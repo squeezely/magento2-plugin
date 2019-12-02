@@ -37,11 +37,9 @@ class EditConfigAdmin implements ObserverInterface {
         $this->_squeezelyDataHelper = $squeezelyDataHelper;
         $this->_objectManager = $objectManager;
     }
-it
     public function execute(EventObserver $observer) {
         $goeieArr = ['apiKeySQZLY: ' => $this->_squeezelyDataHelper->getSqueezelyApiKey()];
 
-//        $this->_logger->info("JA JA GOEIE MAaaaaINNNNNNNsssdNNNNNNNNNNNNNNNNNNNNNNNNNNmnnnnnnnnNNNNN");
         $this->createMagentoIntegration();
     }
 
