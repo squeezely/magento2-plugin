@@ -21,6 +21,7 @@ class EditConfigAdmin implements ObserverInterface {
     private $_squeezelyHelperApi;
     private $_squeezelyDataHelper;
     private $_objectManager;
+    protected $_storeManager;
 
     public function __construct(
         RequestInterface $request,
@@ -28,7 +29,8 @@ class EditConfigAdmin implements ObserverInterface {
         Logger $logger,
         SqueezelyApiHelper $squeezelyHelperApi,
         SqueezelyDataHelper $squeezelyDataHelper,
-        ObjectManager $objectManager
+        ObjectManager $objectManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
         $this->_request = $request;
         $this->_configWriter = $configWriter;
@@ -36,7 +38,9 @@ class EditConfigAdmin implements ObserverInterface {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
         $this->_squeezelyDataHelper = $squeezelyDataHelper;
         $this->_objectManager = $objectManager;
+        $this->_storeManager = $storeManager;
     }
+
     public function execute(EventObserver $observer) {
         $goeieArr = ['apiKeySQZLY: ' => $this->_squeezelyDataHelper->getSqueezelyApiKey()];
 
@@ -89,20 +93,33 @@ class EditConfigAdmin implements ObserverInterface {
             $token->setType('access');
             $token->save();
 
+            $storeInformationAndToken = array_merge($this->getStoreInformation(), $token->toArray());
+            // TODO: remove all logger information
             $this->_logger->info("token info: ", $token->toArray());
 
-            $this->_logger->info("URL SQUEEZELY INFO GHELOGGOODODOD: ", ['apiHelper' => $this->_squeezelyHelperApi->sendMagentoTokenToSqueezely($token->toArray())]);
+            $this->_logger->info("Squeezely merged array: ", $storeInformationAndToken);
 
+            $this->_logger->info("URL SQUEEZELY INFO: ", ['information webpage' => $this->_squeezelyHelperApi->sendMagentoTokenToSqueezely($storeInformationAndToken)]);
+//            $this->_squeezelyHelperApi->sendMagentoTokenToSqueezely($token->toArray());
         }
         catch (Exception $e) {
-            $this->_logger->error("JA JA ERRORRR: " . $e->getMessage());
+            $this->_logger->error("LOGGER ERROR INFO: " . $e->getMessage());
 
             echo "Error : " . $e->getMessage();
         }
 
 //        $this->_logger->info("Integration token bestaat INFOOOOO: ", $integrationExists);
 //        $this->_logger->info("Integration token bestaat al!!!!");
+    }
 
+    private function getStoreInformation() {
+        $storeInformation= [
+            'webshopName' => $this->_storeManager->getStore()->getName() . " - Magento 2",
+            'webshopUrl' => $this->_storeManager->getStore()->getBaseUrl(),
+        ];
+
+        $this->_logger->info("Webstore information: ", $storeInformation);
+        return $storeInformation;
     }
 
 }
