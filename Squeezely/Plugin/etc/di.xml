@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="Squeezely_plugin_command_testbed" xsi:type="object">Squeezely\Plugin\Command\Testbed</item>
+            </argument>
+        </arguments>
+    </type>
+
+<!--    <type name="Squeezely\Plugin\Observer\ProductSaveAfter">-->
+<!--        <arguments>-->
+<!--            <argument name="frontUrlModel" xsi:type="object" shared="false">Magento\Framework\Url</argument>-->
+<!--        </arguments>-->
+<!--    </type>-->
+
+<!--    add 10 items to cart (test plugin-->
+<!--    <type name="Magento\Checkout\Model\Cart">-->
+<!--        <plugin name="SqueezelyCart::add_to_cart" type="Squeezely\Plugin\Checkout\Model\Cart" sortOrder="1" />-->
+<!--    </type>-->
+
+
+</config>
+

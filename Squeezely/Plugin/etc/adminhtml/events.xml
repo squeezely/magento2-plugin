@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="catalog_product_save_after">
+        <observer name="squeezely_save_product" instance="Squeezely\Plugin\Observer\ProductSaveAfter" />
+    </event>
+    <event name="admin_system_config_changed_section_squeezely_plugin">
+        <observer name="squeezely_admin_system_config_changed_section_general" instance="Squeezely\Plugin\Observer\EditConfigAdmin"/>
+    </event>
+</config>
