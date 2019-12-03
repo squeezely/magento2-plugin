@@ -11,7 +11,8 @@ use Psr\Log\LoggerInterface as Logger;
 use Squeezely\Plugin\Helper\SqueezelyApiHelper as SqueezelyApiHelper;
 use Squeezely\Plugin\Helper\Data as SqueezelyDataHelper;
 use Magento\Framework\ObjectManagerInterface as ObjectManager;
-use \stdClass;
+use Magento\Framework\Message\ManagerInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 class EditConfigAdmin implements ObserverInterface {
 
@@ -22,6 +23,7 @@ class EditConfigAdmin implements ObserverInterface {
     private $_squeezelyDataHelper;
     private $_objectManager;
     protected $_storeManager;
+    protected $_messageManager;
 
     public function __construct(
         RequestInterface $request,
@@ -30,7 +32,8 @@ class EditConfigAdmin implements ObserverInterface {
         SqueezelyApiHelper $squeezelyHelperApi,
         SqueezelyDataHelper $squeezelyDataHelper,
         ObjectManager $objectManager,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        ManagerInterface $messageManager
     ) {
         $this->_request = $request;
         $this->_configWriter = $configWriter;
@@ -39,16 +42,12 @@ class EditConfigAdmin implements ObserverInterface {
         $this->_squeezelyDataHelper = $squeezelyDataHelper;
         $this->_objectManager = $objectManager;
         $this->_storeManager = $storeManager;
+        $this->_messageManager = $messageManager;
     }
 
-    public function execute(EventObserver $observer) {
-        $goeieArr = ['apiKeySQZLY: ' => $this->_squeezelyDataHelper->getSqueezelyApiKey()];
-
+    public function execute(EventObserver $observer)
+    {
         $this->createMagentoIntegration();
-    }
-
-    private function verifySqueezelyAuth() {
-
     }
 
     private function createMagentoIntegration() {
@@ -94,22 +93,20 @@ class EditConfigAdmin implements ObserverInterface {
             $token->save();
 
             $storeInformationAndToken = array_merge($this->getStoreInformation(), $token->toArray());
-            // TODO: remove all logger information
-            $this->_logger->info("token info: ", $token->toArray());
+            $isVerified = $this->_squeezelyHelperApi->sendMagentoTokenToSqueezelyAndVerifyAuth($storeInformationAndToken);
+//            $this->_logger->info("URL SQUEEZELY INFO: ", ['information webpage' => $isVerified]);
 
-            $this->_logger->info("Squeezely merged array: ", $storeInformationAndToken);
-
-            $this->_logger->info("URL SQUEEZELY INFO: ", ['information webpage' => $this->_squeezelyHelperApi->sendMagentoTokenToSqueezely($storeInformationAndToken)]);
-//            $this->_squeezelyHelperApi->sendMagentoTokenToSqueezely($token->toArray());
+            if($isVerified){
+                $this->_messageManager->addSuccessMessage("Squeezely credentials are successfully verified");
+            }
+            else {
+                $this->_messageManager->addErrorMessage("Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech.");
+            }
         }
         catch (Exception $e) {
             $this->_logger->error("LOGGER ERROR INFO: " . $e->getMessage());
-
-            echo "Error : " . $e->getMessage();
+            $this->_messageManager->addErrorMessage("Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech.");
         }
-
-//        $this->_logger->info("Integration token bestaat INFOOOOO: ", $integrationExists);
-//        $this->_logger->info("Integration token bestaat al!!!!");
     }
 
     private function getStoreInformation() {

@@ -20,17 +20,18 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
     private $squeezelyWebhookKey;
     private $squeezelyAccountId;
 
+    // TODO: Use this in production
 //    const PRODUCT_END_POINT = "https://squeezely.tech/api/products";
 //    const PURCHASE_END_POINT = "https://squeezely.tech/api/track";
 
-    // Test webhook hattar Dev
+    // Test webhook hattar Dev // TODO: Remove this in production
     const PRODUCT_END_POINT = "https://hattardev.sqzly.nl/api/products";
     const PURCHASE_END_POINT = "https://hattardev.sqzly.nl/api/track";
     const VERIFY_API_LOGIN_END_POINT = "https://hattardev.sqzly.nl/api/v1/verifyAuth?channel=2";
     const SEND_MAGENTO_TOKEN_END_POINT = "https://hattardev.sqzly.nl/callback/magento2_webhook";
 
 
-    // TEST WEBHOOKS TODO: REMOVE THIS
+    // TEST WEBHOOKS TODO: Remove this in production
 //    const PRODUCT_END_POINT = "https://webhook.site/6314a4b0-0ada-4851-8612-f532cbc185e7";
 //    const PURCHASE_END_POINT = "https://webhook.site/6314a4b0-0ada-4851-8612-f532cbc185e7";
 
@@ -61,40 +62,7 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
             "Content-Length: " . strlen($json)
         ]);
 
-        // USED FOR TESTING REQUEST
-    //        $response = curl_exec($ch);
-    //        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-    //        $headers = substr($response, 0, $headerSize);
-    //        $content = substr($response, $headerSize);
-    //        $curlError = curl_errno($ch);
-    //        $curlError .= ': '. curl_error($ch);
-    //
-    //        print_r($response);
-    //        print_r($headerSize);
-    //        print_r($headers);
-    //        print_r($content);
-    //        print_r($curlError);
-
         $result = curl_exec($ch);
-
-        // USED FOR TESTING REQUEST
-    //        print_r($result);
-        curl_close($ch);
-        return $result;
-    }
-
-    private function getData($url)
-    {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "X-AUTH-ACCOUNT: $this->squeezelyAccountId",
-            "X-AUTH-APIKEY: $this->squeezelyApiKey",
-        ]);
-
-        $result = curl_exec($ch);
-
         curl_close($ch);
         return $result;
     }
@@ -109,24 +77,15 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->postData($purchases, self::PURCHASE_END_POINT);
     }
 
-    public function verifySqueezelyAuth()
+    public function sendMagentoTokenToSqueezelyAndVerifyAuth($magentoToken)
     {
-        $data = json_decode($this->getData(self::VERIFY_API_LOGIN_END_POINT), true);
+        $data = (array) json_decode($this->postData($magentoToken, self::VERIFY_API_LOGIN_END_POINT));
 
-        if(isset($data['verified']) && $data['verified'] === true) {
+        if(isset($data['verified']) && $data['verified'] == true) {
             return true;
         }
 
         return false;
-    }
-
-    public function sendMagentoTokenToSqueezely($magentoToken)
-    {
-
-        $data = $this->postData($magentoToken, self::VERIFY_API_LOGIN_END_POINT);
-//        if(i$data)
-
-        return $data;
     }
 
 }
