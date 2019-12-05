@@ -4,6 +4,11 @@ namespace Squeezely\Plugin\Observer;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Squeezely\Plugin\Helper\SqueezelyApiHelper;
+use Magento\Framework\Message\ManagerInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
+use Magento\Framework\UrlInterface;
 use \stdClass;
 
 
@@ -22,11 +27,11 @@ class ProductSaveAfter implements ObserverInterface
 
 
     public function __construct(
-        \Squeezely\Plugin\Helper\SqueezelyApiHelper $squeezelyHelperApi,
-        \Magento\Framework\Message\ManagerInterface $messageManager,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable $catalogProductTypeConfigurable,
-         \Magento\Framework\UrlInterface $frontUrlModel
+        SqueezelyApiHelper $squeezelyHelperApi,
+        ManagerInterface $messageManager,
+        StoreManagerInterface $storeManager,
+        Configurable $catalogProductTypeConfigurable,
+        UrlInterface $frontUrlModel
     )
     {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
@@ -77,7 +82,6 @@ class ProductSaveAfter implements ObserverInterface
         }
 
         // Echo message for testing
-//        $message = "GHELLO GOEIE MAINNN: " . $goeie;
 //        $this->_messageManager->addError($message); // For Error Message
 
         return ['products' => $productsData];

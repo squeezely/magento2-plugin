@@ -4,6 +4,8 @@ namespace Squeezely\Plugin\Observer;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Squeezely\Plugin\Helper\SqueezelyApiHelper;
+use Magento\Newsletter\Model\Subscriber;
 use \stdClass;
 
 
@@ -15,8 +17,8 @@ class OrderSaveAfter implements ObserverInterface
     protected $_subscriber;
 
     public function __construct(
-        \Squeezely\Plugin\Helper\SqueezelyApiHelper $squeezelyHelperApi,
-        \Magento\Newsletter\Model\Subscriber $subscriber
+        SqueezelyApiHelper $squeezelyHelperApi,
+        Subscriber $subscriber
     )
     {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;

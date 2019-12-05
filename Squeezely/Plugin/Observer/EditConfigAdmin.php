@@ -2,6 +2,8 @@
 
 namespace Squeezely\Plugin\Observer;
 
+use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
+use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\RequestInterface;
@@ -13,6 +15,8 @@ use Squeezely\Plugin\Helper\Data as SqueezelyDataHelper;
 use Magento\Framework\ObjectManagerInterface as ObjectManager;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 
 class EditConfigAdmin implements ObserverInterface {
 
@@ -24,6 +28,10 @@ class EditConfigAdmin implements ObserverInterface {
     private $_objectManager;
     protected $_storeManager;
     protected $_messageManager;
+    private $_searchCriteriaBuilder;
+    protected $productRepository;
+    protected $filterBuilder;
+    private $productUrlPathGenerator;
 
     public function __construct(
         RequestInterface $request,
@@ -33,7 +41,11 @@ class EditConfigAdmin implements ObserverInterface {
         SqueezelyDataHelper $squeezelyDataHelper,
         ObjectManager $objectManager,
         StoreManagerInterface $storeManager,
-        ManagerInterface $messageManager
+        ManagerInterface $messageManager,
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        ProductRepositoryInterface $productRepository,
+        FilterBuilder $filterBuilder,
+        ProductUrlPathGenerator $productUrlPathGenerator
     ) {
         $this->_request = $request;
         $this->_configWriter = $configWriter;
@@ -43,6 +55,10 @@ class EditConfigAdmin implements ObserverInterface {
         $this->_objectManager = $objectManager;
         $this->_storeManager = $storeManager;
         $this->_messageManager = $messageManager;
+        $this->_searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->productRepository = $productRepository;
+        $this->filterBuilder = $filterBuilder;
+        $this->productUrlPathGenerator = $productUrlPathGenerator;
     }
 
     public function execute(EventObserver $observer)
@@ -50,9 +66,12 @@ class EditConfigAdmin implements ObserverInterface {
         $this->createMagentoIntegration();
     }
 
-    private function createMagentoIntegration() {
+    private function createMagentoIntegration()
+    {
         $name = "Squeezely Integration";
+
         $endPoint = "https://hattardev.sqzly.nl/callback/magento2"; // TODO: Change url to production url
+//        $endPoint = "https://squeezely.tech/callback/magento2";
 
         $integrationExists = $this->_objectManager->get('Magento\Integration\Model\IntegrationFactory')->create()->load($name, 'name')->getData();
 
@@ -94,9 +113,9 @@ class EditConfigAdmin implements ObserverInterface {
 
             $storeInformationAndToken = array_merge($this->getStoreInformation(), $token->toArray());
             $isVerified = $this->_squeezelyHelperApi->sendMagentoTokenToSqueezelyAndVerifyAuth($storeInformationAndToken);
-//            $this->_logger->info("URL SQUEEZELY INFO: ", ['information webpage' => $isVerified]);
+//            $this->_logger->info("URL SQUEEZELY INFO: ", ['information webpage' => $isVerified]); // TODO: use this looger only for testing
 
-            if($isVerified){
+            if($isVerified) {
                 $this->_messageManager->addSuccessMessage("Squeezely credentials are successfully verified");
             }
             else {
@@ -109,14 +128,38 @@ class EditConfigAdmin implements ObserverInterface {
         }
     }
 
-    private function getStoreInformation() {
+    private function getStoreInformation()
+    {
         $storeInformation= [
             'webshopName' => $this->_storeManager->getStore()->getName() . " - Magento 2",
             'webshopUrl' => $this->_storeManager->getStore()->getBaseUrl(),
+            'webshopSuffix' => $this->getStoreSuffix()
         ];
 
         $this->_logger->info("Webstore information: ", $storeInformation);
         return $storeInformation;
+    }
+
+    private function getStoreSuffix()
+    {
+        // Just get a random product and so we can get the url suffix and format it
+        $filter = [$this->filterBuilder
+            ->setField('sku')
+            ->setConditionType('neq')
+            ->setValue('NoSKU')
+            ->create()];
+
+        $searchCriteria = $this->_searchCriteriaBuilder->addFilters($filter)->setPageSize(1)->create();
+        $products = $this->productRepository->getList($searchCriteria)->getItems();
+
+        if(isset($products[1])) {
+            $urlWithSuffix = $this->productUrlPathGenerator->getUrlPathWithSuffix($products[1], $this->_storeManager->getStore()->getId());
+            $urlKey = $products[1]->getUrlKey();
+            $formattedString = str_replace($urlKey, "", $urlWithSuffix);
+            return $formattedString;
+        }
+
+        return null;
     }
 
 }
