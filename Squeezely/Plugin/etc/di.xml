@@ -8,7 +8,9 @@
         </arguments>
     </type>
 
-<!--    <type name="Squeezely\Plugin\Observer\ProductSaveAfter">-->
+    <preference for="Squeezely\Plugin\Api\GetManagementInterface" type="Squeezely\Plugin\Model\GetProductChildIdManagement"/>
+
+<!--    <type name="Squeezely\Plugin\Observer\ProductSaveAfter"> TODO: REMOVE COMMENT IF DONE WITH TESTING -->
 <!--        <arguments>-->
 <!--            <argument name="frontUrlModel" xsi:type="object" shared="false">Magento\Framework\Url</argument>-->
 <!--        </arguments>-->
