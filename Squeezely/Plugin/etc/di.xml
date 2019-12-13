@@ -10,17 +10,10 @@
 
     <preference for="Squeezely\Plugin\Api\GetManagementInterface" type="Squeezely\Plugin\Model\GetProductChildIdManagement"/>
 
-<!--    <type name="Squeezely\Plugin\Observer\ProductSaveAfter"> TODO: REMOVE COMMENT IF DONE WITH TESTING -->
-<!--        <arguments>-->
-<!--            <argument name="frontUrlModel" xsi:type="object" shared="false">Magento\Framework\Url</argument>-->
-<!--        </arguments>-->
-<!--    </type>-->
-
-<!--    add 10 items to cart (test plugin-->
-<!--    <type name="Magento\Checkout\Model\Cart">-->
-<!--        <plugin name="SqueezelyCart::add_to_cart" type="Squeezely\Plugin\Checkout\Model\Cart" sortOrder="1" />-->
-<!--    </type>-->
-
-
+    <type name="Squeezely\Plugin\Observer\ProductSaveAfter">
+        <arguments>
+            <argument name="frontUrlModel" xsi:type="object" shared="false">Magento\Framework\Url</argument>
+        </arguments>
+    </type>
 </config>
 

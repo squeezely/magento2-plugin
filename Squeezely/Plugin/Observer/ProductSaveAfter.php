@@ -2,43 +2,57 @@
 
 namespace Squeezely\Plugin\Observer;
 
+use Magento\CatalogInventory\Model\Stock\StockItemRepository;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
 use Squeezely\Plugin\Helper\SqueezelyApiHelper;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\CatalogInventory\Model\Stock\StockItemRepository as StockItem;
+use Psr\Log\LoggerInterface as Logger;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
 use Magento\Framework\UrlInterface;
 use \stdClass;
-
+use Magento\InventorySalesApi\Api\GetProductSalableQtyInterface;
+use Magento\InventorySalesApi\Api\StockResolverInterface;
 
 class ProductSaveAfter implements ObserverInterface
 {
     private $_squeezelyHelperApi;
-
+    protected $_logger;
     protected $_storeManager;
+    private $getProductSalableQty;
 
     // TODO: REMOVE THIS LATER, USE ONLY FOR DEV
     protected $_messageManager;
-
     protected $_catalogProductTypeConfigurable;
-
     protected $_frontUrlModel;
-
+    private $stockResolver;
+    private $stockItem;
 
     public function __construct(
         SqueezelyApiHelper $squeezelyHelperApi,
         ManagerInterface $messageManager,
         StoreManagerInterface $storeManager,
         Configurable $catalogProductTypeConfigurable,
-        UrlInterface $frontUrlModel
+        UrlInterface $frontUrlModel,
+        StockItem $stockItem,
+        StockItemRepository $stockItemRepository,
+        Logger $logger,
+        GetProductSalableQtyInterface $getProductSalableQty,
+        StockResolverInterface $stockResolver
     )
     {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
         $this->_messageManager = $messageManager;
         $this->_storeManager = $storeManager;
+        $this->getProductSalableQty = $getProductSalableQty;
         $this->_catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
         $this->_frontUrlModel = $frontUrlModel;
+        $this->stockItem = $stockItem;
+        $this->_logger = $logger;
+        $this->stockResolver = $stockResolver;
     }
 
 
@@ -155,7 +169,10 @@ class ProductSaveAfter implements ObserverInterface
         }
 
         $formattedProduct->availability = ($product->isAvailable() ? 'in stock' : 'out of stock');
-        $formattedProduct->inventory = $product->getExtensionAttributes()->getStockItem()->getQty();
+
+        $websiteCode = $this->_storeManager->getWebsite()->getCode();
+        $stockId = $this->stockResolver->execute(SalesChannelInterface::TYPE_WEBSITE, $websiteCode)->getStockId();
+        $formattedProduct->inventory = $this->getProductSalableQty->execute($product->getSku(), $stockId);
 
         if(isset($parentByChild[0])) {
             $formattedProduct->parent_id  = $parentByChild[0];
