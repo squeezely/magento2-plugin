@@ -5,6 +5,8 @@ use Braintree\Exception;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
 
+// TODO: Product view doesn't work anymore, fix bug
+// TODO: Fix deprecated classes
 class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
 {
     /**
@@ -223,7 +225,7 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
             $objProduct = new stdClass();
             $objProduct->name = $product->getName();
             $objProduct->id = $product->getSku();
-            $objProduct->price = $this->_currency->formatTxt($product->getFinalPrice(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
+            $objProduct->price =  $product->getFinalPrice();
             $objProduct->category = implode('|', $categories);
 
 

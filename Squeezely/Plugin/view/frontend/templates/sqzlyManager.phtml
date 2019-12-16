@@ -10,8 +10,8 @@ $sqzlyId = $block->getSQZLYId();
             l.defer=true;l.src=z;y.parentNode.insertBefore(l,y)})
         (window,document,'https://hattardev.sqzly.nl/tracker/<?php echo $sqzlyId; ?>/sqzl.js'); // TODO REMOVE FIXED URL
 
-        var _sqzl = _sqzl || [];
-        _sqzl.push({"event": "PageView"});
+        window._sqzl = _sqzl || [];
+        window._sqzl.push({"event": "PageView"});
 
         require.config({
             deps: [
