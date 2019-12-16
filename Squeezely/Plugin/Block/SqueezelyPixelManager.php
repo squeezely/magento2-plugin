@@ -7,6 +7,7 @@ use Magento\Catalog\Api\Data\CategoryInterface;
 
 // TODO: Product view doesn't work anymore, fix bug
 // TODO: Fix deprecated classes
+// TODO: Remove unused logic
 class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
 {
     /**
@@ -136,16 +137,6 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
 
     // END HELPER FUNCTIONS
 
-
-    /**
-     * Check if current page is homepage
-     *
-     * @return boolean	true or false
-     */
-    public function getIsHomePage() {
-        return $this->_logo->isHomePage();
-    }
-
     /**
      * Check if current page is order success page
      *
@@ -234,7 +225,7 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
             $objEcommerce->products = $objProduct;
 
             $objAddToCart = new stdClass();
-            $objAddToCart->event = 'addToCart';
+            $objAddToCart->event = 'AddToCart';
             $objAddToCart->ecommerce = new stdClass();
             $objAddToCart->ecommerce->add = new stdClass();
             $objAddToCart->ecommerce->add->products = $objProduct;
@@ -277,7 +268,6 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
                 $productItem['price'] = $this->_currency->formatTxt($item->getBasePrice(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
                 $productItem['category'] = implode('|', $categories);
                 $productItem['quantity'] = intval($item->getQtyOrdered()); // converting qty from decimal to integer
-                $productItem['coupon'] = '';
                 $productItems[] = (object) $productItem;
 
                 $objItem = array();
@@ -298,32 +288,14 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
             $objOrder->firstname = $order->getCustomerFirstname();
             $objOrder->lastname = $order->getCustomerLastname();
             $objOrder->userid = $order->getCustomerId();
-
-            $objOrder->transactionAffiliation = $this->_storeManager->getStore()->getFrontendName();
-            $objOrder->transactionTotal = $this->_currency->formatTxt($order->getBaseGrandTotal(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-            $objOrder->transactionTax = $this->_currency->formatTxt($order->getBaseTaxAmount(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-            $objOrder->transactionShipping = $this->_currency->formatTxt($order->getBaseShippingAmount(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-
-            $objOrder->transactionProducts = $aItems;
-
-            $objOrder->ecommerce = new stdClass();
-            $objOrder->ecommerce->purchase = new stdClass();
-            $objOrder->ecommerce->purchase->actionField = new stdClass();
-            $objOrder->ecommerce->purchase->actionField->id = $order->getIncrementId();
-            $objOrder->ecommerce->purchase->actionField->affiliation = $this->_storeManager->getStore()->getFrontendName();
-            $objOrder->ecommerce->purchase->actionField->revenue = $this->_currency->formatTxt($order->getBaseGrandTotal(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-            $objOrder->ecommerce->purchase->actionField->tax = $this->_currency->formatTxt($order->getBaseTaxAmount(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-            $objOrder->ecommerce->purchase->actionField->shipping = $this->_currency->formatTxt($order->getBaseShippingAmount(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-            $coupon = $order->getCouponCode();
-            $objOrder->ecommerce->purchase->actionField->coupon = $coupon == null ? '' : $coupon;
-
-            $objOrder->ecommerce->products = $productItems;
+            $objOrder->products = $productItems;
 
             $pageCategory = json_encode(array('pageCategory' => 'order-success'), JSON_PRETTY_PRINT);
 
             $dataScript = PHP_EOL;
 
             $dataScript .= '<script type="text/javascript">'.PHP_EOL.'dataLayer = [' . $pageCategory . '];'.PHP_EOL.'</script>';
+            $dataScript .= '<script type="text/javascript">console.log("purchase ORDER",'.json_encode($objOrder).')</script>'; // TODO: Remove this
 
             $dataScript .= PHP_EOL.PHP_EOL;
 
