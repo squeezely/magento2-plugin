@@ -27,8 +27,7 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
     // Test webhook hattar Dev // TODO: Remove this in production
     const PRODUCT_END_POINT = "https://hattardev.sqzly.nl/api/products";
     const PURCHASE_END_POINT = "https://hattardev.sqzly.nl/api/track";
-    const VERIFY_API_LOGIN_END_POINT = "https://hattardev.sqzly.nl/api/v1/verifyAuth?channel=2";
-    const SEND_MAGENTO_TOKEN_END_POINT = "https://hattardev.sqzly.nl/callback/magento2_webhook";
+    const VERIFY_API_LOGIN_END_POINT = "https://hattardev.sqzly.nl/api/v1/verifyAuth?channel=2"; // TODO: remove dev url
 
 
     // TEST WEBHOOKS TODO: Remove this in production

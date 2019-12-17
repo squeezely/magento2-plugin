@@ -19,8 +19,7 @@ class OrderSaveAfter implements ObserverInterface
     public function __construct(
         SqueezelyApiHelper $squeezelyHelperApi,
         Subscriber $subscriber
-    )
-    {
+    ) {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
         $this->_subscriber= $subscriber;
     }

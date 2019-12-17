@@ -19,33 +19,27 @@ use Magento\InventorySalesApi\Api\StockResolverInterface;
 
 class ProductSaveAfter implements ObserverInterface
 {
-    private $_squeezelyHelperApi;
     protected $_logger;
     protected $_storeManager;
-    private $getProductSalableQty;
-
-    // TODO: REMOVE THIS LATER, USE ONLY FOR DEV
-    protected $_messageManager;
     protected $_catalogProductTypeConfigurable;
     protected $_frontUrlModel;
+
+    private $_squeezelyHelperApi;
+    private $getProductSalableQty;
     private $stockResolver;
     private $stockItem;
 
     public function __construct(
         SqueezelyApiHelper $squeezelyHelperApi,
-        ManagerInterface $messageManager,
         StoreManagerInterface $storeManager,
+        GetProductSalableQtyInterface $getProductSalableQty,
         Configurable $catalogProductTypeConfigurable,
         UrlInterface $frontUrlModel,
         StockItem $stockItem,
-        StockItemRepository $stockItemRepository,
         Logger $logger,
-        GetProductSalableQtyInterface $getProductSalableQty,
         StockResolverInterface $stockResolver
-    )
-    {
+    ) {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
-        $this->_messageManager = $messageManager;
         $this->_storeManager = $storeManager;
         $this->getProductSalableQty = $getProductSalableQty;
         $this->_catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
@@ -60,6 +54,8 @@ class ProductSaveAfter implements ObserverInterface
      * @param Observer $observer
      *
      * @return void
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute(Observer $observer)
@@ -73,6 +69,8 @@ class ProductSaveAfter implements ObserverInterface
      * @param $_product
      *
      * @return array
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     private function transformProductData($_product)
@@ -95,8 +93,6 @@ class ProductSaveAfter implements ObserverInterface
             array_push($productsData, $this->addProduct($_product, $productImageUrls, $categoriesIds));
         }
 
-        // Echo message for testing
-//        $this->_messageManager->addError($message); // For Error Message
 
         return ['products' => $productsData];
     }
@@ -149,6 +145,8 @@ class ProductSaveAfter implements ObserverInterface
      * @param $categoriesIds
      *
      * @return stdClass
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     private function addProduct($product, $productImageUrls, $categoriesIds)

@@ -2,67 +2,67 @@
 namespace Squeezely\Plugin\Block;
 
 use Braintree\Exception;
+use Magento\Framework\View\Element\Template;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
+use Magento\Backend\Block\Template\Context;
+use Squeezely\Plugin\Helper\Data;
+use Squeezely\Plugin\Helper\SqueezelyApiHelper;
+use Magento\Framework\App\Request\Http;
+use Magento\Framework\Registry;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Checkout\Model\Session;
+use Magento\Catalog\Model\CategoryRepository;
+use Magento\Directory\Model\Currency;
 
-// TODO: Product view doesn't work anymore, fix bug
-// TODO: Fix deprecated classes
-// TODO: Remove unused logic
-class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
+class SqueezelyPixelManager extends Template
 {
     /**
      * Squeezely Pixel Manager Helper
      *
-     * @var \Squeezely\Plugin\Helper\Data
+     * @var Data
      */
-    protected $_helper;
-
-    /**
-     * Header Logo
-     *
-     * @var \Magento\Theme\Block\Html\Header\Logo
-     */
-    protected $_logo;
+    protected $_sqzlyHelper;
 
     /**
      * Http Request
      *
-     * @var \Magento\Framework\App\Request\Http
+     * @var Http
      */
     protected $_request;
 
     /**
      * Registry
      *
-     * @var \Magento\Framework\Registry
+     * @var Registry
      */
     protected $_registry;
 
     /**
      * Order
      *
-     * @var \Magento\Sales\Api\Data\OrderInterface
+     * @var OrderInterface
      */
     protected $_order;
 
     /**
      * Checkout Session
      *
-     * @var \Magento\Checkout\Model\Session
+     * @var Session
      */
     protected $_checkoutSession;
 
     /**
      * Category Repository
      *
-     * @var \Magento\Catalog\Model\CategoryRepository
+     * @var CategoryRepository
      */
     protected $_categoryRepository;
 
     /**
      * Currency
      *
-     * @var \Magento\Directory\Model\Currency
+     * @var Currency
      */
     protected $_currency;
 
@@ -76,27 +76,25 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
     /**
      * Current Category
      *
-     * @var \Squeezely\Plugin\Helper\SqueezelyApiHelper
+     * @var SqueezelyApiHelper
      */
     private $_helperApi;
 
     public function __construct(
-        \Magento\Backend\Block\Template\Context $context,
-        \Squeezely\Plugin\Helper\Data $helper,
-        \Squeezely\Plugin\Helper\SqueezelyApiHelper $_helperApi,
-        \Magento\Theme\Block\Html\Header\Logo $logo,
-        \Magento\Framework\App\Request\Http $request,
-        \Magento\Framework\Registry $registry,
-        \Magento\Sales\Api\Data\OrderInterface $order,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Catalog\Model\CategoryRepository $categoryRepository,
-        \Magento\Directory\Model\Currency $currency,
+        Context $context,
+        Data $sqzlyHelper,
+        SqueezelyApiHelper $_helperApi,
+        Http $request,
+        Registry $registry,
+        OrderInterface $order,
+        Session $checkoutSession,
+        CategoryRepository $categoryRepository,
+        Currency $currency,
         array $data = []
     )
     {
-        $this->_helper = $helper;
+        $this->_sqzlyHelper = $sqzlyHelper;
         $this->_helperApi = $_helperApi;
-        $this->_logo = $logo;
         $this->_request = $request;
         $this->_registry = $registry;
         $this->_order = $order;
@@ -114,7 +112,7 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
      * @return boolean 0 or 1
      */
     public function getIsEnable() {
-        return $this->_helper->getIsEnable();
+        return $this->_sqzlyHelper->getIsEnable();
     }
 
     /**
@@ -123,7 +121,7 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
      * @return boolean 0 or 1
      */
     public function getIsEnableDataLayer() {
-        return $this->_helper->getIsEnableDataLayer();
+        return $this->_sqzlyHelper->getIsEnableDataLayer();
     }
 
     /**
@@ -132,7 +130,7 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
      * @return string
      */
     public function getSQZLYId() {
-        return $this->_helper->getSQZLYId();
+        return $this->_sqzlyHelper->getSQZLYId();
     }
 
     // END HELPER FUNCTIONS
@@ -179,7 +177,8 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
      * @return \Magento\Catalog\Model\Product\Interceptor
      */
     public function getCurrentProduct() {
-        return $this->_registry->registry('current_product'); // TODO: Refactor thsi
+        // https://magento.stackexchange.com/questions/265001/how-to-get-current-product-in-phtml-without-registry?atw=1#answer-265004 TODO: Refactor Registry (current product) after Magento has an alternative
+        return $this->_registry->registry('current_product');
     }
 
     /**

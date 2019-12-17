@@ -18,24 +18,22 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 
-class EditConfigAdmin implements ObserverInterface {
+class EditConfigAdmin implements ObserverInterface
+{
 
     protected $_logger;
-    private $_request;
-    private $_configWriter;
+    protected $_storeManager;
+    protected $_messageManager;
+    protected $productRepository;
+    protected $filterBuilder;
+
     private $_squeezelyHelperApi;
     private $_squeezelyDataHelper;
     private $_objectManager;
-    protected $_storeManager;
-    protected $_messageManager;
     private $_searchCriteriaBuilder;
-    protected $productRepository;
-    protected $filterBuilder;
     private $productUrlPathGenerator;
 
     public function __construct(
-        RequestInterface $request,
-        WriterInterface $configWriter,
         Logger $logger,
         SqueezelyApiHelper $squeezelyHelperApi,
         SqueezelyDataHelper $squeezelyDataHelper,
@@ -47,8 +45,6 @@ class EditConfigAdmin implements ObserverInterface {
         FilterBuilder $filterBuilder,
         ProductUrlPathGenerator $productUrlPathGenerator
     ) {
-        $this->_request = $request;
-        $this->_configWriter = $configWriter;
         $this->_logger = $logger;
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
         $this->_squeezelyDataHelper = $squeezelyDataHelper;
@@ -87,25 +83,25 @@ class EditConfigAdmin implements ObserverInterface {
             'setup_type' => '0',
         ];
         try {
-            // Code to create Integration
+            // Create Integration
             $integrationFactory = $this->_objectManager->get('Magento\Integration\Model\IntegrationFactory')->create();
             $integration = $integrationFactory->setData($integrationData);
             $integration->save();
             $integrationId = $integration->getId();
             $consumerName = 'Integration ' . $integrationId;
 
-            // Code to create consumer
+            // Create consumer
             $oauthService = $this->_objectManager->get('Magento\Integration\Model\OauthService');
             $consumer = $oauthService->createConsumer(['name' => $consumerName]);
             $consumerId = $consumer->getId();
             $integration->setConsumerId($consumer->getId());
             $integration->save();
 
-            // Code to grant permission
+            // Grant permission
             $authrizeService = $this->_objectManager->get('Magento\Integration\Model\AuthorizationService');
             $authrizeService->grantAllPermissions($integrationId);
 
-            // Code to Activate and Authorize
+            // Activate and Authorize
             $token = $this->_objectManager->get('Magento\Integration\Model\Oauth\Token');
             $uri = $token->createVerifierToken($consumerId);
             $token->setType('access');
@@ -113,7 +109,6 @@ class EditConfigAdmin implements ObserverInterface {
 
             $storeInformationAndToken = array_merge($this->getStoreInformation(), $token->toArray());
             $isVerified = $this->_squeezelyHelperApi->sendMagentoTokenToSqueezelyAndVerifyAuth($storeInformationAndToken);
-//            $this->_logger->info("URL SQUEEZELY INFO: ", ['information webpage' => $isVerified]); // TODO: use this looger only for testing
 
             if($isVerified) {
                 $this->_messageManager->addSuccessMessage("Squeezely credentials are successfully verified");
@@ -142,7 +137,7 @@ class EditConfigAdmin implements ObserverInterface {
 
     private function getStoreSuffix()
     {
-        // Just get a random product and so we can get the url suffix and format it
+        // Get a random product so we can get the url suffix and format it
         $filter = [$this->filterBuilder
             ->setField('sku')
             ->setConditionType('neq')

@@ -5,7 +5,8 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
 use \Magento\Framework\Controller\Result\JsonFactory;
 
-class GetProductChildIdManagement {
+class GetProductChildIdManagement
+{
 
     protected $_catalogProductTypeConfigurable;
 

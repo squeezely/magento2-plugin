@@ -1,7 +1,8 @@
 <?php
 namespace Squeezely\Plugin\Helper;
 
-class Data extends \Magento\Framework\App\Helper\AbstractHelper {
+class Data extends \Magento\Framework\App\Helper\AbstractHelper
+{
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
