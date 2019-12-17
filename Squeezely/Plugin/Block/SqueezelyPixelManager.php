@@ -179,7 +179,7 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
      * @return \Magento\Catalog\Model\Product\Interceptor
      */
     public function getCurrentProduct() {
-        return $this->_registry->registry('current_product');
+        return $this->_registry->registry('current_product'); // TODO: Refactor thsi
     }
 
     /**
@@ -217,28 +217,21 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
             $objProduct->name = $product->getName();
             $objProduct->id = $product->getSku();
             $objProduct->price =  $product->getFinalPrice();
-            $objProduct->category = implode('|', $categories);
 
 
             $objEcommerce = new stdClass();
             $objEcommerce->event = 'ViewContent';
             $objEcommerce->products = $objProduct;
 
-            $objAddToCart = new stdClass();
-            $objAddToCart->event = 'AddToCart';
-            $objAddToCart->ecommerce = new stdClass();
-            $objAddToCart->ecommerce->add = new stdClass();
-            $objAddToCart->ecommerce->add->products = $objProduct;
-
             $pageCategory = json_encode(array('pageCategory' => 'product-detail'), JSON_PRETTY_PRINT);
 
             $dataScript = PHP_EOL;
 
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'dataLayer = [' . $pageCategory . '];'.PHP_EOL.'</script>';
+            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'dataLayer = [' . $pageCategory . ']'.PHP_EOL.'</script>';
 
             $dataScript .= PHP_EOL.PHP_EOL;
 
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objEcommerce, JSON_PRETTY_PRINT) . ');'.PHP_EOL.'</script>';
+            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objEcommerce, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
 
             return $dataScript;
@@ -294,12 +287,11 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
 
             $dataScript = PHP_EOL;
 
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'dataLayer = [' . $pageCategory . '];'.PHP_EOL.'</script>';
-            $dataScript .= '<script type="text/javascript">console.log("purchase ORDER",'.json_encode($objOrder).')</script>'; // TODO: Remove this
+            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'dataLayer = [' . $pageCategory . ']'.PHP_EOL.'</script>';
 
             $dataScript .= PHP_EOL.PHP_EOL;
 
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objOrder, JSON_PRETTY_PRINT) . ');'.PHP_EOL.'</script>';
+            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objOrder, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
             return $dataScript;
         }
@@ -324,7 +316,7 @@ class SqueezelyPixelManager extends \Magento\Framework\View\Element\Template
 
         $dataScript = PHP_EOL;
 
-        $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objViewCategory, JSON_PRETTY_PRINT) . ');'.PHP_EOL.'</script>';
+        $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objViewCategory, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
         return $dataScript;
     }

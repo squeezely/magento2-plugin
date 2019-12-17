@@ -23,7 +23,6 @@ $sqzlyId = $block->getSQZLYId();
                 'use strict';
 
                 $(document).on("ajax:addToCart", function (event, data) {
-                    console.log('goeie', data);
                     var products = [{"id": data.sku}];
                     _sqzl.push({"event": "AddToCart", "products": products});
                 });
