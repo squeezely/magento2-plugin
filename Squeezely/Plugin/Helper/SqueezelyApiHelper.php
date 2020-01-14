@@ -20,21 +20,9 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
     private $squeezelyWebhookKey;
     private $squeezelyAccountId;
 
-    // TODO: Use this in production
-//    const PRODUCT_END_POINT = "https://squeezely.tech/api/products";
-//    const PURCHASE_END_POINT = "https://squeezely.tech/api/track";
-
-    // Test webhook hattar Dev // TODO: Remove this in production
-    const PRODUCT_END_POINT = "https://hattardev.sqzly.nl/api/products";
-    const PURCHASE_END_POINT = "https://hattardev.sqzly.nl/api/track";
-    const VERIFY_API_LOGIN_END_POINT = "https://hattardev.sqzly.nl/api/v1/verifyAuth?channel=2"; // TODO: remove dev url
-
-
-    // TEST WEBHOOKS TODO: Remove this in production
-//    const PRODUCT_END_POINT = "https://webhook.site/6314a4b0-0ada-4851-8612-f532cbc185e7";
-//    const PURCHASE_END_POINT = "https://webhook.site/6314a4b0-0ada-4851-8612-f532cbc185e7";
-
-
+    const PRODUCT_END_POINT = "https://squeezely.tech/api/products";
+    const PURCHASE_END_POINT = "https://squeezely.tech/api/track";
+    const VERIFY_API_LOGIN_END_POINT = "https://squeezely.tech/api/v1/verifyAuth?channel=2";
 
     public function __construct(\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig)
     {

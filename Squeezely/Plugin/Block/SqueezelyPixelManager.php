@@ -222,16 +222,9 @@ class SqueezelyPixelManager extends Template
             $objEcommerce->event = 'ViewContent';
             $objEcommerce->products = $objProduct;
 
-            $pageCategory = json_encode(array('pageCategory' => 'product-detail'), JSON_PRETTY_PRINT);
-
             $dataScript = PHP_EOL;
 
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'dataLayer = [' . $pageCategory . ']'.PHP_EOL.'</script>';
-
-            $dataScript .= PHP_EOL.PHP_EOL;
-
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objEcommerce, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
-
+            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'window._sqzl = _sqzl || []; _sqzl.push('. json_encode($objEcommerce, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
             return $dataScript;
         }
@@ -244,7 +237,6 @@ class SqueezelyPixelManager extends Template
     public function getDataLayerOrder() { // Purchase Squeezely
         if ($order = $this->getOrder()) {
 
-            $aItems = array();
             $productItems = array();
             foreach ($order->getAllVisibleItems() as $item) {
 
@@ -258,17 +250,8 @@ class SqueezelyPixelManager extends Template
                 $productItem['id'] = $item->getSku();
                 $productItem['name'] = $item->getName();
                 $productItem['price'] = $this->_currency->formatTxt($item->getBasePrice(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-                $productItem['category'] = implode('|', $categories);
                 $productItem['quantity'] = intval($item->getQtyOrdered()); // converting qty from decimal to integer
                 $productItems[] = (object) $productItem;
-
-                $objItem = array();
-                $objItem['sku'] = $item->getSku();
-                $objItem['name'] = $item->getName();
-                $objItem['category'] = implode('|', $categories);
-                $objItem['price'] = $this->_currency->formatTxt($item->getBasePrice(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
-                $objItem['quantity'] = intval($item->getQtyOrdered()); // converting qty from decimal to integer
-                $aItems[] = (object) $objItem;
             }
 
             $objOrder = new stdClass();
@@ -282,15 +265,9 @@ class SqueezelyPixelManager extends Template
             $objOrder->userid = $order->getCustomerId();
             $objOrder->products = $productItems;
 
-            $pageCategory = json_encode(array('pageCategory' => 'order-success'), JSON_PRETTY_PRINT);
-
             $dataScript = PHP_EOL;
 
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'dataLayer = [' . $pageCategory . ']'.PHP_EOL.'</script>';
-
-            $dataScript .= PHP_EOL.PHP_EOL;
-
-            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objOrder, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
+            $dataScript .= '<script type="text/javascript">'.PHP_EOL.'window._sqzl = _sqzl || []; _sqzl.push('. json_encode($objOrder, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
             return $dataScript;
         }
@@ -315,7 +292,7 @@ class SqueezelyPixelManager extends Template
 
         $dataScript = PHP_EOL;
 
-        $dataScript .= '<script type="text/javascript">'.PHP_EOL.'_sqzl.push('. json_encode($objViewCategory, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
+        $dataScript .= '<script type="text/javascript">'.PHP_EOL.'window._sqzl = _sqzl || []; _sqzl.push('. json_encode($objViewCategory, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
         return $dataScript;
     }

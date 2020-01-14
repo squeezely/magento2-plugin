@@ -66,8 +66,7 @@ class EditConfigAdmin implements ObserverInterface
     {
         $name = "Squeezely Integration";
 
-        $endPoint = "https://hattardev.sqzly.nl/callback/magento2"; // TODO: Change url to production url
-//        $endPoint = "https://squeezely.tech/callback/magento2";
+        $endPoint = "https://squeezely.tech/callback/magento2";
 
         $integrationExists = $this->_objectManager->get('Magento\Integration\Model\IntegrationFactory')->create()->load($name, 'name')->getData();
 
