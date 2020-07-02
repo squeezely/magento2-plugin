@@ -165,7 +165,7 @@ class ProductSaveAfter implements ObserverInterface
         $formattedProduct->availability = ($product->isAvailable() ? 'in stock' : 'out of stock');
 
         $stockItem = $product->getExtensionAttributes()->getStockItem();
-        $formattedProduct->inventory = $stockItem>getQty();
+        $formattedProduct->inventory = $stockItem ? $stockItem->getQty() : 1;
 
         if(isset($parentByChild[0])) {
             $formattedProduct->parent_id  = $parentByChild[0];
