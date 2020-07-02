@@ -14,7 +14,6 @@ use Psr\Log\LoggerInterface as Logger;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
 use Magento\Framework\UrlInterface;
 use \stdClass;
-use Magento\InventorySalesApi\Api\GetProductSalableQtyInterface;
 use Magento\InventorySalesApi\Api\StockResolverInterface;
 
 class ProductSaveAfter implements ObserverInterface
@@ -25,14 +24,12 @@ class ProductSaveAfter implements ObserverInterface
     protected $_frontUrlModel;
 
     private $_squeezelyHelperApi;
-    private $getProductSalableQty;
     private $stockResolver;
     private $stockItem;
 
     public function __construct(
         SqueezelyApiHelper $squeezelyHelperApi,
         StoreManagerInterface $storeManager,
-        GetProductSalableQtyInterface $getProductSalableQty,
         Configurable $catalogProductTypeConfigurable,
         UrlInterface $frontUrlModel,
         StockItem $stockItem,
@@ -41,7 +38,6 @@ class ProductSaveAfter implements ObserverInterface
     ) {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
         $this->_storeManager = $storeManager;
-        $this->getProductSalableQty = $getProductSalableQty;
         $this->_catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
         $this->_frontUrlModel = $frontUrlModel;
         $this->stockItem = $stockItem;
@@ -168,9 +164,8 @@ class ProductSaveAfter implements ObserverInterface
 
         $formattedProduct->availability = ($product->isAvailable() ? 'in stock' : 'out of stock');
 
-        $websiteCode = $this->_storeManager->getWebsite()->getCode();
-        $stockId = $this->stockResolver->execute(SalesChannelInterface::TYPE_WEBSITE, $websiteCode)->getStockId();
-        $formattedProduct->inventory = $this->getProductSalableQty->execute($product->getSku(), $stockId);
+        $stockItem = $product->getExtensionAttributes()->getStockItem();
+        $formattedProduct->inventory = $stockItem>getQty();
 
         if(isset($parentByChild[0])) {
             $formattedProduct->parent_id  = $parentByChild[0];
