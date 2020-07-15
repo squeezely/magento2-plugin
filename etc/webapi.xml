@@ -6,4 +6,10 @@
             <resource ref="Magento_Backend::admin"/>
         </resources>
     </route>
+    <route method="POST" url="/V1/productInfo">
+        <service class="Squeezely\Plugin\Api\GetManagementInterface" method="getProductsInfo"/>
+        <resources>
+            <resource ref="Magento_Backend::admin"/>
+        </resources>
+    </route>
 </routes>

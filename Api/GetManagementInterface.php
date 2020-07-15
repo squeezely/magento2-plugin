@@ -12,4 +12,12 @@ interface GetManagementInterface {
      * @return string
      */
     public function getParentIdOfProduct($productId);
+
+    /**
+     * GET for api
+     *
+     * @param string $productIds
+     * @return string
+     */
+    public function getProductsInfo($productIds);
 }
