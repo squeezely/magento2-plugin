@@ -9,12 +9,10 @@ use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
 use Squeezely\Plugin\Helper\SqueezelyApiHelper;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\CatalogInventory\Model\Stock\StockItemRepository as StockItem;
 use Psr\Log\LoggerInterface as Logger;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
 use Magento\Framework\UrlInterface;
 use \stdClass;
-use Magento\InventorySalesApi\Api\StockResolverInterface;
 
 class ProductSaveAfter implements ObserverInterface
 {
@@ -24,25 +22,19 @@ class ProductSaveAfter implements ObserverInterface
     protected $_frontUrlModel;
 
     private $_squeezelyHelperApi;
-    private $stockResolver;
-    private $stockItem;
 
     public function __construct(
         SqueezelyApiHelper $squeezelyHelperApi,
         StoreManagerInterface $storeManager,
         Configurable $catalogProductTypeConfigurable,
         UrlInterface $frontUrlModel,
-        StockItem $stockItem,
-        Logger $logger,
-        StockResolverInterface $stockResolver
+        Logger $logger
     ) {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
         $this->_storeManager = $storeManager;
         $this->_catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
         $this->_frontUrlModel = $frontUrlModel;
-        $this->stockItem = $stockItem;
         $this->_logger = $logger;
-        $this->stockResolver = $stockResolver;
     }
 
 
