@@ -3,6 +3,7 @@ namespace Squeezely\Plugin\Block;
 
 use Braintree\Exception;
 use Magento\Framework\View\Element\Template;
+use Psr\Log\LoggerInterface;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Backend\Block\Template\Context;
@@ -79,6 +80,10 @@ class SqueezelyPixelManager extends Template
      * @var SqueezelyApiHelper
      */
     private $_helperApi;
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     public function __construct(
         Context $context,
@@ -90,7 +95,8 @@ class SqueezelyPixelManager extends Template
         Session $checkoutSession,
         CategoryRepository $categoryRepository,
         Currency $currency,
-        array $data = []
+        array $data = [],
+        LoggerInterface $logger
     )
     {
         $this->_sqzlyHelper = $sqzlyHelper;
@@ -101,6 +107,7 @@ class SqueezelyPixelManager extends Template
         $this->_checkoutSession = $checkoutSession;
         $this->_categoryRepository = $categoryRepository;
         $this->_currency = $currency;
+        $this->logger = $logger;
         parent::__construct($context, $data);
     }
 
@@ -138,10 +145,14 @@ class SqueezelyPixelManager extends Template
     /**
      * Check if current page is order success page
      *
+     * @TODO Find a better way then getPathInfo()
      * @return boolean	true or false
      */
     public function getIsOrderSuccessPage() {
-        if (strpos($this->_request->getPathInfo(), '/checkout/onepage/success') !== false) {
+        if (
+            strpos($this->_request->getPathInfo(), '/checkout/onepage/success') !== false
+            || strpos($this->_request->getPathInfo(), '/checkout/success') !== false
+        ) {
             return true;
         }
         return false;
@@ -188,8 +199,7 @@ class SqueezelyPixelManager extends Template
      */
     public function getOrder() {
         if ($this->getIsOrderSuccessPage()) {
-            $orderId = $this->_checkoutSession->getLastOrderId();
-            $order = $this->_order->load($orderId);
+            $order = $this->_checkoutSession->getLastRealOrder();
             if (!$order) {
                 return false;
             }
@@ -263,6 +273,7 @@ class SqueezelyPixelManager extends Template
             $objOrder->firstname = $order->getCustomerFirstname();
             $objOrder->lastname = $order->getCustomerLastname();
             $objOrder->userid = $order->getCustomerId();
+            $objOrder->service = 'enabled';
             $objOrder->products = $productItems;
 
             $dataScript = PHP_EOL;
