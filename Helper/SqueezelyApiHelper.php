@@ -2,13 +2,14 @@
 
 namespace Squeezely\Plugin\Helper;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Helper\Context;
+use Magento\Store\Model\ScopeInterface;
 
-class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
-{
+class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper {
 
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
     protected $scopeConfig;
 
@@ -21,25 +22,24 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
     private $squeezelyAccountId;
 
     const PRODUCT_END_POINT = "https://squeezely.tech/api/products";
-    const PURCHASE_END_POINT = "https://squeezely.tech/api/track";
+    const TRACKER_END_POINT = "https://squeezely.tech/api/track";
     const VERIFY_API_LOGIN_END_POINT = "https://squeezely.tech/api/v1/verifyAuth?channel=2";
 
-    public function __construct(\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig)
-    {
+    public function __construct(ScopeConfigInterface $scopeConfig) {
         $this->scopeConfig = $scopeConfig;
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        $storeScope = ScopeInterface::SCOPE_STORE;
         $this->squeezelyAccountId = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_ID, $storeScope));
-        $this->squeezelyApiKey  = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_API_KEY, $storeScope));
-        $this->squeezelyWebhookKey = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_WEBHOOK_KEY, $storeScope));
+        $this->squeezelyApiKey = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_API_KEY, $storeScope));
+        $this->squeezelyWebhookKey = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_WEBHOOK_KEY,
+            $storeScope));
     }
 
 
-    private function postData($fields, $url)
-    {
+    private function postData($fields, $url) {
         $json = json_encode($fields);
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST , true);
+        curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -54,19 +54,16 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper
         return $result;
     }
 
-    public function sendProducts($products)
-    {
+    public function sendProducts($products) {
         return $this->postData($products, self::PRODUCT_END_POINT);
     }
 
-    public function sendPurchases($purchases)
-    {
-        return $this->postData($purchases, self::PURCHASE_END_POINT);
+    public function sendPurchases($purchases) {
+        return $this->postData($purchases, self::TRACKER_END_POINT);
     }
 
-    public function sendMagentoTokenToSqueezelyAndVerifyAuth($magentoToken)
-    {
-        $data = (array) json_decode($this->postData($magentoToken, self::VERIFY_API_LOGIN_END_POINT));
+    public function sendMagentoTokenToSqueezelyAndVerifyAuth($magentoToken) {
+        $data = (array)json_decode($this->postData($magentoToken, self::VERIFY_API_LOGIN_END_POINT));
 
         if(isset($data['verified']) && $data['verified'] == true) {
             return true;

@@ -2,7 +2,10 @@
 namespace Squeezely\Plugin\Block;
 
 use Braintree\Exception;
+use Magento\Framework\Locale\Resolver;
 use Magento\Framework\View\Element\Template;
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\ScopeInterface;
 use Psr\Log\LoggerInterface;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
@@ -81,9 +84,18 @@ class SqueezelyPixelManager extends Template
      */
     private $_helperApi;
     /**
-     * @var LoggerInterface
+     * @var StoreInterface
      */
-    private $logger;
+    private $_store;
+
+    /** @var int */
+    private $_storeId;
+    /**
+     * @var Resolver
+     */
+    private $store;
+    /** @var string */
+    private $_storeLocale;
 
     public function __construct(
         Context $context,
@@ -96,7 +108,7 @@ class SqueezelyPixelManager extends Template
         CategoryRepository $categoryRepository,
         Currency $currency,
         array $data = [],
-        LoggerInterface $logger
+        Resolver $localStore
     )
     {
         $this->_sqzlyHelper = $sqzlyHelper;
@@ -107,8 +119,12 @@ class SqueezelyPixelManager extends Template
         $this->_checkoutSession = $checkoutSession;
         $this->_categoryRepository = $categoryRepository;
         $this->_currency = $currency;
-        $this->logger = $logger;
         parent::__construct($context, $data);
+
+        $this->_store = $this->_storeManager->getStore();
+        $this->_storeId = $this->_store->getId();
+        $this->_storeLocale = $localStore->getLocale() ?: $localStore->getDefaultLocale();
+        $this->_storeLocale = str_replace('_', '-', $this->_storeLocale);
     }
 
     // HELPER FUNCTIONS
@@ -214,7 +230,6 @@ class SqueezelyPixelManager extends Template
      */
     public function getDataLayerProduct() { // Get current product (view)
         if ($product = $this->getCurrentProduct()) {
-
             $categoryCollection = $product->getCategoryCollection();
 
             $categories = array();
@@ -226,6 +241,7 @@ class SqueezelyPixelManager extends Template
             $objProduct->name = $product->getName();
             $objProduct->id = $product->getSku();
             $objProduct->price =  $product->getFinalPrice();
+            $objProduct->language = $this->_storeLocale;
 
 
             $objEcommerce = new stdClass();
@@ -291,7 +307,7 @@ class SqueezelyPixelManager extends Template
         try{
             $categoryId = (int) $this->getRequest()->getParam('id', false);
             $this->currentCategory = $categoryId;
-            $category = $this->_categoryRepository->get($categoryId, $this->_storeManager->getStore()->getId());
+            $category = $this->_categoryRepository->get($categoryId, $this->_storeId);
         } catch (\Exception $e) {
             return null;
         }
