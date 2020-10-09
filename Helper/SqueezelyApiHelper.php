@@ -21,9 +21,9 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper {
     private $squeezelyWebhookKey;
     private $squeezelyAccountId;
 
-    const PRODUCT_END_POINT = "https://squeezely.tech/api/products";
-    const TRACKER_END_POINT = "https://squeezely.tech/api/track";
-    const VERIFY_API_LOGIN_END_POINT = "https://squeezely.tech/api/v1/verifyAuth?channel=2";
+    const PRODUCT_END_POINT = "https://api.squeezely.tech/v1/products";
+    const TRACKER_END_POINT = "https://api.squeezely.tech/v1/track";
+    const VERIFY_API_LOGIN_END_POINT = "https://api.squeezely.tech/v1/verifyAuth?channel=2";
 
     public function __construct(ScopeConfigInterface $scopeConfig) {
         $this->scopeConfig = $scopeConfig;
@@ -42,6 +42,8 @@ class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "X-AUTH-ACCOUNT: $this->squeezelyAccountId",
             "X-AUTH-APIKEY: $this->squeezelyApiKey",
