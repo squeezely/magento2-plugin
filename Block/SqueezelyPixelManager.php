@@ -2,7 +2,11 @@
 namespace Squeezely\Plugin\Block;
 
 use Braintree\Exception;
+use Magento\Framework\Locale\Resolver;
 use Magento\Framework\View\Element\Template;
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\ScopeInterface;
+use Psr\Log\LoggerInterface;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Backend\Block\Template\Context;
@@ -79,6 +83,19 @@ class SqueezelyPixelManager extends Template
      * @var SqueezelyApiHelper
      */
     private $_helperApi;
+    /**
+     * @var StoreInterface
+     */
+    private $_store;
+
+    /** @var int */
+    private $_storeId;
+    /**
+     * @var Resolver
+     */
+    private $store;
+    /** @var string */
+    private $_storeLocale;
 
     public function __construct(
         Context $context,
@@ -90,7 +107,8 @@ class SqueezelyPixelManager extends Template
         Session $checkoutSession,
         CategoryRepository $categoryRepository,
         Currency $currency,
-        array $data = []
+        array $data = [],
+        Resolver $localStore
     )
     {
         $this->_sqzlyHelper = $sqzlyHelper;
@@ -102,6 +120,11 @@ class SqueezelyPixelManager extends Template
         $this->_categoryRepository = $categoryRepository;
         $this->_currency = $currency;
         parent::__construct($context, $data);
+
+        $this->_store = $this->_storeManager->getStore();
+        $this->_storeId = $this->_store->getId();
+        $this->_storeLocale = $localStore->getLocale() ?: $localStore->getDefaultLocale();
+        $this->_storeLocale = str_replace('_', '-', $this->_storeLocale);
     }
 
     // HELPER FUNCTIONS
@@ -138,10 +161,14 @@ class SqueezelyPixelManager extends Template
     /**
      * Check if current page is order success page
      *
+     * @TODO Find a better way then getPathInfo()
      * @return boolean	true or false
      */
     public function getIsOrderSuccessPage() {
-        if (strpos($this->_request->getPathInfo(), '/checkout/onepage/success') !== false) {
+        if (
+            strpos($this->_request->getPathInfo(), '/checkout/onepage/success') !== false
+            || strpos($this->_request->getPathInfo(), '/checkout/success') !== false
+        ) {
             return true;
         }
         return false;
@@ -188,8 +215,7 @@ class SqueezelyPixelManager extends Template
      */
     public function getOrder() {
         if ($this->getIsOrderSuccessPage()) {
-            $orderId = $this->_checkoutSession->getLastOrderId();
-            $order = $this->_order->load($orderId);
+            $order = $this->_checkoutSession->getLastRealOrder();
             if (!$order) {
                 return false;
             }
@@ -204,7 +230,6 @@ class SqueezelyPixelManager extends Template
      */
     public function getDataLayerProduct() { // Get current product (view)
         if ($product = $this->getCurrentProduct()) {
-
             $categoryCollection = $product->getCategoryCollection();
 
             $categories = array();
@@ -216,6 +241,7 @@ class SqueezelyPixelManager extends Template
             $objProduct->name = $product->getName();
             $objProduct->id = $product->getSku();
             $objProduct->price =  $product->getFinalPrice();
+            $objProduct->language = $this->_storeLocale;
 
 
             $objEcommerce = new stdClass();
@@ -263,6 +289,7 @@ class SqueezelyPixelManager extends Template
             $objOrder->firstname = $order->getCustomerFirstname();
             $objOrder->lastname = $order->getCustomerLastname();
             $objOrder->userid = $order->getCustomerId();
+            $objOrder->service = 'enabled';
             $objOrder->products = $productItems;
 
             $dataScript = PHP_EOL;
@@ -280,7 +307,7 @@ class SqueezelyPixelManager extends Template
         try{
             $categoryId = (int) $this->getRequest()->getParam('id', false);
             $this->currentCategory = $categoryId;
-            $category = $this->_categoryRepository->get($categoryId, $this->_storeManager->getStore()->getId());
+            $category = $this->_categoryRepository->get($categoryId, $this->_storeId);
         } catch (\Exception $e) {
             return null;
         }

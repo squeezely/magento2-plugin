@@ -1,48 +1,84 @@
 <?php
 namespace Squeezely\Plugin\Model;
 
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use \Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Store\Model\ScopeInterface;
+use Psr\Log\LoggerInterface;
+use \Magento\Store\Model\StoreManagerInterface;
 
 class GetProductChildIdManagement
 {
 
     protected $_catalogProductTypeConfigurable;
     protected $_productRepository;
+    /**
+     * @var LoggerInterface
+     */
+    private $_logger;
+    /**
+     * @var StoreManager
+     */
+    private $_storeManager;
+    /**
+     * @var ScopeConfigInterface
+     */
+    private $_scopeConfig;
 
     public function __construct(
         Configurable $catalogProductTypeConfigurable,
-        ProductRepositoryInterface $productRepository
+        ProductRepositoryInterface $productRepository,
+        LoggerInterface $logger,
+        StoreManagerInterface $storeManager,
+        ScopeConfigInterface $scopeConfig
     ) {
         $this->_catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
         $this->_productRepository = $productRepository;
+        $this->_logger = $logger;
+        $this->_storeManager = $storeManager;
+        $this->_scopeConfig = $scopeConfig;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getParentIdOfProduct($productId)
     {
-        $productChildId =  $this->_catalogProductTypeConfigurable->getParentIdsByChild($productId);
-        return $productChildId;
+        return  $this->_catalogProductTypeConfigurable->getParentIdsByChild($productId);
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $productIds
+     * @param int $storeId
      */
-    public function getProductsInfo($productIds)
+    public function getProductsInfo($productIds, $storeId)
     {
         $ids = json_decode($productIds, true);
         $products = [];
+        $stores = $this->_storeManager->getStores();
+
+        $defaultStore = array_shift($stores);
+        $defaultStoreId = $defaultStore->getId();
+
+        $storeLocale = $this->_scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE, $defaultStoreId);
+        $storeLocale = str_replace('_', '-', $storeLocale);
+
         foreach($ids as $id) {
-            $product = false;
+            $product = null;
             try {
-                $product = $this->_productRepository->get($id);
+                $storeLocale = $this->_scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE, $storeId);
+            }
+            catch(\Exception $exception) {
+                ;
+            }
+
+            try {
+                /** @var ProductInterface $product */
+                $product = $this->_productRepository->get($id, false, $storeId);
             } catch (\Exception $e) {
                 //nothing
             }
-            if($product){
+            if($product) {
                 $productImageUrls = [];
                 $galleryImages = $product->getMediaGalleryImages();
                 $productImage = false;
@@ -57,7 +93,7 @@ class GetProductChildIdManagement
                 }
 
                 $stockItem = $product->getExtensionAttributes()->getStockItem();
-                $productChildId =  $this->_catalogProductTypeConfigurable->getParentIdsByChild($id);
+                $productParentIds = $this->_catalogProductTypeConfigurable->getParentIdsByChild($product->getId());
 
                 //get price
                 $regularPrice = $product->getPriceInfo()->getPrice('regular_price')->getValue();
@@ -81,9 +117,18 @@ class GetProductChildIdManagement
                     }
                 }
 
-
                 $productData = [];
-                $productData['parent_id'] = $productChildId;
+                $productData['url'] = $product->getProductUrl();
+
+                if(!$product->getVisibleInSiteIds() && $productParentIds) {
+                    // We only support one parent product per child
+                    $parentProduct = $this->_productRepository->getById($productParentIds[0], false, $storeId);
+                    if($parentProduct) {
+                        $productData['url'] = $parentProduct->getProductUrl();
+                    }
+                }
+
+                $productData['parent_id'] = $productParentIds;
                 $productData['images'] = $productImageUrls;
                 $productData['image'] = $productImage;
                 $productData['price'] = $regularPrice ?: $product->getPrice();
@@ -91,6 +136,8 @@ class GetProductChildIdManagement
                 $productData['availability'] = ($product->isAvailable() ? 'in stock' : 'out of stock');
                 $productData['inventory'] = $stockItem ? $stockItem->getQty() : 1;
                 $productData['sku'] = $id;
+                $productData['locale'] = $storeLocale;
+
                 $products[$id] = $productData;
             }
         }

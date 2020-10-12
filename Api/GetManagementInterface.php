@@ -17,7 +17,8 @@ interface GetManagementInterface {
      * GET for api
      *
      * @param string $productIds
-     * @return string
+     * @param int $storeId
+     * @return mixed[]
      */
-    public function getProductsInfo($productIds);
+    public function getProductsInfo($productIds, $storeId);
 }
