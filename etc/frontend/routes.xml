@@ -5,5 +5,8 @@
         <route id="squeezelypixel" frontName="squeezelypixel">
             <module name="Squeezely_Plugin" />
         </route>
+        <route id="sqzl" frontName="sqzl">
+            <module name="Squeezely_Plugin" />
+        </route>
     </router>
 </config>
