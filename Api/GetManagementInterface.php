@@ -21,4 +21,11 @@ interface GetManagementInterface {
      * @return mixed[]
      */
     public function getProductsInfo($productIds, $storeId);
+
+    /**
+     * GET module info
+     *
+     * @return mixed[]
+     */
+    public function getModuleInfo();
 }

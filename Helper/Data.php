@@ -6,6 +6,7 @@ use Magento\Store\Model\ScopeInterface;
 
 class Data extends AbstractHelper {
 
+    const SQUEEZELY_PLUGIN_NAME = 'Squeezely_Plugin';
     const XML_PATH_SQUEEZELY_ENABLED = 'squeezely_plugin/general/enabled';
     const XML_PATH_SQUEEZELY_ID = 'squeezely_plugin/general/SQZLY_id';
     const XML_PATH_SQUEEZELY_API_KEY = 'squeezely_plugin/general/squeezely_api_key';
