@@ -1,5 +1,8 @@
 <?php
-$sqzlyId = $block->getSQZLYId();
+/** @var \Squeezely\Plugin\Block\SqueezelyPixelManager $block */
+if($block->getIsEnabled()):
+
+    $sqzlyId = $block->getSQZLYId();
 ?>
     <!-- Squeezely Pixel  -->
 
@@ -35,7 +38,9 @@ $sqzlyId = $block->getSQZLYId();
     <!-- End Squeezely Pixel -->
 
 <?php
-echo $block->getCurrentCategory();
-echo $block->getDataLayerProduct();
-echo $block->getDataLayerOrder();
+    echo $block->getCurrentCategory();
+    echo $block->getDataLayerProduct();
+    echo $block->getDataLayerOrder();
+
+endif
 ?>

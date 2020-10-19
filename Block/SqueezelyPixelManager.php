@@ -134,17 +134,8 @@ class SqueezelyPixelManager extends Template
      *
      * @return boolean 0 or 1
      */
-    public function getIsEnable() {
-        return $this->_sqzlyHelper->getIsEnable();
-    }
-
-    /**
-     * Check if data layered is enabled or not
-     *
-     * @return boolean 0 or 1
-     */
-    public function getIsEnableDataLayer() {
-        return $this->_sqzlyHelper->getIsEnableDataLayer();
+    public function getIsEnabled() {
+        return $this->_sqzlyHelper->getIsEnabled();
     }
 
     /**

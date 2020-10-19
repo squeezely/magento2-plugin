@@ -1,8 +1,19 @@
 <?php
 namespace Squeezely\Plugin\Controller\Cart;
 
-class Add extends \Magento\Framework\App\Action\Action
-{
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
+use Magento\Checkout\Model\Cart;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Response\RedirectInterface;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\View\Result\PageFactory;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Psr\Log\LoggerInterface;
+use Magento\Checkout\Model\Session;
+
+class Add extends \Magento\Framework\App\Action\Action {
 
     /**
      * @param \Magento\Framework\App\Action\Context $context
@@ -15,16 +26,17 @@ class Add extends \Magento\Framework\App\Action\Action
     protected $cart;
     protected $product;
     protected $_productRepository;
+
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Framework\Controller\ResultFactory $resultFactory,
-        \Magento\Framework\Data\Form\FormKey $formKey,
-        \Magento\Checkout\Model\Cart $cart,
-        \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
-        \Magento\Catalog\Model\Product $product,
-        \Magento\Framework\App\Response\RedirectInterface $redirectInterface
-) {
+        Context $context,
+        PageFactory $resultPageFactory,
+        ResultFactory $resultFactory,
+        FormKey $formKey,
+        Cart $cart,
+        ProductRepositoryInterface $productRepository,
+        Product $product,
+        RedirectInterface $redirectInterface
+    ) {
         $this->formKey = $formKey;
         $this->cart = $cart;
         $this->product = $product;
@@ -52,17 +64,18 @@ class Add extends \Magento\Framework\App\Action\Action
 
                 if($product) {
 
-                    $params = array(
+                    $params = [
                         'form_key' => $this->formKey->getFormKey(),
                         'product' => $product->getId(),
-                        'qty'   => $quantity ?: 1,
-                    );
+                        'qty' => $quantity ?: 1,
+                    ];
 
                     $product = $this->product->load($product->getId());
                     $this->cart->addProduct($product, $params);
                     $this->cart->save();
                 }
-            } catch (\Exception $e) {
+            }
+            catch (\Exception $e) {
                 //nothing
             }
         }
