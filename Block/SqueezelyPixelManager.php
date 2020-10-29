@@ -221,9 +221,9 @@ class SqueezelyPixelManager extends Template
         if ($product = $this->getCurrentProduct()) {
             $categoryCollection = $product->getCategoryCollection();
 
-            $categories = array();
+            $categories = [];
             foreach ($categoryCollection as $category) {
-                $categories[] = $this->_categoryRepository->get($category->getEntityId())->getName();
+                $categories[] = $this->_categoryRepository->get($category->getEntityId())->getId();
             }
 
             $objProduct = new stdClass();
@@ -231,7 +231,7 @@ class SqueezelyPixelManager extends Template
             $objProduct->id = $product->getSku();
             $objProduct->price =  $product->getFinalPrice();
             $objProduct->language = $this->_storeLocale;
-
+            $objProduct->category_ids = $categories;
 
             $objEcommerce = new stdClass();
             $objEcommerce->event = 'ViewContent';
