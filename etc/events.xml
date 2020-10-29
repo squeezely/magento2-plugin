@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <event name="sales_order_save_after">
-        <observer name="squeezely_save_order" instance="Squeezely\Plugin\Observer\OrderSaveAfter" />
+    <event name="sales_order_invoice_pay">
+        <observer name="squeezely_sales_order_invoice_pay" instance="Squeezely\Plugin\Observer\SalesOrderInvoicePay" />
     </event>
 </config>

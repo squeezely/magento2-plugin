@@ -1,12 +1,10 @@
 <?php
 namespace Squeezely\Plugin\Block;
 
-use Braintree\Exception;
 use Magento\Framework\Locale\Resolver;
 use Magento\Framework\View\Element\Template;
+use Magento\Sales\Model\Order;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\ScopeInterface;
-use Psr\Log\LoggerInterface;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Backend\Block\Template\Context;
@@ -202,7 +200,7 @@ class SqueezelyPixelManager extends Template
     /**
      * Get order
      *
-     * @return mixed	\Magento\Sales\Model\Order or false
+     * @return Order|false
      */
     public function getOrder() {
         if ($this->getIsOrderSuccessPage()) {
@@ -245,6 +243,8 @@ class SqueezelyPixelManager extends Template
 
             return $dataScript;
         }
+
+        return '';
     }
 
     /**
@@ -274,6 +274,9 @@ class SqueezelyPixelManager extends Template
             $objOrder = new stdClass();
 
             $objOrder->event = 'Purchase';
+            if($order->getState() !== Order::STATE_COMPLETE) {
+                $objOrder->event = 'PrePurchase';
+            }
 
             $objOrder->email = $order->getCustomerEmail();
             $objOrder->orderid = $order->getIncrementId();
@@ -289,6 +292,8 @@ class SqueezelyPixelManager extends Template
 
             return $dataScript;
         }
+
+        return '';
     }
 
     /**
