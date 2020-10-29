@@ -1,6 +1,7 @@
 <?php
 namespace Squeezely\Plugin\Block;
 
+use Magento\Catalog\Model\Product;
 use Magento\Framework\Locale\Resolver;
 use Magento\Framework\View\Element\Template;
 use Magento\Sales\Model\Order;
@@ -88,12 +89,14 @@ class SqueezelyPixelManager extends Template
 
     /** @var int */
     private $_storeId;
-    /**
-     * @var Resolver
-     */
-    private $store;
+
     /** @var string */
     private $_storeLocale;
+
+    /**
+     * @var string|null
+     */
+    private $_storeCurrency;
 
     public function __construct(
         Context $context,
@@ -121,6 +124,7 @@ class SqueezelyPixelManager extends Template
 
         $this->_store = $this->_storeManager->getStore();
         $this->_storeId = $this->_store->getId();
+        $this->_storeCurrency = $this->_store->getCurrentCurrencyCode();
         $this->_storeLocale = $localStore->getLocale() ?: $localStore->getDefaultLocale();
         $this->_storeLocale = str_replace('_', '-', $this->_storeLocale);
     }
@@ -218,6 +222,7 @@ class SqueezelyPixelManager extends Template
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getDataLayerProduct() { // Get current product (view)
+        /** @var Product $product */
         if ($product = $this->getCurrentProduct()) {
             $categoryCollection = $product->getCategoryCollection();
 
@@ -236,6 +241,7 @@ class SqueezelyPixelManager extends Template
             $objEcommerce = new stdClass();
             $objEcommerce->event = 'ViewContent';
             $objEcommerce->products = $objProduct;
+            $objEcommerce->currency = $this->_storeCurrency;
 
             $dataScript = PHP_EOL;
 
@@ -285,6 +291,7 @@ class SqueezelyPixelManager extends Template
             $objOrder->userid = $order->getCustomerId();
             $objOrder->service = 'enabled';
             $objOrder->products = $productItems;
+            $objOrder->currency = $this->_storeCurrency;
 
             $dataScript = PHP_EOL;
 
