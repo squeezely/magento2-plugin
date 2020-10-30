@@ -41,6 +41,6 @@ if($block->getIsEnabled()):
     echo $block->getCurrentCategory();
     echo $block->getDataLayerProduct();
     echo $block->getDataLayerOrder();
-
+    echo $block->fireQueuedEvents();
 endif
 ?>

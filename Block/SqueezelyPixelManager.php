@@ -6,6 +6,7 @@ use Magento\Framework\Locale\Resolver;
 use Magento\Framework\View\Element\Template;
 use Magento\Sales\Model\Order;
 use Magento\Store\Api\Data\StoreInterface;
+use Squeezely\Plugin\Helper\SqueezelyDataLayerHelper;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Backend\Block\Template\Context;
@@ -97,6 +98,10 @@ class SqueezelyPixelManager extends Template
      * @var string|null
      */
     private $_storeCurrency;
+    /**
+     * @var SqueezelyDataLayerHelper
+     */
+    private $_squeezelyDataLayerHelper;
 
     public function __construct(
         Context $context,
@@ -109,9 +114,9 @@ class SqueezelyPixelManager extends Template
         CategoryRepository $categoryRepository,
         Currency $currency,
         array $data = [],
-        Resolver $localStore
-    )
-    {
+        Resolver $localStore,
+        SqueezelyDataLayerHelper $squeezelyDataLayerHelper
+    ) {
         $this->_sqzlyHelper = $sqzlyHelper;
         $this->_helperApi = $_helperApi;
         $this->_request = $request;
@@ -127,6 +132,7 @@ class SqueezelyPixelManager extends Template
         $this->_storeCurrency = $this->_store->getCurrentCurrencyCode();
         $this->_storeLocale = $localStore->getLocale() ?: $localStore->getDefaultLocale();
         $this->_storeLocale = str_replace('_', '-', $this->_storeLocale);
+        $this->_squeezelyDataLayerHelper = $squeezelyDataLayerHelper;
     }
 
     // HELPER FUNCTIONS
@@ -325,5 +331,9 @@ class SqueezelyPixelManager extends Template
         $dataScript .= '<script type="text/javascript">'.PHP_EOL.'window._sqzl = _sqzl || []; _sqzl.push('. json_encode($objViewCategory, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
         return $dataScript;
+    }
+
+    public function fireQueuedEvents() {
+        return $this->_squeezelyDataLayerHelper->fireQueuedEvents();
     }
 }

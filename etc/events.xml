@@ -3,4 +3,7 @@
     <event name="sales_order_invoice_pay">
         <observer name="squeezely_sales_order_invoice_pay" instance="Squeezely\Plugin\Observer\SalesOrderInvoicePay" />
     </event>
+    <event name="controller_action_predispatch_catalogsearch">
+        <observer name="squeezely_controller_action_predispatch" instance="Squeezely\Plugin\Observer\ControllerActionPreDispatchCatalogSearch" />
+    </event>
 </config>

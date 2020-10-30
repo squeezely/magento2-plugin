@@ -3,10 +3,10 @@
 namespace Squeezely\Plugin\Helper;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
 
-class SqueezelyApiHelper extends \Magento\Framework\App\Helper\AbstractHelper {
+class SqueezelyApiHelper extends AbstractHelper {
 
     /**
      * @var ScopeConfigInterface
