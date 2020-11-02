@@ -31,8 +31,6 @@ class NewsletterSubscriberSaveAfter implements ObserverInterface {
      * @param Observer $observer
      */
     public function execute(Observer $observer) {
-        $this->_squeezelyDataLayerHelper->addEventToQueue('EmailOptIn', ['abc' => 1]);
-
         /** @var Subscriber $subscriber */
         $subscriber = $observer->getEvent()->getSubscriber();
         $email = $subscriber ? $subscriber->getSubscriberEmail() : null;

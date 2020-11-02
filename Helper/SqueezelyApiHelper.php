@@ -64,6 +64,10 @@ class SqueezelyApiHelper extends AbstractHelper {
         return $this->postData($purchases, self::TRACKER_END_POINT);
     }
 
+    public function sendCompleteRegistration($eventData) {
+        return $this->postData($eventData, self::TRACKER_END_POINT);
+    }
+
     public function sendMagentoTokenToSqueezelyAndVerifyAuth($magentoToken) {
         $data = (array)json_decode($this->postData($magentoToken, self::VERIFY_API_LOGIN_END_POINT));
 
