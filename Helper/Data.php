@@ -11,6 +11,7 @@ class Data extends AbstractHelper {
     const XML_PATH_SQUEEZELY_ID = 'squeezely_plugin/general/SQZLY_id';
     const XML_PATH_SQUEEZELY_API_KEY = 'squeezely_plugin/general/squeezely_api_key';
     const XML_PATH_SQUEEZELY_WEBHOOK_KEY = 'squeezely_plugin/general/squeezely_webhook_key';
+    const SQUEEZELY_COOKIE_NAME = 'sqzllocal';
 
     /**
      * Check if the module is enabled

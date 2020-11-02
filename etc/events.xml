@@ -16,4 +16,8 @@
         <observer name="squeezely_customer_register_success"
                   instance="Squeezely\Plugin\Observer\CustomerRegisterSuccess"/>
     </event>
+    <event name="layout_load_before">
+        <observer name="squeezely_layout_load_before"
+                  instance="Squeezely\Plugin\Observer\LayoutLoadBefore"/>
+    </event>
 </config>
