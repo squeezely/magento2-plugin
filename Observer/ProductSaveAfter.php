@@ -2,12 +2,9 @@
 
 namespace Squeezely\Plugin\Observer;
 
-use Magento\CatalogInventory\Model\Stock\StockItemRepository;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
 use Squeezely\Plugin\Helper\SqueezelyApiHelper;
-use Magento\Framework\Message\ManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface as Logger;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;

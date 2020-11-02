@@ -1,12 +1,12 @@
 <?php
 namespace Squeezely\Plugin\Block;
 
-use Braintree\Exception;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\Locale\Resolver;
 use Magento\Framework\View\Element\Template;
+use Magento\Sales\Model\Order;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\ScopeInterface;
-use Psr\Log\LoggerInterface;
+use Squeezely\Plugin\Helper\SqueezelyDataLayerHelper;
 use \stdClass;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Backend\Block\Template\Context;
@@ -90,12 +90,18 @@ class SqueezelyPixelManager extends Template
 
     /** @var int */
     private $_storeId;
-    /**
-     * @var Resolver
-     */
-    private $store;
+
     /** @var string */
     private $_storeLocale;
+
+    /**
+     * @var string|null
+     */
+    private $_storeCurrency;
+    /**
+     * @var SqueezelyDataLayerHelper
+     */
+    private $_squeezelyDataLayerHelper;
 
     public function __construct(
         Context $context,
@@ -108,9 +114,9 @@ class SqueezelyPixelManager extends Template
         CategoryRepository $categoryRepository,
         Currency $currency,
         array $data = [],
-        Resolver $localStore
-    )
-    {
+        Resolver $localStore,
+        SqueezelyDataLayerHelper $squeezelyDataLayerHelper
+    ) {
         $this->_sqzlyHelper = $sqzlyHelper;
         $this->_helperApi = $_helperApi;
         $this->_request = $request;
@@ -123,8 +129,10 @@ class SqueezelyPixelManager extends Template
 
         $this->_store = $this->_storeManager->getStore();
         $this->_storeId = $this->_store->getId();
+        $this->_storeCurrency = $this->_store->getCurrentCurrencyCode();
         $this->_storeLocale = $localStore->getLocale() ?: $localStore->getDefaultLocale();
         $this->_storeLocale = str_replace('_', '-', $this->_storeLocale);
+        $this->_squeezelyDataLayerHelper = $squeezelyDataLayerHelper;
     }
 
     // HELPER FUNCTIONS
@@ -202,7 +210,7 @@ class SqueezelyPixelManager extends Template
     /**
      * Get order
      *
-     * @return mixed	\Magento\Sales\Model\Order or false
+     * @return Order|false
      */
     public function getOrder() {
         if ($this->getIsOrderSuccessPage()) {
@@ -220,12 +228,13 @@ class SqueezelyPixelManager extends Template
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getDataLayerProduct() { // Get current product (view)
+        /** @var Product $product */
         if ($product = $this->getCurrentProduct()) {
             $categoryCollection = $product->getCategoryCollection();
 
-            $categories = array();
+            $categories = [];
             foreach ($categoryCollection as $category) {
-                $categories[] = $this->_categoryRepository->get($category->getEntityId())->getName();
+                $categories[] = $this->_categoryRepository->get($category->getEntityId())->getId();
             }
 
             $objProduct = new stdClass();
@@ -233,11 +242,12 @@ class SqueezelyPixelManager extends Template
             $objProduct->id = $product->getSku();
             $objProduct->price =  $product->getFinalPrice();
             $objProduct->language = $this->_storeLocale;
-
+            $objProduct->category_ids = $categories;
 
             $objEcommerce = new stdClass();
             $objEcommerce->event = 'ViewContent';
             $objEcommerce->products = $objProduct;
+            $objEcommerce->currency = $this->_storeCurrency;
 
             $dataScript = PHP_EOL;
 
@@ -245,6 +255,8 @@ class SqueezelyPixelManager extends Template
 
             return $dataScript;
         }
+
+        return '';
     }
 
     /**
@@ -274,6 +286,9 @@ class SqueezelyPixelManager extends Template
             $objOrder = new stdClass();
 
             $objOrder->event = 'Purchase';
+            if($order->getState() !== Order::STATE_COMPLETE) {
+                $objOrder->event = 'PrePurchase';
+            }
 
             $objOrder->email = $order->getCustomerEmail();
             $objOrder->orderid = $order->getIncrementId();
@@ -282,6 +297,7 @@ class SqueezelyPixelManager extends Template
             $objOrder->userid = $order->getCustomerId();
             $objOrder->service = 'enabled';
             $objOrder->products = $productItems;
+            $objOrder->currency = $this->_storeCurrency;
 
             $dataScript = PHP_EOL;
 
@@ -289,6 +305,8 @@ class SqueezelyPixelManager extends Template
 
             return $dataScript;
         }
+
+        return '';
     }
 
     /**
@@ -313,5 +331,9 @@ class SqueezelyPixelManager extends Template
         $dataScript .= '<script type="text/javascript">'.PHP_EOL.'window._sqzl = _sqzl || []; _sqzl.push('. json_encode($objViewCategory, JSON_PRETTY_PRINT) . ')'.PHP_EOL.'</script>';
 
         return $dataScript;
+    }
+
+    public function fireQueuedEvents() {
+        return $this->_squeezelyDataLayerHelper->fireQueuedEvents();
     }
 }

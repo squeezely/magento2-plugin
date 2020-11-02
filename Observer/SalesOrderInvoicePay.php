@@ -1,45 +1,68 @@
 <?php
-
 namespace Squeezely\Plugin\Observer;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Squeezely\Plugin\Helper\SqueezelyApiHelper;
 use Magento\Newsletter\Model\Subscriber;
-use \stdClass;
+use Magento\Sales\Model\Order;
+use Psr\Log\LoggerInterface;
+use Squeezely\Plugin\Helper\SqueezelyApiHelper;
+use Squeezely\Plugin\Helper\Data;
+use stdClass;
+use Throwable;
 
+class SalesOrderInvoicePay implements ObserverInterface {
 
-class OrderSaveAfter implements ObserverInterface
-{
-
+    /**
+     * @var SqueezelyApiHelper
+     */
     private $_squeezelyHelperApi;
 
+    /**
+     * @var Subscriber
+     */
     protected $_subscriber;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $_logger;
 
     public function __construct(
         SqueezelyApiHelper $squeezelyHelperApi,
-        Subscriber $subscriber
+        Subscriber $subscriber,
+        LoggerInterface $logger
     ) {
         $this->_squeezelyHelperApi = $squeezelyHelperApi;
-        $this->_subscriber= $subscriber;
+        $this->_subscriber = $subscriber;
+        $this->_logger = $logger;
     }
 
     /**
      * @param Observer $observer
      */
-    public function execute(Observer $observer)
-    {
-        $order = $observer->getEvent()->getOrder();
-        $this->_squeezelyHelperApi->sendPurchases($this->transformOrderData($order));
+    public function execute(Observer $observer) {
+        /** @var Order $order */
+        try {
+            /** @var Order\Invoice $invoice */
+            $invoice = $observer->getEvent()->getInvoice();
+            $order = $invoice->getOrder();
+
+            if($invoice->getState() === Order\Invoice::STATE_PAID) {
+                $this->_squeezelyHelperApi->sendPurchases($this->transformOrderData($order));
+            }
+        }
+        catch(Throwable $throwable) {
+            $this->_logger->warning(Data::SQUEEZELY_PLUGIN_NAME . ': Couldn\'t fetch order from invoice event.');
+        }
     }
 
     /**
-     * @param $order
+     * @param Order $order
      *
      * @return stdClass
      */
-    private function transformOrderData($order)
-    {
+    private function transformOrderData($order) {
         $formattedProduct = new stdClass();
 
         $formattedProduct->event = "Purchase";
@@ -50,7 +73,7 @@ class OrderSaveAfter implements ObserverInterface
         $formattedProduct->timestamp = $order->getCreatedAt();
 
         if($order->getCustomerIsGuest()) {
-            $formattedProduct->userid =  $order->getCustomerFirstname() . " " . $order->getCustomerLastname();
+            $formattedProduct->userid = $order->getCustomerFirstname() . " " . $order->getCustomerLastname();
         } else {
             $formattedProduct->userid = $order->getCustomerId();
         }
@@ -77,10 +100,9 @@ class OrderSaveAfter implements ObserverInterface
      *
      * @return array
      */
-    private function retrieveProductsFromOrder(Array $products)
-    {
-        $formattedProducts = array();
-        foreach($products as $product){
+    private function retrieveProductsFromOrder(array $products) {
+        $formattedProducts = [];
+        foreach($products as $product) {
             if($product->getData('has_children') !== true) {
                 continue;
             }
@@ -95,5 +117,4 @@ class OrderSaveAfter implements ObserverInterface
         }
         return $formattedProducts;
     }
-
 }
