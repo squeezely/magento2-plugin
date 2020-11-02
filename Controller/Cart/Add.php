@@ -4,16 +4,14 @@ namespace Squeezely\Plugin\Controller\Cart;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Checkout\Model\Cart;
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\View\Result\PageFactory;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Psr\Log\LoggerInterface;
-use Magento\Checkout\Model\Session;
 
-class Add extends \Magento\Framework\App\Action\Action {
+class Add extends Action {
 
     /**
      * @param \Magento\Framework\App\Action\Context $context

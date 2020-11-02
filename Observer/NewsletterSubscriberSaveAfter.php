@@ -1,7 +1,6 @@
 <?php
 namespace Squeezely\Plugin\Observer;
 
-use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Newsletter\Model\Subscriber;
@@ -9,12 +8,7 @@ use Psr\Log\LoggerInterface;
 use Squeezely\Plugin\Helper\Data;
 use Squeezely\Plugin\Helper\SqueezelyDataLayerHelper;
 
-class ControllerActionPreDispatchCatalogSearch implements ObserverInterface {
-    /**
-     * @var Subscriber
-     */
-    protected $_subscriber;
-
+class NewsletterSubscriberSaveAfter implements ObserverInterface {
     /**
      * @var LoggerInterface
      */
@@ -37,12 +31,23 @@ class ControllerActionPreDispatchCatalogSearch implements ObserverInterface {
      * @param Observer $observer
      */
     public function execute(Observer $observer) {
-        /** @var RequestInterface $request */
-        $request = $observer->getControllerAction()->getRequest();
+        $this->_squeezelyDataLayerHelper->addEventToQueue('EmailOptIn', ['abc' => 1]);
 
-        $searchKey = $request->getParam('q');
-        $this->_squeezelyDataLayerHelper->addEventToQueue('Search', [
-            'keyword' => $searchKey
-        ]);
+        /** @var Subscriber $subscriber */
+        $subscriber = $observer->getEvent()->getSubscriber();
+        $email = $subscriber ? $subscriber->getSubscriberEmail() : null;
+
+        if($email && $subscriber) {
+            $eventData = ['email' => hash('sha256', $email)];
+
+            if($subscriber->isSubscribed()) {
+                $eventData['newsletter'] = 'yes';
+            }
+            else {
+                $eventData['newsletter'] = 'no';
+            }
+
+            $this->_squeezelyDataLayerHelper->addEventToQueue('EmailOptIn', $eventData);
+        }
     }
 }

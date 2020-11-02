@@ -4,6 +4,9 @@
         <observer name="squeezely_sales_order_invoice_pay" instance="Squeezely\Plugin\Observer\SalesOrderInvoicePay" />
     </event>
     <event name="controller_action_predispatch_catalogsearch">
-        <observer name="squeezely_controller_action_predispatch" instance="Squeezely\Plugin\Observer\ControllerActionPreDispatchCatalogSearch" />
+        <observer name="squeezely_controller_action_predispatch" instance="Squeezely\Plugin\Observer\ControllerAction\PreDispatchCatalogSearch" />
+    </event>
+    <event name="newsletter_subscriber_save_after">
+        <observer name="squeezely_customer_account_edited" instance="Squeezely\Plugin\Observer\NewsletterSubscriberSaveAfter" />
     </event>
 </config>
