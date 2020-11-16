@@ -278,7 +278,7 @@ class SqueezelyPixelManager extends Template
                 $productItem = array();
                 $productItem['id'] = $item->getSku();
                 $productItem['name'] = $item->getName();
-                $productItem['price'] = $this->_currency->formatTxt($item->getBasePrice(), array('display' => \Magento\Framework\Currency::NO_SYMBOL));
+                $productItem['price'] = $item->getPrice();
                 $productItem['quantity'] = intval($item->getQtyOrdered()); // converting qty from decimal to integer
                 $productItems[] = (object) $productItem;
             }

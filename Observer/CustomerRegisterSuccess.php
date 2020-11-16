@@ -52,17 +52,24 @@ class CustomerRegisterSuccess implements ObserverInterface {
 
         if($customer->getEmail()) {
             // Frontend event, to connect email_hash with cookie
-            $this->_squeezelyDataLayerHelper->addEventToQueue('CompleteRegistration', [
-                'email' => hash('sha256', $customer->getEmail()),
-                'newsletter' => $subscription->isSubscribed() ? 'yes' : 'no'
-            ]);
+            $data = [
+                'email' => hash('sha256', $customer->getEmail())
+            ];
+            if($subscription->isSubscribed()) {
+                $data['newsletter'] = 'yes';
+            }
+            $this->_squeezelyDataLayerHelper->addEventToQueue('CompleteRegistration', $data);
 
             // Backend event, to add the raw email
-            $this->_squeezelyApiHelper->sendCompleteRegistration([
+            $data = [
                 'event' => 'CompleteRegistration',
-                'email' => $customer->getEmail(),
-                'newsletter' => $subscription->isSubscribed() ? 'yes' : 'no'
-            ]);
+                'email' => $customer->getEmail()
+            ];
+            if($subscription->isSubscribed()) {
+                $data['newsletter'] = 'yes';
+            }
+
+            $this->_squeezelyApiHelper->sendCompleteRegistration($data);
 
         }
     }

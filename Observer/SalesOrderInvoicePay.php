@@ -85,7 +85,10 @@ class SalesOrderInvoicePay implements ObserverInterface {
         $formattedProduct->currency = $order->getOrderCurrencyCode();
 
         $checkSubscriber = $this->_subscriber->loadByEmail($order->getCustomerEmail());
-        $formattedProduct->newsletter = $checkSubscriber->isSubscribed() ? 'yes' : 'no';
+        if($checkSubscriber->isSubscribed()) {
+            $formattedProduct->newsletter = 'yes';
+        }
+
 
         $formattedProduct->products = $this->retrieveProductsFromOrder($order->getAllVisibleItems());
 
@@ -105,7 +108,7 @@ class SalesOrderInvoicePay implements ObserverInterface {
             $productItem = [];
             $productItem['id'] = $item->getSku();
             $productItem['name'] = $item->getName();
-            $productItem['price'] = $item->getFinalPrice();
+            $productItem['price'] = $item->getPrice();
             $productItem['quantity'] = intval($item->getQtyOrdered()); // converting qty from decimal to integer
             $productItems[] = (object) $productItem;
         }
