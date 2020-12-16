@@ -55,7 +55,7 @@ class CustomerRegisterSuccess implements ObserverInterface {
             $data = [
                 'email' => hash('sha256', $customer->getEmail())
             ];
-            if($subscription->isSubscribed()) {
+            if($subscription->getStatus() === Subscriber::STATUS_SUBSCRIBED) {
                 $data['newsletter'] = 'yes';
             }
             $this->_squeezelyDataLayerHelper->addEventToQueue('CompleteRegistration', $data);
@@ -65,7 +65,7 @@ class CustomerRegisterSuccess implements ObserverInterface {
                 'event' => 'CompleteRegistration',
                 'email' => $customer->getEmail()
             ];
-            if($subscription->isSubscribed()) {
+            if($subscription->getStatus() === Subscriber::STATUS_SUBSCRIBED) {
                 $data['newsletter'] = 'yes';
             }
 
