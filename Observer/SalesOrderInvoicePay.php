@@ -72,9 +72,7 @@ class SalesOrderInvoicePay implements ObserverInterface {
         $formattedProduct->orderid = $order->getRealOrderId();
         $formattedProduct->timestamp = $order->getCreatedAt();
 
-        if($order->getCustomerIsGuest()) {
-            $formattedProduct->userid = $order->getCustomerFirstname() . " " . $order->getCustomerLastname();
-        } else {
+        if(!$order->getCustomerIsGuest()) {
             $formattedProduct->userid = $order->getCustomerId();
         }
 
@@ -101,8 +99,8 @@ class SalesOrderInvoicePay implements ObserverInterface {
                 break;
         }
 
-        $formattedProduct->products = new stdClass();
-        $formattedProduct->products = $this->retrieveProductsFromOrder($order->getAllItems());
+
+        $formattedProduct->products = $this->retrieveProductsFromOrder($order->getAllVisibleItems());
 
         return $formattedProduct;
     }
@@ -113,20 +111,18 @@ class SalesOrderInvoicePay implements ObserverInterface {
      * @return array
      */
     private function retrieveProductsFromOrder(array $products) {
-        $formattedProducts = [];
-        foreach($products as $product) {
-            if($product->getData('has_children') !== true) {
-                continue;
-            }
 
-            $productFormat = new stdClass();
-            $productFormat->id = $product->getSku();
-            $productFormat->name = $product->getName();
-            $productFormat->price = $product->getPrice();
-            $productFormat->quantity = $product->getQtyOrdered();
+        $productItems = array();
+        foreach ($products as $item) {
 
-            array_push($formattedProducts, $productFormat);
+            $productItem = [];
+            $productItem['id'] = $item->getSku();
+            $productItem['name'] = $item->getName();
+            $productItem['price'] = $item->getPrice();
+            $productItem['quantity'] = intval($item->getQtyOrdered()); // converting qty from decimal to integer
+            $productItems[] = (object) $productItem;
         }
-        return $formattedProducts;
+        return $productItems;
+
     }
 }
