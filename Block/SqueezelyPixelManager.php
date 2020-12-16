@@ -286,9 +286,6 @@ class SqueezelyPixelManager extends Template
             $objOrder = new stdClass();
 
             $objOrder->event = 'Purchase';
-            if($order->getState() !== Order::STATE_COMPLETE) {
-                $objOrder->event = 'PrePurchase';
-            }
 
             $objOrder->email = $order->getCustomerEmail();
             $objOrder->orderid = $order->getIncrementId();

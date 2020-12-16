@@ -83,10 +83,20 @@ class SalesOrderInvoicePay implements ObserverInterface {
         $formattedProduct->city = $order->getShippingAddress()->getCity();
         $formattedProduct->country = $order->getShippingAddress()->getCountryId();
         $formattedProduct->currency = $order->getOrderCurrencyCode();
+        $formattedProduct->service = 'yes';
 
         $checkSubscriber = $this->_subscriber->loadByEmail($order->getCustomerEmail());
-        if($checkSubscriber->isSubscribed()) {
-            $formattedProduct->newsletter = 'yes';
+
+        switch($checkSubscriber->getStatus()) {
+            case Subscriber::STATUS_SUBSCRIBED:
+                $formattedProduct->newsletter = 'yes';
+                break;
+            case Subscriber::STATUS_UNSUBSCRIBED:
+                $formattedProduct->newsletter = 'no';
+                break;
+            default:
+                $formattedProduct->newsletter = '';
+                break;
         }
 
 
