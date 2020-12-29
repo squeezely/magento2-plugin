@@ -38,11 +38,15 @@ class NewsletterSubscriberSaveAfter implements ObserverInterface {
         if($email && $subscriber) {
             $eventData = ['email' => hash('sha256', $email)];
 
-            if($subscriber->isSubscribed()) {
-                $eventData['newsletter'] = 'yes';
-            }
-            else {
-                $eventData['newsletter'] = 'no';
+            switch($subscriber->getStatus()) {
+                case Subscriber::STATUS_SUBSCRIBED:
+                    $eventData['newsletter'] = 'yes';
+                    break;
+                case Subscriber::STATUS_UNSUBSCRIBED:
+                    $eventData['newsletter'] = 'no';
+                    break;
+                default: // Don't do anything with the other status
+                    return false;
             }
 
             $this->_squeezelyDataLayerHelper->addEventToQueue('EmailOptIn', $eventData);
