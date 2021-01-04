@@ -98,25 +98,27 @@ class ProductSaveAfter implements ObserverInterface
         $productsData = array();
 
         foreach ($customOptions as $option) {
-            foreach ($option['values'] as $childData) {
-                $formattedProduct = new stdClass();
-                $formattedProduct->id = $childData['sku'];
-                $formattedProduct->title = $product->getName() . " - " . $childData['title'];
-                $formattedProduct->link = $this->getProductUrl($product);
-                $formattedProduct->description = $product->getDescription();
-                $formattedProduct->language = $this->_storeManager->getStore()->getLocaleCode(); //returns null
-                $formattedProduct->price = $childData['price'];
-                $formattedProduct->currency = $this->_storeManager->getStore()->getCurrentCurrencyCode();
+            if(isset($option['values']) && is_iterable($option['values'])) {
+                foreach ($option['values'] as $childData) {
+                    $formattedProduct = new stdClass();
+                    $formattedProduct->id = $childData['sku'];
+                    $formattedProduct->title = $product->getName() . " - " . $childData['title'];
+                    $formattedProduct->link = $this->getProductUrl($product);
+                    $formattedProduct->description = $product->getDescription();
+                    $formattedProduct->language = $this->_storeManager->getStore()->getLocaleCode(); //returns null
+                    $formattedProduct->price = $childData['price'];
+                    $formattedProduct->currency = $this->_storeManager->getStore()->getCurrentCurrencyCode();
 
-                if(!empty($productImageUrls)) {
-                    $formattedProduct->image_links = $productImageUrls;
+                    if(!empty($productImageUrls)) {
+                        $formattedProduct->image_links = $productImageUrls;
+                    }
+
+                    $formattedProduct->availability = ($product->isAvailable() ? 'in stock' : 'out of stock') ;
+                    $formattedProduct->inventory = 1;
+                    $formattedProduct->parent_id = $product->getId();
+                    $formattedProduct->category_ids = $categoriesIds;
+                    array_push($productsData ,$formattedProduct);
                 }
-
-                $formattedProduct->availability = ($product->isAvailable() ? 'in stock' : 'out of stock') ;
-                $formattedProduct->inventory = 1;
-                $formattedProduct->parent_id = $product->getId();
-                $formattedProduct->category_ids = $categoriesIds;
-                array_push($productsData ,$formattedProduct);
             }
         }
         return $productsData;
