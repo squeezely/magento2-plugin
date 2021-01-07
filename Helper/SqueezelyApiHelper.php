@@ -2,9 +2,13 @@
 
 namespace Squeezely\Plugin\Helper;
 
+use Magento\Framework\App\Area;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\State;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 class SqueezelyApiHelper extends AbstractHelper {
 
@@ -24,14 +28,43 @@ class SqueezelyApiHelper extends AbstractHelper {
     const PRODUCT_END_POINT = "https://api.squeezely.tech/v1/products";
     const TRACKER_END_POINT = "https://api.squeezely.tech/v1/track";
     const VERIFY_API_LOGIN_END_POINT = "https://api.squeezely.tech/v1/verifyAuth?channel=2";
+    /**
+     * @var StoreManagerInterface
+     */
+    private $_storeManager;
+    /**
+     * @var State
+     */
+    private $_state;
+    /**
+     * @var bool
+     */
+    private $storeMode;
+    /**
+     * @var bool
+     */
+    private $websiteMode;
 
-    public function __construct(ScopeConfigInterface $scopeConfig) {
+    public function __construct(
+        ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager,
+        State $state,
+        Context $context
+    ) {
+        parent::__construct($context);
+
         $this->scopeConfig = $scopeConfig;
-        $storeScope = ScopeInterface::SCOPE_STORE;
-        $this->squeezelyAccountId = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_ID, $storeScope));
-        $this->squeezelyApiKey = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_API_KEY, $storeScope));
-        $this->squeezelyWebhookKey = trim($this->scopeConfig->getValue(self::XML_PATH_SQUEEZELY_WEBHOOK_KEY,
-            $storeScope));
+
+        $this->websiteMode = $this->_request->getParam('website', 0) !== 0;
+        $this->storeMode = $this->_request->getParam('store', 0) !== 0;
+
+        $this->_storeManager = $storeManager;
+        $this->_state = $state;
+
+        $this->squeezelyAccountId = trim($this->getConfigValue(self::XML_PATH_SQUEEZELY_ID));
+        $this->squeezelyApiKey = trim($this->getConfigValue(self::XML_PATH_SQUEEZELY_API_KEY));
+        $this->squeezelyWebhookKey = trim($this->getConfigValue(self::XML_PATH_SQUEEZELY_WEBHOOK_KEY));
+
     }
 
 
@@ -78,4 +111,50 @@ class SqueezelyApiHelper extends AbstractHelper {
         return false;
     }
 
+    /**
+     * @return \Magento\Store\Api\Data\StoreInterface
+     */
+    private function getCurrentStore() {
+        if($this->_state->getAreaCode() == Area::AREA_ADMINHTML) {
+            $storeId = (int)$this->_request->getParam('store', 0);
+        } else {
+            $storeId = true; // get current store from the store resolver
+        }
+
+        return $this->_storeManager->getStore($storeId);
+    }
+
+    /**
+     * @return \Magento\Store\Api\Data\WebsiteInterface
+     */
+    private function getCurrentWebsite() {
+        if($this->_state->getAreaCode() == Area::AREA_ADMINHTML) {
+            $websiteId = (int)$this->_request->getParam('website', 0);
+        } else {
+            $websiteId = true; // get current store from the store resolver
+        }
+
+        return $this->_storeManager->getWebsite($websiteId);
+    }
+
+    /**
+     * Retrieve config value by path, keeping in mind the current mode your are (website, store, or default)
+     *
+     * @param string $path The path through the tree of configuration values, e.g., 'general/store_information/name'
+     * @return mixed
+     */
+    protected function getConfigValue($path) {
+        $scopeCode = null;
+        $configScope = ScopeInterface::SCOPE_STORES;
+
+        if($this->storeMode) {
+            $scopeCode = $this->getCurrentStore()->getId();
+        }
+        elseif($this->websiteMode) {
+            $scopeCode = $this->getCurrentWebsite()->getId();
+            $configScope = ScopeInterface::SCOPE_WEBSITES;
+        }
+
+        return trim($this->scopeConfig->getValue($path, $configScope, $scopeCode));
+    }
 }

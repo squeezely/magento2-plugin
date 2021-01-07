@@ -113,12 +113,12 @@ class EditConfigAdmin implements ObserverInterface
                 $this->_messageManager->addSuccessMessage("Squeezely credentials are successfully verified");
             }
             else {
-                $this->_messageManager->addErrorMessage("Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech.");
+                $this->_messageManager->addErrorMessage("[1] Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech.");
             }
         }
         catch (Exception $e) {
             $this->_logger->error("LOGGER ERROR INFO: " . $e->getMessage());
-            $this->_messageManager->addErrorMessage("Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech.");
+            $this->_messageManager->addErrorMessage("[2] Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech. Exception message: " . $e->getMessage());
         }
     }
 
