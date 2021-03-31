@@ -1,0 +1,54 @@
+<?php
+/* @var Magento\Framework\View\Element\Template $block */
+/* @var Squeezely\Plugin\ViewModel\PixelManager $viewModel */
+$viewModel = $block->getViewModel();
+?>
+<?php if ($viewModel->isEnabled()): ?>
+    <!-- Squeezely Pixel  -->
+    <script type="text/javascript">
+        (function(s,q,z,l,y){s._sqzl=s._sqzl||[];l=q.createElement('script'),
+            y=q.getElementsByTagName('script')[0];l.async=1;l.type='text/javascript';
+            l.defer=true;l.src=z;y.parentNode.insertBefore(l,y)})
+        (window,document, '<?= /* @noEscape */ $viewModel->getJsLink();?>');
+
+        window._sqzl = _sqzl || [];
+        window._sqzl.push({"event": "PageView"});
+
+        require.config({
+            deps: [
+                'jquery',
+                'mage/translate',
+                'jquery/jquery-storageapi'
+            ],
+            callback: function ($) {
+                'use strict';
+
+                $(document).on("ajax:addToCart", function (event, data) {
+                    var products = [{"id": data.sku}];
+                    _sqzl.push({"event": "AddToCart", "products": products});
+                });
+                $(document).on("ajax:removeFromCart", function (event, data) {
+                    var products = [{"id": data.productSku}];
+                    _sqzl.push({"event": "RemoveFromCart", "products": products});
+                });
+            }
+        });
+    </script>
+    <script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Ui/js/core/app": {
+                "components": {
+                    "queuedevents": {
+                        "component": "Squeezely_Plugin/js/queuedevents",
+                        "queuedevents": {
+                            "url": "<?= /* @noEscape */ $viewModel->getAjaxUrl(); ?>"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    </script>
+    <!-- End Squeezely Pixel -->
+<?php endif;?>

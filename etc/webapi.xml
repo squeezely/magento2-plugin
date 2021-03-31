@@ -1,19 +1,25 @@
 <?xml version="1.0" ?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
     <route method="GET" url="/V1/productParent">
-        <service class="Squeezely\Plugin\Api\GetManagementInterface" method="getParentIdOfProduct"/>
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getParentIdOfProduct"/>
         <resources>
             <resource ref="Magento_Backend::admin"/>
         </resources>
     </route>
     <route method="POST" url="/V1/productInfo">
-        <service class="Squeezely\Plugin\Api\GetManagementInterface" method="getProductsInfo"/>
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getProductsInfo"/>
         <resources>
             <resource ref="Magento_Backend::admin"/>
         </resources>
     </route>
     <route method="GET" url="/V1/squeezely/moduleInfo">
-        <service class="Squeezely\Plugin\Api\GetManagementInterface" method="getModuleInfo"/>
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getModuleInfo"/>
         <resources>
             <resource ref="Magento_Backend::admin"/>
         </resources>

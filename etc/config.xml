@@ -1,10 +1,32 @@
 <?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
-        <squeezely_plugin>
+        <squeezely>
             <general>
                 <enabled>1</enabled>
+                <version>v2.0.0</version>
             </general>
-        </squeezely_plugin>
+            <store_sync>
+                <attribute_sku>sku</attribute_sku>
+                <attribute_name>name</attribute_name>
+                <attribute_description>description</attribute_description>
+                <attribute_brand>manufacturer</attribute_brand>
+                <attribute_size>size</attribute_size>
+                <attribute_color>color</attribute_color>
+                <attribute_condition>condition</attribute_condition>
+            </store_sync>
+            <advanced>
+                <debug>0</debug>
+                <endpoint_data_url>https://squeezely.tech/callback/magento2</endpoint_data_url>
+                <endpoint_tracker_url>https://squeezely.tech/tracker/%s/sqzl.js</endpoint_tracker_url>
+                <api_request_uri>https://api.squeezely.tech/</api_request_uri>
+            </advanced>
+        </squeezely>
     </default>
 </config>

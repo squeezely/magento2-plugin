@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<!--
+  ~ Copyright © Magmodules.eu. All rights reserved.
+  ~ See COPYING.txt for license details.
+  -->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+
+    <!-- Declaration Schema of Squeezely Items Queue Table -->
+    <table name="squeezely_items_queue" engine="innodb" resource="default" comment="Squeezely Items Queue Table">
+        <column name="entity_id"
+                xsi:type="int"
+                padding="10"
+                identity="true"
+                nullable="false"
+                unsigned="true"
+                comment="Entity ID"/>
+        <column name="product_id"
+                xsi:type="int"
+                padding="10"
+                nullable="false"
+                unsigned="true"
+                comment="Product ID"/>
+        <column name="parent_id"
+                xsi:type="int"
+                padding="10"
+                nullable="true"
+                unsigned="true"
+                comment="Parent ID"/>
+        <column name="store_id"
+                xsi:type="smallint"
+                padding="5"
+                nullable="false"
+                unsigned="true"
+                comment="Product ID"/>
+        <column name="created_at"
+                xsi:type="timestamp"
+                on_update="false"
+                default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
+        <constraint referenceId="PRIMARY" xsi:type="primary">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint
+                xsi:type="foreign"
+                referenceId="SQUEEZELY_ITEMS_QUEUE_PRODUCT_ID" table="squeezely_items_queue"
+                column="product_id"
+                referenceTable="catalog_product_entity"
+                referenceColumn="entity_id"
+                onDelete="CASCADE"
+        />
+        <constraint
+                xsi:type="foreign"
+                referenceId="SQUEEZELY_ITEMS_QUEUE_STORE_ID" table="squeezely_items_queue"
+                column="store_id"
+                referenceTable="store"
+                referenceColumn="store_id"
+                onDelete="CASCADE"
+        />
+        <index referenceId="SQUEEZELY_ITEMS_QUEUE_ENTITY_ID" indexType="btree">
+            <column name="entity_id"/>
+        </index>
+    </table>
+</schema>

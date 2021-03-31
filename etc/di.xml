@@ -1,12 +1,76 @@
 <?xml version="1.0"?>
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
 
-    <preference for="Squeezely\Plugin\Api\GetManagementInterface" type="Squeezely\Plugin\Model\GetProductChildIdManagement"/>
+    <preference for="Squeezely\Plugin\Api\Webapi\ManagementInterface"
+                type="Squeezely\Plugin\Model\Webapi\Repository"/>
+    <preference for="Squeezely\Plugin\Api\Config\RepositoryInterface"
+                type="Squeezely\Plugin\Model\Config\Repository"/>
+    <preference for="Squeezely\Plugin\Api\Config\System\BackendEventsInterface"
+                type="Squeezely\Plugin\Model\Config\System\BackendEventsRepository"/>
+    <preference for="Squeezely\Plugin\Api\Config\System\FrontendEventsInterface"
+                type="Squeezely\Plugin\Model\Config\System\FrontendEventsRepository"/>
+    <preference for="Squeezely\Plugin\Api\Config\System\StoreSyncInterface"
+                type="Squeezely\Plugin\Model\Config\System\StoreSyncRepository"/>
+    <preference for="Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface"
+                type="Squeezely\Plugin\Model\Config\System\AdvancedOptionsRepository"/>
+    <preference for="Squeezely\Plugin\Api\Request\ServiceInterface"
+                type="Squeezely\Plugin\Service\Api\Request"/>
+    <preference for="Squeezely\Plugin\Api\Request\RepositoryInterface"
+                type="Squeezely\Plugin\Model\Request\Repository"/>
+    <preference for="Squeezely\Plugin\Api\Service\DataLayerInterface"
+                type="Squeezely\Plugin\Service\Api\DataLayer"/>
+    <preference for="Squeezely\Plugin\Api\Log\RepositoryInterface"
+                type="Squeezely\Plugin\Model\Log\Repository"/>
+    <preference for="Squeezely\Plugin\Api\ItemsQueue\RepositoryInterface"
+                type="Squeezely\Plugin\Model\ItemsQueue\Repository"/>
+    <preference for="Squeezely\Plugin\Api\ItemsQueue\DataInterface"
+                type="Squeezely\Plugin\Model\ItemsQueue\Data"/>
+    <preference for="Squeezely\Plugin\Api\ItemsQueue\SearchResultsInterface"
+                type="Magento\Framework\Api\SearchResults"/>
 
-    <type name="Squeezely\Plugin\Observer\ProductSaveAfter">
+    <type name="Magento\Quote\Model\Quote">
+        <plugin name="squeezelyRemoveItemAfter"
+                type="Squeezely\Plugin\Plugin\Quote" sortOrder="1" disabled="false" />
+    </type>
+    <type name="Magento\Customer\Model\AccountManagement">
+        <plugin name="squeezelyCreateCustomer"
+                type="Squeezely\Plugin\Plugin\CustomerAccountManagement" sortOrder="1" disabled="false" />
+    </type>
+    <type name="Magento\Sales\Model\Order\Invoice">
+        <plugin name="squeezelyInvoicePay"
+                type="Squeezely\Plugin\Plugin\Invoice" sortOrder="1" disabled="false" />
+    </type>
+
+    <type name="Squeezely\Plugin\Logger\ErrorLogger">
         <arguments>
-            <argument name="frontUrlModel" xsi:type="object" shared="false">Magento\Framework\Url</argument>
+            <argument name="name" xsi:type="string">SqueezelyError</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">Squeezely\Plugin\Logger\Handler\Error</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Squeezely\Plugin\Logger\DebugLogger">
+        <arguments>
+            <argument name="name" xsi:type="string">SqueezelyDebug</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">Squeezely\Plugin\Logger\Handler\Debug</item>
+            </argument>
         </arguments>
     </type>
 
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="SqueezelySyncInvalidatedProduct"
+                      xsi:type="object">Squeezely\Plugin\Console\Command\Product\SyncInvalidated</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
