@@ -1,0 +1,47 @@
+<?php
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ *
+ * @var Squeezely\Plugin\Block\Adminhtml\System\Squeezely\Products $block
+ */
+$element = $block->getElement();
+?>
+<tr id="row_<?= /* @noEscape */ $element->getHtmlId() ?>">
+    <td class="label"><?= /* @noEscape */ $element->getLabel() ?></td>
+    <td class="value">
+        <table class="mm-block-squeezely-table">
+            <thead>
+            <tr>
+                <th><?= $block->escapeHtml(__('Storeview')); ?></th>
+                <th><?= $block->escapeHtml(__('Totals')); ?></th>
+                <th><?= $block->escapeHtml(__('Actions')); ?></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($block->getContentStoreData() as $contentStore): ?>
+                <tr>
+                    <td>
+                        <p><?= $block->escapeHtml($contentStore['name']); ?></p>
+                    </td>
+                    <td>
+                        <p><?= $block->escapeHtml(__('Products: %1', $contentStore['totals']['all'])); ?></p>
+                        <p><?= $block->escapeHtml(__(
+                            'Waiting for update: %1',
+                            $contentStore['totals']['invalidated']
+                        )); ?></p>
+                    </td>
+                    <td>
+                        <p>
+                            <a href="<?= $block->escapeUrl($contentStore['invalidate_url']); ?>">
+                                <?= $block->escapeHtml(__('Update all products')); ?>
+                            </a>
+                        </p>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </td>
+    <td></td>
+</tr>

@@ -7,34 +7,34 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Console\Command\Product;
 
-use Squeezely\Plugin\Model\Command\Product\SyncInvalidated as SyncInvalidatedProducts;
+use Squeezely\Plugin\Model\Command\Product\InvalidateAll as InvalidateAllProducts;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Sync invalidated products via command line
+ * Invalidate all products via command line
  */
-class SyncInvalidated extends Command
+class InvalidateAll extends Command
 {
 
     /**
      * Command call name
      */
-    const COMMAND_NAME = 'squeezely:product:sync-invalidated';
+    const COMMAND_NAME = 'squeezely:product:invalidate-all';
     /**
-     * @var SyncInvalidatedProducts
+     * @var InvalidateAllProducts
      */
-    private $syncInvalidatedProducts;
+    private $invalidateAllProducts;
 
     /**
-     * SyncInvalidated constructor.
-     * @param SyncInvalidatedProducts $syncInvalidatedProducts
+     * InvalidateAll constructor.
+     * @param InvalidateAllProducts $invalidateAllProducts
      */
     public function __construct(
-        SyncInvalidatedProducts $syncInvalidatedProducts
+        InvalidateAllProducts $invalidateAllProducts
     ) {
-        $this->syncInvalidatedProducts = $syncInvalidatedProducts;
+        $this->invalidateAllProducts = $invalidateAllProducts;
         parent::__construct();
     }
 
@@ -44,7 +44,7 @@ class SyncInvalidated extends Command
     public function configure()
     {
         $this->setName(self::COMMAND_NAME);
-        $this->setDescription('Squeezely: Sync product');
+        $this->setDescription('Squeezely: Invalidate all products');
         parent::configure();
     }
 
@@ -53,7 +53,7 @@ class SyncInvalidated extends Command
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $results = $this->syncInvalidatedProducts->execute();
+        $results = $this->invalidateAllProducts->execute();
         foreach ($results as $result) {
             $output->writeln($result['msg']);
         }

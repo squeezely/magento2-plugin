@@ -28,6 +28,7 @@ class Frequency implements OptionSourceInterface
     {
         if (!$this->options) {
             $this->options = [
+                ['value' => '* * * * *', 'label' => __('Every minute')],
                 ['value' => '0 * * * *', 'label' => __('Hourly')],
                 ['value' => '0 4 * * *', 'label' => __('Daily')],
                 ['value' => '0 4 * * MON', 'label' => __('Weekly')],

@@ -10,7 +10,7 @@
         <tab id="squeezely_tab" translate="label" sortOrder="500" class="squeezely-extensions">
             <label>Squeezely</label>
         </tab>
-        <section id="squeezely_plugin" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+        <section id="squeezely" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Configuration</label>
             <tab>squeezely_tab</tab>
             <resource>Squeezely_Plugin::config</resource>

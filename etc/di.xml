@@ -65,11 +65,26 @@
         </arguments>
     </type>
 
+    <type name="Squeezely\Plugin\Console\Command\Product\InvalidateAll">
+        <arguments>
+            <argument name="invalidateAllProducts"
+                      xsi:type="object">Squeezely\Plugin\Model\Command\Product\InvalidateAll\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Squeezely\Plugin\Console\Command\Product\SyncInvalidated">
+        <arguments>
+            <argument name="syncInvalidatedProducts"
+                      xsi:type="object">Squeezely\Plugin\Model\Command\Product\SyncInvalidated\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\Framework\Console\CommandList">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="SqueezelySyncInvalidatedProduct"
                       xsi:type="object">Squeezely\Plugin\Console\Command\Product\SyncInvalidated</item>
+                <item name="SqueezelyInvalidateAllProducts"
+                      xsi:type="object">Squeezely\Plugin\Console\Command\Product\InvalidateAll</item>
             </argument>
         </arguments>
     </type>

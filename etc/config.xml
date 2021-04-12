@@ -13,7 +13,6 @@
                 <version>v2.0.0</version>
             </general>
             <store_sync>
-                <attribute_sku>sku</attribute_sku>
                 <attribute_name>name</attribute_name>
                 <attribute_description>description</attribute_description>
                 <attribute_brand>manufacturer</attribute_brand>

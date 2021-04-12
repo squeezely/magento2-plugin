@@ -41,6 +41,11 @@ interface RepositoryInterface
     const PURCHASE_EVENT_NAME = 'Purchase';
 
     /**
+     * Number of products per one request
+     */
+    const PRODUCTS_PER_REQUEST = 250;
+
+    /**
      * Send product data to API
      *
      * @param array $products

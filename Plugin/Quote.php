@@ -15,6 +15,7 @@ use Magento\Quote\Model\Quote\Item;
 use Magento\Framework\App\RequestInterface;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Magento\Framework\Locale\Resolver as LocaleResolver;
 
 /**
  * Class Quote
@@ -46,6 +47,10 @@ class Quote
      * @var JsonSerializer
      */
     private $jsonSerializer;
+    /**
+     * @var LocaleResolver
+     */
+    private $localeResolver;
 
     /**
      * Quote constructor.
@@ -55,19 +60,22 @@ class Quote
      * @param RequestInterface $request
      * @param LogRepository $logRepository
      * @param JsonSerializer $jsonSerializer
+     * @param LocaleResolver $localeResolver
      */
     public function __construct(
         DataLayerInterface $dataLayer,
         FrontendEventsRepository $frontendEventsRepository,
         RequestInterface $request,
         LogRepository $logRepository,
-        JsonSerializer $jsonSerializer
+        JsonSerializer $jsonSerializer,
+        LocaleResolver $localeResolver
     ) {
         $this->dataLayer = $dataLayer;
         $this->frontendEventsRepository = $frontendEventsRepository;
         $this->request = $request;
         $this->logRepository = $logRepository;
         $this->jsonSerializer = $jsonSerializer;
+        $this->localeResolver = $localeResolver;
     }
 
     /**
@@ -113,10 +121,13 @@ class Quote
         Item $result,
         Product $product
     ) {
-        /** @phpstan-ignore-next-line */
-        if ($this->frontendEventsRepository->isEnabled() && !$this->request->isAjax()) {
+        if ($this->frontendEventsRepository->isEnabled()) {
             $this->logRepository->addDebugLog(self::ADD_TO_CART_EVENT_NAME, __('Start'));
-            $eventData = ['products' => ['id' => $product->getSku()]];
+            $eventData = ['products' => [
+                'id' => $product->getSku(),
+                'language' => $this->getStoreLocale(),
+                'quantity' => $product->getQty()
+            ]];
             $this->dataLayer->addEventToQueue(self::ADD_TO_CART_EVENT_NAME, $eventData);
             $this->logRepository->addDebugLog(
                 self::ADD_TO_CART_EVENT_NAME,
@@ -125,5 +136,15 @@ class Quote
             $this->logRepository->addDebugLog(self::ADD_TO_CART_EVENT_NAME, __('Finish'));
         }
         return $result;
+    }
+
+    /**
+     * @return string
+     */
+    private function getStoreLocale(): string
+    {
+        $locale = $this->localeResolver->getLocale()
+            ?: $this->localeResolver->getDefaultLocale();
+        return str_replace('_', '-', $locale);
     }
 }

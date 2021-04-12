@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Squeezely\Plugin\Observer;
+namespace Squeezely\Plugin\Observer\Product;
 
 use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableResource;
@@ -69,7 +69,7 @@ class InvalidateProduct implements ObserverInterface
             foreach ($storeIds as $storeId) {
                 $select = $connection->select()
                     ->from($this->itemsQueueResource->getTable('squeezely_items_queue'))
-                    ->where('product_id=?', $productId)
+                    ->where('product_sku=?', $productId)
                     ->where('store_id=?', $storeId);
 
                 $result = $connection->fetchRow($select);

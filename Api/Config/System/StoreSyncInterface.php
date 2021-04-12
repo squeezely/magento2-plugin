@@ -18,7 +18,6 @@ interface StoreSyncInterface extends RepositoryInterface
      * Config paths for 'store_sync'-group
      */
     const XML_PATH_STORESYNC_ENABLED = 'squeezely/store_sync/enabled';
-    const XML_PATH_STORESYNC_ATTRIBUTE_SKU = 'squeezely/store_sync/attribute_sku';
     const XML_PATH_STORESYNC_ATTRIBUTE_NAME = 'squeezely/store_sync/attribute_name';
     const XML_PATH_STORESYNC_ATTRIBUTE_DESCRIPTION = 'squeezely/store_sync/attribute_description';
     const XML_PATH_STORESYNC_ATTRIBUTE_BRAND = 'squeezely/store_sync/attribute_brand';
@@ -42,15 +41,6 @@ interface StoreSyncInterface extends RepositoryInterface
      * @return array
      */
     public function getAllEnabledStoreIds(): array;
-
-    /**
-     * Get Attribute SKU
-     *
-     * @param int|null $storeId
-     *
-     * @return string
-     */
-    public function getAttributeSku(int $storeId = null): string;
 
     /**
      * Get Attribute Name

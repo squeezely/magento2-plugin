@@ -15,11 +15,10 @@
                 nullable="false"
                 unsigned="true"
                 comment="Entity ID"/>
-        <column name="product_id"
-                xsi:type="int"
-                padding="10"
+        <column name="product_sku"
+                xsi:type="varchar"
+                length="100"
                 nullable="false"
-                unsigned="true"
                 comment="Product ID"/>
         <column name="parent_id"
                 xsi:type="int"
@@ -41,14 +40,6 @@
         <constraint referenceId="PRIMARY" xsi:type="primary">
             <column name="entity_id"/>
         </constraint>
-        <constraint
-                xsi:type="foreign"
-                referenceId="SQUEEZELY_ITEMS_QUEUE_PRODUCT_ID" table="squeezely_items_queue"
-                column="product_id"
-                referenceTable="catalog_product_entity"
-                referenceColumn="entity_id"
-                onDelete="CASCADE"
-        />
         <constraint
                 xsi:type="foreign"
                 referenceId="SQUEEZELY_ITEMS_QUEUE_STORE_ID" table="squeezely_items_queue"

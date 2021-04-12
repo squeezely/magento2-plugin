@@ -11,33 +11,23 @@
            showInStore="1">
         <label>Store Sync</label>
         <comment>
-            <![CDATA[Use the store sync to synchronize products from your Magento store to the product catalog in Squeezely. In the settings below you can match fields with product information in Squeezely (on the left side) to the product information in Magento (on the right side). To sync custom fields to Squeezely, you can use extra fields to apply a mapping to Squeezely. When using custom fields, these need to be created in Squeezely as ‘custom product fields’ first.]]></comment>
+            <![CDATA[Use the store sync to synchronize products from your Magento store to the product catalog in Squeezely. Most product fields will be added by default to your Squeezely Catalog, like URL, Price, Availability, Categories and Parent ID for configurable products. In the settings below you can match additional fields with product information in Squeezely (on the left side) to the product information in Magento (on the right side). To sync custom fields to Squeezely, you can use extra fields to apply a mapping to Squeezely. When using custom fields, these need to be created in Squeezely as ‘custom product fields’ first.]]></comment>
         <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1"
                showInStore="1">
             <label>Enabled</label>
             <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
             <config_path>squeezely/store_sync/enabled</config_path>
         </field>
-        <field id="cron" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="1"
-               showInStore="1">
-            <label>Sync frequency</label>
-            <source_model>Squeezely\Plugin\Model\Config\Source\Frequency</source_model>
-            <config_path>squeezely/store_sync/cron</config_path>
-            <comment>Select the frequency for the new product export.</comment>
-            <depends>
-                <field id="enabled">1</field>
-            </depends>
-        </field>
-        <field id="attribute_sku" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
-               showInStore="1">
-            <label>SKU</label>
-            <source_model>Squeezely\Plugin\Model\Config\Source\Attributes</source_model>
-            <config_path>squeezely/store_sync/attribute_sku</config_path>
-            <comment>Select SKU attribute</comment>
-            <depends>
-                <field id="enabled">1</field>
-            </depends>
-        </field>
+        <!--<field id="cron" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="1"-->
+        <!--showInStore="1">-->
+        <!--<label>Sync frequency</label>-->
+        <!--<source_model>Squeezely\Plugin\Model\Config\Source\Frequency</source_model>-->
+        <!--<config_path>squeezely/store_sync/cron</config_path>-->
+        <!--<comment>Select the frequency for the new product export.</comment>-->
+        <!--<depends>-->
+        <!--<field id="enabled">1</field>-->
+        <!--</depends>-->
+        <!--</field>-->
         <field id="attribute_name" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1"
                showInStore="1">
             <label>Name</label>
@@ -119,6 +109,14 @@
             <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Config\Form\Field\ExtraFields</frontend_model>
             <backend_model>Squeezely\Plugin\Model\Config\Backend\Serialized\ExtraFields</backend_model>
             <config_path>squeezely/store_sync/extra_fields</config_path>
+            <depends>
+                <field id="enabled">1</field>
+            </depends>
+        </field>
+        <field id="products" translate="label" type="select" sortOrder="110" showInDefault="1"
+               showInWebsite="1" showInStore="1">
+            <label>Product Updates</label>
+            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Squeezely\Products</frontend_model>
             <depends>
                 <field id="enabled">1</field>
             </depends>

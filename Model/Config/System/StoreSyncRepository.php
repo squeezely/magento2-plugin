@@ -46,17 +46,6 @@ class StoreSyncRepository extends ConfigRepository implements StoreSyncInterface
     /**
      * @inheritDoc
      */
-    public function getAttributeSku(int $storeId = null): string
-    {
-        return (string)$this->getStoreValue(
-            self::XML_PATH_STORESYNC_ATTRIBUTE_SKU,
-            $storeId
-        );
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getAttributeName(int $storeId = null): string
     {
         return (string)$this->getStoreValue(

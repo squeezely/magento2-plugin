@@ -16,6 +16,7 @@ use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEvents
 use Squeezely\Plugin\Api\Service\DataLayerInterface;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Magento\Framework\Locale\Resolver as LocaleResolver;
 
 /**
  * Class Success
@@ -52,6 +53,10 @@ class Success implements ArgumentInterface
      * @var JsonSerializer
      */
     private $jsonSerializer;
+    /**
+     * @var LocaleResolver
+     */
+    private $localeResolver;
 
     /**
      * Success constructor.
@@ -62,6 +67,7 @@ class Success implements ArgumentInterface
      * @param DataLayerInterface $dataLayer
      * @param LogRepository $logRepository
      * @param JsonSerializer $jsonSerializer
+     * @param LocaleResolver $localeResolver
      */
     public function __construct(
         FrontendEventsRepository $frontendEventsRepository,
@@ -69,7 +75,8 @@ class Success implements ArgumentInterface
         StoreManagerInterface $storeManager,
         DataLayerInterface $dataLayer,
         LogRepository $logRepository,
-        JsonSerializer $jsonSerializer
+        JsonSerializer $jsonSerializer,
+        LocaleResolver $localeResolver
     ) {
         $this->frontendEventsRepository = $frontendEventsRepository;
         $this->checkoutSession = $checkoutSession;
@@ -77,6 +84,7 @@ class Success implements ArgumentInterface
         $this->dataLayer = $dataLayer;
         $this->logRepository = $logRepository;
         $this->jsonSerializer = $jsonSerializer;
+        $this->localeResolver = $localeResolver;
     }
 
     /**
@@ -97,6 +105,7 @@ class Success implements ArgumentInterface
             foreach ($order->getAllVisibleItems() as $item) {
                 $productItem = [];
                 $productItem['id'] = $item->getSku();
+                $productItem['language'] = $this->getStoreLocale();
                 $productItem['name'] = $item->getName();
                 $productItem['price'] = $item->getPrice();
                 $productItem['quantity']
@@ -163,5 +172,15 @@ class Success implements ArgumentInterface
             $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
         }
         return $currencyCode;
+    }
+
+    /**
+     * @return string
+     */
+    private function getStoreLocale(): string
+    {
+        $locale = $this->localeResolver->getLocale()
+            ?: $this->localeResolver->getDefaultLocale();
+        return str_replace('_', '-', $locale);
     }
 }

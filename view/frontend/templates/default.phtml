@@ -22,11 +22,6 @@ $viewModel = $block->getViewModel();
             ],
             callback: function ($) {
                 'use strict';
-
-                $(document).on("ajax:addToCart", function (event, data) {
-                    var products = [{"id": data.sku}];
-                    _sqzl.push({"event": "AddToCart", "products": products});
-                });
                 $(document).on("ajax:removeFromCart", function (event, data) {
                     var products = [{"id": data.productSku}];
                     _sqzl.push({"event": "RemoveFromCart", "products": products});
