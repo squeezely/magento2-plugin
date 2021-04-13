@@ -1,8 +1,15 @@
 <?xml version="1.0"?>
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
-        <referenceContainer name="after.body.start">
-            <block class="Squeezely\Plugin\Block\SqueezelyPixelManager" name="squeezely.squeezelyPixelManager" as="SqueezelyPixelManager" template="Squeezely_Plugin::sqzlyManager.phtml"/>
-        </referenceContainer>
+        <referenceBlock name="head.additional">
+            <block name="squeezely.pixelManager"
+                   as="pixelManager"
+                   class="Magento\Framework\View\Element\Template"
+                   template="Squeezely_Plugin::default.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Squeezely\Plugin\ViewModel\PixelManager</argument>
+                </arguments>
+            </block>
+        </referenceBlock>
     </body>
 </page>

@@ -1,159 +1,107 @@
 <?php
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+declare(strict_types=1);
 
 namespace Squeezely\Plugin\Observer;
 
-use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator;
-use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\Config\Storage\WriterInterface;
-use mysql_xdevapi\Exception;
-use Psr\Log\LoggerInterface as Logger;
-use Squeezely\Plugin\Helper\SqueezelyApiHelper as SqueezelyApiHelper;
-use Squeezely\Plugin\Helper\Data as SqueezelyDataHelper;
-use Magento\Framework\ObjectManagerInterface as ObjectManager;
+use Magento\Framework\Exception\AuthenticationException;
 use Magento\Framework\Message\ManagerInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Framework\Api\SearchCriteriaBuilder;
+use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
+use Squeezely\Plugin\Service\Integration\Service as IntegrationService;
 
+/**
+ * Observer to update integration on configuration save
+ */
 class EditConfigAdmin implements ObserverInterface
 {
 
-    protected $_logger;
-    protected $_storeManager;
-    protected $_messageManager;
-    protected $productRepository;
-    protected $filterBuilder;
+    /**
+     * Integation name constant
+     */
+    const INTEGRATION_NAME = 'Squeezely Integration';
 
-    private $_squeezelyHelperApi;
-    private $_squeezelyDataHelper;
-    private $_objectManager;
-    private $_searchCriteriaBuilder;
-    private $productUrlPathGenerator;
+    /**
+     * Message on successfully integration
+     */
+    const SUCCESS_MSG = 'Squeezely credentials are successfully verified';
 
+    /**
+     * Message on unsuccessfully integration
+     */
+    const ERROR_MSG = 'Could not verify given Squeezely credentials, please try again later or contact '
+    . 'support@squeezely.tech.';
+
+    /**
+     * Message on exception in integration call
+     */
+    const EXCEPTION_MSG = 'Could not verify given Squeezely credentials, please try again later or contact ' .
+    'support@squeezely.tech. Exception message: %1';
+
+    /**
+     * Message on exception in integration call
+     */
+    const EXCEPTION_CREDENTIALS_MSG = 'Credentials are incorect, please try again!';
+
+    /**
+     * @var LogRepository
+     */
+    private $logRepository;
+    /**
+     * @var ManagerInterface
+     */
+    private $messageManager;
+    /**
+     * @var IntegrationService
+     */
+    private $integrationService;
+
+    /**
+     * EditConfigAdmin constructor.
+     *
+     * @param LogRepository $logRepository
+     * @param ManagerInterface $messageManager
+     * @param IntegrationService $integrationService
+     */
     public function __construct(
-        Logger $logger,
-        SqueezelyApiHelper $squeezelyHelperApi,
-        SqueezelyDataHelper $squeezelyDataHelper,
-        ObjectManager $objectManager,
-        StoreManagerInterface $storeManager,
+        LogRepository $logRepository,
         ManagerInterface $messageManager,
-        SearchCriteriaBuilder $searchCriteriaBuilder,
-        ProductRepositoryInterface $productRepository,
-        FilterBuilder $filterBuilder,
-        ProductUrlPathGenerator $productUrlPathGenerator
+        IntegrationService $integrationService
     ) {
-        $this->_logger = $logger;
-        $this->_squeezelyHelperApi = $squeezelyHelperApi;
-        $this->_squeezelyDataHelper = $squeezelyDataHelper;
-        $this->_objectManager = $objectManager;
-        $this->_storeManager = $storeManager;
-        $this->_messageManager = $messageManager;
-        $this->_searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->productRepository = $productRepository;
-        $this->filterBuilder = $filterBuilder;
-        $this->productUrlPathGenerator = $productUrlPathGenerator;
+        $this->logRepository = $logRepository;
+        $this->messageManager = $messageManager;
+        $this->integrationService = $integrationService;
     }
 
+    /**
+     * Update integration on configuration save
+     *
+     * @param EventObserver $observer
+     */
     public function execute(EventObserver $observer)
     {
-        $this->createMagentoIntegration();
-    }
-
-    private function createMagentoIntegration()
-    {
-        $name = "Squeezely Integration";
-
-        $endPoint = "https://squeezely.tech/callback/magento2";
-
-        $integrationExists = $this->_objectManager->get('Magento\Integration\Model\IntegrationFactory')->create()->load($name, 'name')->getData();
-
-        if (!empty($integrationExists)) {
-            $removeIntegration = $this->_objectManager->get('Magento\Integration\Model\IntegrationFactory')->create()->load($name, 'name');
-            $removeIntegration->delete();
-        }
-
-        $integrationData = [
-            'name' => $name,
-            'endpoint' => $endPoint,
-            'status' => '1',
-            'setup_type' => '0',
-        ];
         try {
-            // Create Integration
-            $integrationFactory = $this->_objectManager->get('Magento\Integration\Model\IntegrationFactory')->create();
-            $integration = $integrationFactory->setData($integrationData);
-            $integration->save();
-            $integrationId = $integration->getId();
-            $consumerName = 'Integration ' . $integrationId;
+            $this->integrationService->deleteIntegration();
+            $isVerified = $this->integrationService->createIntegration();
 
-            // Create consumer
-            $oauthService = $this->_objectManager->get('Magento\Integration\Model\OauthService');
-            $consumer = $oauthService->createConsumer(['name' => $consumerName]);
-            $consumerId = $consumer->getId();
-            $integration->setConsumerId($consumer->getId());
-            $integration->save();
-
-            // Grant permission
-            $authrizeService = $this->_objectManager->get('Magento\Integration\Model\AuthorizationService');
-            $authrizeService->grantAllPermissions($integrationId);
-
-            // Activate and Authorize
-            $token = $this->_objectManager->get('Magento\Integration\Model\Oauth\Token');
-            $uri = $token->createVerifierToken($consumerId);
-            $token->setType('access');
-            $token->save();
-
-            $storeInformationAndToken = array_merge($this->getStoreInformation(), $token->toArray());
-            $isVerified = $this->_squeezelyHelperApi->sendMagentoTokenToSqueezelyAndVerifyAuth($storeInformationAndToken);
-
-            if($isVerified) {
-                $this->_messageManager->addSuccessMessage("Squeezely credentials are successfully verified");
+            if ($isVerified) {
+                $msg = (string)self::SUCCESS_MSG;
+                $this->messageManager->addSuccessMessage(__($msg));
+            } else {
+                $msg = (string)self::ERROR_MSG;
+                $this->messageManager->addErrorMessage(__($msg));
             }
-            else {
-                $this->_messageManager->addErrorMessage("[1] Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech.");
-            }
-        }
-        catch (Exception $e) {
-            $this->_logger->error("LOGGER ERROR INFO: " . $e->getMessage());
-            $this->_messageManager->addErrorMessage("[2] Could not verify given Squeezely credentials, please try again later or contact support@squeezely.tech. Exception message: " . $e->getMessage());
+        } catch (AuthenticationException $exception) {
+            $msg = (string)self::EXCEPTION_CREDENTIALS_MSG;
+            $this->messageManager->addErrorMessage(__($msg));
+        } catch (\Exception $e) {
+            $this->logRepository->addErrorLog("Integration Observer", $e->getMessage());
+            $msg = (string)self::EXCEPTION_MSG;
+            $this->messageManager->addErrorMessage(__($msg, $e->getMessage()));
         }
     }
-
-    private function getStoreInformation()
-    {
-        $storeInformation= [
-            'webshopName' => $this->_storeManager->getStore()->getName() . " - Magento 2",
-            'webshopUrl' => $this->_storeManager->getStore()->getBaseUrl(),
-            'webshopSuffix' => $this->getStoreSuffix()
-        ];
-
-        $this->_logger->info("Webstore information: ", $storeInformation);
-        return $storeInformation;
-    }
-
-    private function getStoreSuffix()
-    {
-        // Get a random product so we can get the url suffix and format it
-        $filter = [$this->filterBuilder
-            ->setField('sku')
-            ->setConditionType('neq')
-            ->setValue('NoSKU')
-            ->create()];
-
-        $searchCriteria = $this->_searchCriteriaBuilder->addFilters($filter)->setPageSize(1)->create();
-        $products = $this->productRepository->getList($searchCriteria)->getItems();
-
-        if(isset($products[1])) {
-            $urlWithSuffix = $this->productUrlPathGenerator->getUrlPathWithSuffix($products[1], $this->_storeManager->getStore()->getId());
-            $urlKey = $products[1]->getUrlKey();
-            $formattedString = str_replace($urlKey, "", $urlWithSuffix);
-            return $formattedString;
-        }
-
-        return null;
-    }
-
 }

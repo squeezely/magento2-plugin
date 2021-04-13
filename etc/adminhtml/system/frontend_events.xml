@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
+    <group id="frontend_events" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1"
+           showInStore="1">
+        <label>Frontend Events</label>
+        <comment>
+            <![CDATA[Enable this setting to receive frontend events from your Magento store in Squeezely.]]></comment>
+        <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1"
+               showInStore="1">
+            <label>Enabled</label>
+            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+            <comment>
+                <![CDATA[This setting determines if Squeezely should fetch events from your visitors in your website frontend. This covers the following events: Session-start, Pageview, ViewContent, Addtocart & Purchase. Disable this setting if you want to implement events separately.]]></comment>
+            <config_path>squeezely/frontend_events/enabled</config_path>
+        </field>
+    </group>
+</include>
+

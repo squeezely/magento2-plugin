@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
+    <group id="backend_events" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1"
+           showInStore="1">
+        <label>Backend Events</label>
+        <comment>
+            <![CDATA[Enable this setting to receive backend events from your Magento store in Squeezely.]]></comment>
+        <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1"
+               showInStore="1">
+            <label>Enabled</label>
+            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+            <config_path>squeezely/backend_events/enabled</config_path>
+        </field>
+        <field id="events" translate="label" type="multiselect" sortOrder="60" showInDefault="1" showInWebsite="1"
+               showInStore="1">
+            <label>Events</label>
+            <source_model>Squeezely\Plugin\Model\Config\Source\BackendEvents</source_model>
+            <config_path>squeezely/backend_events/events</config_path>
+            <depends>
+                <field id="enabled">1</field>
+            </depends>
+        </field>
+    </group>
+</include>

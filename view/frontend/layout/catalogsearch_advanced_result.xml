@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="head.additional">
+            <block name="squeezely.search.pixelManager"
+                   as="searchPixelManager"
+                   class="Magento\Framework\View\Element\Template"
+                   template="Squeezely_Plugin::data_script.phtml"
+                   after="pixelManager">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Squeezely\Plugin\ViewModel\Search</argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+    </body>
+</page>

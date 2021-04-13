@@ -1,0 +1,19 @@
+{
+    "squeezely_items_queue": {
+        "column": {
+            "entity_id": true,
+            "product_sku": true,
+            "parent_id": true,
+            "store_id": true,
+            "created_at": true
+        },
+        "index": {
+            "SQUEEZELY_ITEMS_QUEUE_ENTITY_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SQUEEZELY_ITEMS_QUEUE_PRODUCT_ID": true,
+            "SQUEEZELY_ITEMS_QUEUE_STORE_ID": true
+        }
+    }
+}

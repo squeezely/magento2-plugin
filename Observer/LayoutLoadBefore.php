@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+declare(strict_types=1);
+
 namespace Squeezely\Plugin\Observer;
 
 use Magento\Framework\Event\Observer;
@@ -6,56 +12,87 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
 use Magento\Framework\Stdlib\CookieManagerInterface;
-use Psr\Log\LoggerInterface;
-use Squeezely\Plugin\Helper\Data;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepositoryInterface;
+use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 
-class LayoutLoadBefore implements ObserverInterface {
+/**
+ * Class LayoutLoadBefore
+ * Obserser to set public Cookie
+ */
+class LayoutLoadBefore implements ObserverInterface
+{
+
     /**
-     * @var LoggerInterface
+     * @var LogRepository
      */
-    private $_logger;
-
+    private $logRepository;
     /**
      * @var CookieManagerInterface
      */
-    private $_cookieManager;
+    private $cookieManager;
     /**
      * @var CookieMetadataFactory
      */
-    private $_cookieMetadataFactory;
+    private $cookieMetadataFactory;
     /**
      * @var SessionManagerInterface
      */
-    private $_sessionManager;
+    private $sessionManager;
+    /**
+     * @var ConfigRepositoryInterface
+     */
+    private $configRepository;
 
+    /**
+     * LayoutLoadBefore constructor.
+     *
+     * @param LogRepository $logRepository
+     * @param CookieManagerInterface $cookieManager
+     * @param CookieMetadataFactory $cookieMetadataFactory
+     * @param SessionManagerInterface $sessionManager
+     * @param ConfigRepositoryInterface $configRepository
+     */
     public function __construct(
-        LoggerInterface $logger,
+        LogRepository $logRepository,
         CookieManagerInterface $cookieManager,
         CookieMetadataFactory $cookieMetadataFactory,
-        SessionManagerInterface $sessionManager
+        SessionManagerInterface $sessionManager,
+        ConfigRepositoryInterface $configRepository
     ) {
-        $this->_logger = $logger;
-        $this->_cookieManager = $cookieManager;
-        $this->_cookieMetadataFactory = $cookieMetadataFactory;
-        $this->_sessionManager = $sessionManager;
+        $this->logRepository = $logRepository;
+        $this->cookieManager = $cookieManager;
+        $this->cookieMetadataFactory = $cookieMetadataFactory;
+        $this->sessionManager = $sessionManager;
+        $this->configRepository = $configRepository;
     }
 
     /**
+     * Set public Cookie
+     *
      * @param Observer $observer
      */
-    public function execute(Observer $observer) {
-        if(($cookieValue = $this->_cookieManager->getCookie(Data::SQUEEZELY_COOKIE_NAME))) {
-            $metadata = $this->_cookieMetadataFactory
-                ->createPublicCookieMetadata()
-                ->setDurationOneYear()
-                ->setPath($this->_sessionManager->getCookiePath())
-                ->setDomain($this->_sessionManager->getCookieDomain());
+    public function execute(Observer $observer)
+    {
+        if ($this->configRepository->isEnabled()) {
+            if ($cookieValue = $this->cookieManager->getCookie(
+                ConfigRepositoryInterface::SQUEEZELY_COOKIE_NAME
+            )
+            ) {
+                $metadata = $this->cookieMetadataFactory
+                    ->createPublicCookieMetadata()
+                    ->setDurationOneYear()
+                    ->setPath($this->sessionManager->getCookiePath())
+                    ->setDomain($this->sessionManager->getCookieDomain());
 
-            try {
-                $this->_cookieManager->setPublicCookie(Data::SQUEEZELY_COOKIE_NAME, $cookieValue, $metadata);
-            }
-            catch(\Throwable $throwable) {
-                // don't do anything with the exception (for now)
+                try {
+                    $this->cookieManager->setPublicCookie(
+                        ConfigRepositoryInterface::SQUEEZELY_COOKIE_NAME,
+                        $cookieValue,
+                        $metadata
+                    );
+                } catch (\Exception $e) {
+                    $this->logRepository->addErrorLog('Exception', $e->getMessage());
+                }
             }
         }
     }
