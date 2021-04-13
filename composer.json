@@ -8,6 +8,7 @@
         "AFL-3.0"
     ],
     "require": {
+        "php": ">=7.2.*",
         "magento/framework": ">=102.0"
     },
     "require-dev": {
