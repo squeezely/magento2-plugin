@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+        <policies>
+            <policy id="script-src">
+                <values>
+                    <value id="sqzl" type="host">squeezely.tech</value>
+                    <value id="www_sqzl" type="host">www.squeezely.tech</value>
+                    <value id="other_sqzl" type="host">*.squeezely.tech</value>
+                </values>
+            </policy>
+            <policy id="connect-src">
+                <values>
+                    <value id="sqzl_connect" type="host">squeezely.tech</value>
+                    <value id="other_sqzl_connect" type="host">*.squeezely.tech</value>
+                </values>
+            </policy>
+            <policy id="img-src">
+                <values>
+                    <value id="www-magmodules" type="host">www.magmodules.eu</value>
+                    <value id="sqzl_image" type="host">*.squeezely.tech</value>
+                </values>
+            </policy>
+        </policies>
+</csp_whitelist>

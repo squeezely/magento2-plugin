@@ -1,0 +1,14 @@
+name: Codesniffer with the Magento EcgM2 standard
+on: push
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v1
+
+            - name: Run codesniffer
+              run:
+                  docker run
+                  --volume $(pwd)/:/app/data
+                  michielgerritsen/magento-coding-standard:latest

@@ -1,23 +1,17 @@
 <?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <event name="sales_order_invoice_pay">
-        <observer name="squeezely_sales_order_invoice_pay" instance="Squeezely\Plugin\Observer\SalesOrderInvoicePay"/>
-    </event>
-    <event name="controller_action_predispatch_catalogsearch">
-        <observer name="squeezely_controller_action_predispatch"
-                  instance="Squeezely\Plugin\Observer\ControllerAction\PreDispatchCatalogSearch"/>
+    <event name="layout_load_before">
+        <observer name="sqzl_layout_load_before"
+                  instance="Squeezely\Plugin\Observer\LayoutLoadBefore"/>
     </event>
     <event name="newsletter_subscriber_save_after">
-        <observer name="squeezely_newsletter_subscriber_save_after"
-                  instance="Squeezely\Plugin\Observer\NewsletterSubscriberSaveAfter"/>
-    </event>
-    <event name="customer_register_success">
-        <observer name="squeezely_customer_register_success"
-                  instance="Squeezely\Plugin\Observer\CustomerRegisterSuccess"/>
-    </event>
-    <event name="layout_load_before">
-        <observer name="squeezely_layout_load_before"
-                  instance="Squeezely\Plugin\Observer\LayoutLoadBefore"/>
+        <observer name="sqzl_observer_subscriber_save_after" instance="Squeezely\Plugin\Observer\Newsletter\NewsletterSubscriberSaveAfter"/>
     </event>
 </config>

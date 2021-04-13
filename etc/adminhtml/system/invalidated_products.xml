@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
+    <group id="invalidated_products" translate="label" type="text" sortOrder="25" showInDefault="1" showInWebsite="1"
+           showInStore="1">
+        <label>Product Updates</label>
+        <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Config\Form\Table\InvalidatedProducts</frontend_model>
+    </group>
+</include>

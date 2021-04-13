@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
+    <group id="advanced" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+        <label>Advanced Options</label>
+        <comment>Do not change these settings unless instructed to do so by the Squeezely Team.</comment>
+        <field id="debug" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+            <label>Enable Debug Logging</label>
+            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+            <comment>Write all calls to var/squeezely/debug.log. Not recommend in live stores.</comment>
+            <config_path>squeezely/advanced/debug</config_path>
+        </field>
+        <field id="endpoint_data_url" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+            <label>Endpoint Data URL</label>
+            <comment>Don't change unless instructed by the Squeezely team</comment>
+            <config_path>squeezely/advanced/endpoint_data_url</config_path>
+        </field>
+        <field id="endpoint_tracker_url" translate="label" type="text" sortOrder="11" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+            <label>Endpoint Tracker URL</label>
+            <comment>Don't change unless instructed by the Squeezely team</comment>
+            <config_path>squeezely/advanced/endpoint_tracker_url</config_path>
+        </field>
+        <field id="api_request_uri" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+            <label>API Request URI</label>
+            <comment>Don't change unless instructed by the Squeezely team</comment>
+            <config_path>squeezely/advanced/api_request_uri</config_path>
+        </field>
+    </group>
+</include>
