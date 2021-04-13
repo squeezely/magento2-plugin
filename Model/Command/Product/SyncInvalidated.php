@@ -103,7 +103,7 @@ class SyncInvalidated
                     'success' => true,
                     'msg' => sprintf(
                         '<info>Store %s: there is no invalidated products</info>',
-                        $storeId,
+                        $storeId
                     )
                 ];
                 continue;
