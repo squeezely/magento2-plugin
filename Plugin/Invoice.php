@@ -14,6 +14,7 @@ use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRe
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 /**
  * Class Quote
@@ -42,6 +43,10 @@ class Invoice
      * @var JsonSerializer
      */
     private $jsonSerializer;
+    /**
+     * @var TimezoneInterface
+     */
+    protected $localeDate;
 
     /**
      * Invoice constructor.
@@ -51,19 +56,22 @@ class Invoice
      * @param BackendEventsRepository $backendEventsRepository
      * @param LogRepository $logRepository
      * @param JsonSerializer $jsonSerializer
+     * @param TimezoneInterface $localeDate
      */
     public function __construct(
         RequestRepository $requestRepository,
         Subscriber $subscriber,
         BackendEventsRepository $backendEventsRepository,
         LogRepository $logRepository,
-        JsonSerializer $jsonSerializer
+        JsonSerializer $jsonSerializer,
+        TimezoneInterface $localeDate
     ) {
         $this->requestRepository = $requestRepository;
         $this->subscriber = $subscriber;
         $this->backendEventsRepository = $backendEventsRepository;
         $this->logRepository = $logRepository;
         $this->jsonSerializer = $jsonSerializer;
+        $this->localeDate = $localeDate;
     }
 
     /**
@@ -117,7 +125,7 @@ class Invoice
             'firstname' => $order->getCustomerFirstname(),
             'lastname' => $order->getCustomerLastname(),
             'orderid' => $order->getRealOrderId(),
-            'timestamp' => $order->getCreatedAt(),
+            'timestamp' => $this->createdAtStore($order),
             'userid' => $order->getCustomerId() ?? null,
             'gender' => $order->getCustomerGender(),
             'birthdate' => $order->getCustomerDob(),
@@ -172,5 +180,32 @@ class Invoice
             ];
         }
         return $productItems;
+    }
+
+    /**
+     * @param $order
+     * @return string
+     */
+    private function createdAtStore($order)
+    {
+        $datetime = \DateTime::createFromFormat('Y-m-d H:i:s', $order->getCreatedAt());
+        $timezone = $this->getTimezoneForStore($order->getStore());
+        $storeTime = new \DateTimeZone($timezone);
+        $datetime->setTimezone($storeTime);
+        return $datetime->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Get timezone for store
+     *
+     * @param mixed $store
+     * @return string
+     */
+    private function getTimezoneForStore($store)
+    {
+        return $this->localeDate->getConfigTimezone(
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $store->getCode()
+        );
     }
 }
