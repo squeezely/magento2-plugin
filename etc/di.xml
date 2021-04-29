@@ -39,6 +39,10 @@
         <plugin name="squeezelyRemoveItemAfter"
                 type="Squeezely\Plugin\Plugin\Quote" sortOrder="1" disabled="false" />
     </type>
+    <type name="Magento\Customer\Controller\Account\CreatePost">
+        <plugin name="squeezelyCreateCustomer"
+                type="Squeezely\Plugin\Plugin\CustomerCreate" sortOrder="1" disabled="false" />
+    </type>
     <type name="Magento\Customer\Model\AccountManagement">
         <plugin name="squeezelyCreateCustomer"
                 type="Squeezely\Plugin\Plugin\CustomerAccountManagement" sortOrder="1" disabled="false" />

@@ -336,7 +336,7 @@ class GetData
             case 'currency':
                 return $this->getCurrency();
             case 'image_link':
-                return $this->getImageUrl() . $product->getImage();
+                return $this->getFullImageLink($product);
             case 'inventory':
                 try {
                     $productStock = $this->stockItem->get($product->getId());
@@ -426,6 +426,18 @@ class GetData
             }
         }
         return $this->currency;
+    }
+
+    /**
+     * Get full product image link
+     *
+     * @param Product $product
+     *
+     * @return string
+     */
+    public function getFullImageLink(Product $product)
+    {
+        return $this->getImageUrl() . $product->getImage();
     }
 
     /**

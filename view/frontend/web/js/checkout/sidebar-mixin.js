@@ -1,21 +1,12 @@
 define(
     [
         'jquery',
-        'Magento_Customer/js/model/authentication-popup',
-        'Magento_Customer/js/customer-data',
-        'Magento_Ui/js/modal/alert',
-        'Magento_Ui/js/modal/confirm',
         'underscore',
-        'jquery-ui-modules/widget',
-        'mage/decorate',
-        'mage/collapsible',
-        'mage/cookies',
-        'jquery-ui-modules/effect-fade'
     ],
-    function ($, authenticationPopup, customerData, alert, confirm, _) {
+    function ($, _) {
         'use strict';
         return function (widget) {
-            $.widget('mage.sidebar', widget, {
+            return $.widget('mage.sidebar', $.mage.sidebar, {
                 _removeItemAfter: function (elem) {
                     var productData = this._getProductById(Number(elem.data('cart-item')));
 
@@ -29,10 +20,9 @@ define(
                             window.location.reload();
                         }
                     }
+                    return this._super(elem);
                 }
             });
-
-            return $.mage.sidebar;
         }
     }
 );
