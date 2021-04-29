@@ -183,7 +183,7 @@ class Invoice
     }
 
     /**
-     * @param $order
+     * @param Order $order
      * @return string
      */
     private function createdAtStore($order)
