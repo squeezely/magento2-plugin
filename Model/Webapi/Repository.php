@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Model\Webapi;
 
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
-use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepositoryInterface;
 use Squeezely\Plugin\Api\Webapi\ManagementInterface;
@@ -38,10 +37,6 @@ class Repository implements ManagementInterface
      */
     private $catalogProductTypeConfigurable;
     /**
-     * @var ModuleListInterface
-     */
-    private $moduleList;
-    /**
      * @var JsonSerializer
      */
     private $jsonSerializer;
@@ -49,25 +44,28 @@ class Repository implements ManagementInterface
      * @var ProductDataService
      */
     private $productDataService;
+    /**
+     * @var ConfigRepositoryInterface
+     */
+    private $configRepository;
 
     /**
      * Repository constructor.
      *
      * @param Configurable $catalogProductTypeConfigurable
-     * @param ModuleListInterface $moduleList
      * @param JsonSerializer $jsonSerializer
      * @param ProductDataService $productDataService
      */
     public function __construct(
         Configurable $catalogProductTypeConfigurable,
-        ModuleListInterface $moduleList,
         JsonSerializer $jsonSerializer,
-        ProductDataService $productDataService
+        ProductDataService $productDataService,
+        ConfigRepositoryInterface $configRepository
     ) {
         $this->catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
-        $this->moduleList = $moduleList;
         $this->jsonSerializer = $jsonSerializer;
         $this->productDataService = $productDataService;
+        $this->configRepository = $configRepository;
     }
 
     /**
@@ -104,9 +102,11 @@ class Repository implements ManagementInterface
     public function getModuleInfo()
     {
         return [
-            $this->moduleList->getOne(
-                ConfigRepositoryInterface::SQUEEZELY_PLUGIN_NAME
-            )
+            [
+                'name' => ConfigRepositoryInterface::SQUEEZELY_PLUGIN_NAME,
+                'setup_version' => str_replace('v', '', $this->configRepository->getExtensionVersion()),
+                'magento_version' => $this->configRepository->getMagentoVersion()
+            ]
         ];
     }
 }
