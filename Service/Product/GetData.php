@@ -447,6 +447,9 @@ class GetData
     {
         if (!$this->imageUrl) {
             $this->imageUrl = $this->store->getBaseUrl(UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
+            if (strpos($this->imageUrl, '/pub/') !== false) {
+                $link = str_replace('/pub/', '/', $this->imageUrl);
+            }
         }
         return $this->imageUrl;
     }
