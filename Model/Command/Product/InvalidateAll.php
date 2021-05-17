@@ -80,8 +80,8 @@ class InvalidateAll
                     ->where('product_sku=?', $sku)
                     ->where('store_id=?', $storeId);
 
-                $result = $connection->fetchRow($select);
-                if ($result == false) {
+                $fetchResult = $connection->fetchRow($select);
+                if ($fetchResult == false) {
                     $connection->insert(
                         $this->itemsQueueResource->getTable('squeezely_items_queue'),
                         [
