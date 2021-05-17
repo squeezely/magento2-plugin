@@ -118,7 +118,7 @@ class Quote
      */
     public function afterAddProduct(
         QuoteModel $subject,
-        Item $result,
+        $result,
         Product $product
     ) {
         if ($this->frontendEventsRepository->isEnabled()) {
