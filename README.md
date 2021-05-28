@@ -1,7 +1,9 @@
 Squeezely Magento 2 Plugin
 =====================
 This is the Squeezely Magento 2 plugin.
+
 For a Squeezely subscription, go to https://www.squeezely.tech
+
 GitHub: https://github.com/squeezely/magento2-plugin
 
 ## CONTACTS
