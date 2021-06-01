@@ -24,4 +24,16 @@
             <resource ref="Magento_Backend::admin"/>
         </resources>
     </route>
+    <route method="GET" url="/V1/squeezely/invalidateAllProducts/:store_id">
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="invalidateAll"/>
+        <resources>
+            <resource ref="Magento_Backend::admin"/>
+        </resources>
+    </route>
+    <route method="GET" url="/V1/squeezely/invalidateProducts/:store_id/:product_ids">
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="invalidate"/>
+        <resources>
+            <resource ref="Magento_Backend::admin"/>
+        </resources>
+    </route>
 </routes>

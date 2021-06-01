@@ -20,6 +20,7 @@
             <include path="Squeezely_Plugin::system/frontend_events.xml"/>
             <include path="Squeezely_Plugin::system/backend_events.xml"/>
             <include path="Squeezely_Plugin::system/advanced.xml"/>
+            <include path="Squeezely_Plugin::system/logger.xml"/>
         </section>
     </system>
 </config>

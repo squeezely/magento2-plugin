@@ -16,6 +16,7 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableResource;
 use Magento\Eav\Model\Entity\Attribute;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Framework\UrlInterface;
@@ -28,6 +29,8 @@ use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as StoreSyncConfigRepo
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Magento\Bundle\Model\Product\Type as BundleTypeModel;
 use Magento\GroupedProduct\Model\Product\Type\Grouped as GroupedTypeModel;
+use Magento\Framework\Filesystem\Driver\File;
+use Magento\Framework\App\Filesystem\DirectoryList;
 
 /**
  * Product Data Service class
@@ -158,6 +161,15 @@ class GetData
      * @var GroupedTypeModel
      */
     private $groupedModel;
+    /**
+     * @var File
+     */
+    private $file;
+
+    /**
+     * @var DirectoryList
+     */
+    private $directoryList;
 
     /**
      * GetData constructor.
@@ -175,6 +187,8 @@ class GetData
      * @param ProductResource $productResource
      * @param BundleTypeModel $bundleModel
      * @param GroupedTypeModel $groupedModel
+     * @param File $file
+     * @param DirectoryList $directoryList
      */
     public function __construct(
         ProductCollectionFactory $productCollectionFactory,
@@ -189,7 +203,9 @@ class GetData
         UrlFinderInterface $urlFinder,
         ProductResource $productResource,
         BundleTypeModel $bundleModel,
-        GroupedTypeModel $groupedModel
+        GroupedTypeModel $groupedModel,
+        File $file,
+        DirectoryList $directoryList
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
         $this->storeSynConfigRepository = $storeSynConfigRepository;
@@ -204,6 +220,8 @@ class GetData
         $this->productResource = $productResource;
         $this->bundleModel = $bundleModel;
         $this->groupedModel = $groupedModel;
+        $this->file = $file;
+        $this->directoryList = $directoryList;
     }
 
     /**
@@ -447,8 +465,15 @@ class GetData
     {
         if (!$this->imageUrl) {
             $this->imageUrl = $this->store->getBaseUrl(UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
-            if (strpos($this->imageUrl, '/pub/') !== false) {
-                $link = str_replace('/pub/', '/', $this->imageUrl);
+            try {
+                $mediaDir = $this->directoryList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA);
+                if (strpos($mediaDir, '/pub/') !== false
+                    && !$this->file->isDirectory($mediaDir)
+                ) {
+                    $this->imageUrl = str_replace('/pub/', '/', $this->imageUrl);
+                }
+            } catch (FileSystemException $exception) {
+                $this->imageUrl = str_replace('/pub/', '/', $this->imageUrl);
             }
         }
         return $this->imageUrl;

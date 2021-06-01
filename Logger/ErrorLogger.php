@@ -12,7 +12,6 @@ use Monolog\Logger;
 
 /**
  * ErrorLogger logger class
- *
  */
 class ErrorLogger extends Logger
 {
