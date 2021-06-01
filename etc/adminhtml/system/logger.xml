@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
+    <group id="logger" translate="label comment" type="text" sortOrder="100" showInDefault="1" showInWebsite="1"
+           showInStore="1">
+        <label>Logger</label>
+        <field id="download" translate="label" type="select" sortOrder="1" showInDefault="1"
+               showInWebsite="1" showInStore="1">
+            <label>Log Files</label>
+            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Config\Form\Table\Logger</frontend_model>
+        </field>
+    </group>
+</include>
