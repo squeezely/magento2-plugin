@@ -8,19 +8,16 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Controller\Adminhtml\Products;
 
 use Magento\Backend\App\Action;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollection;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as StoreSyncConfigRepository;
 use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
-use Squeezely\Plugin\Model\ItemsQueue\CollectionFactory as ItemsQueueCollectionFactory;
-use Squeezely\Plugin\Model\ItemsQueue\ResourceModel as ItemsQueueResource;
-use Squeezely\Plugin\Service\Product\GetData as ProductDataService;
+use Squeezely\Plugin\Service\Invalidate\ByStore as InvalidateByStore;
 
 /**
  * Class Invalidate
- * Contoller to invalidate all products
+ * Controller to invalidate all products
  */
 class Invalidate extends Action
 {
@@ -38,60 +35,46 @@ class Invalidate extends Action
     /**
      * Success Message
      */
-    const SUCCESS_MSG = 'All products were synced.';
+    const SUCCESS_MSG = '%1 products were invalidated and queued for sync.';
 
     /**
-     * @var ProductCollection
+     * No products to invalidate
      */
-    private $productCollection;
+    const NO_PRODUCTS_MSG = 'No products to invalidate.';
+
     /**
      * @var StoreSyncConfigRepository
      */
     private $storeSyncConfigRepository;
-    /**
-     * @var ProductDataService
-     */
-    private $productDataDervice;
-    /**
-     * @var ItemsQueueResource
-     */
-    private $itemsQueueResource;
-    /**
-     * @var ItemsQueueCollectionFactory
-     */
-    private $itemsQueueCollectionFactory;
+
     /**
      * @var RequestRepository
      */
     private $requestRepository;
 
     /**
+     * @var InvalidateByStore;
+     */
+    private $invalidateByStore;
+
+    /**
      * Invalidate constructor.
      *
      * @param Action\Context $context
-     * @param ProductCollection $productCollection
      * @param StoreSyncConfigRepository $storeSyncConfigRepository
-     * @param ProductDataService $productDataDervice
-     * @param ItemsQueueResource $itemsQueueResource
-     * @param ItemsQueueCollectionFactory $itemsQueueCollection
      * @param RequestRepository $requestRepository
+     * @param InvalidateByStore $invalidateByStore
      */
     public function __construct(
         Action\Context $context,
-        ProductCollection $productCollection,
         StoreSyncConfigRepository $storeSyncConfigRepository,
-        ProductDataService $productDataDervice,
-        ItemsQueueResource $itemsQueueResource,
-        ItemsQueueCollectionFactory $itemsQueueCollection,
-        RequestRepository $requestRepository
+        RequestRepository $requestRepository,
+        InvalidateByStore $invalidateByStore
     ) {
         $this->messageManager = $context->getMessageManager();
-        $this->productCollection = $productCollection;
         $this->storeSyncConfigRepository = $storeSyncConfigRepository;
-        $this->productDataDervice = $productDataDervice;
-        $this->itemsQueueResource = $itemsQueueResource;
-        $this->itemsQueueCollectionFactory = $itemsQueueCollection;
         $this->requestRepository = $requestRepository;
+        $this->invalidateByStore = $invalidateByStore;
         parent::__construct($context);
     }
 
@@ -111,40 +94,14 @@ class Invalidate extends Action
             );
         }
 
-        $this->invalidateAllProducts($storeId);
-
+        $result = $this->invalidateByStore->execute($storeId);
+        if ($result['success']) {
+            $this->messageManager->addSuccessMessage($result['message']);
+        } else {
+            $this->messageManager->addErrorMessage($result['message']);
+        }
         return $resultRedirect->setPath(
             $this->_redirect->getRefererUrl()
         );
-    }
-
-    /**
-     * Invalidate all products by store
-     *
-     * @param int $storeId
-     */
-    private function invalidateAllProducts(int $storeId)
-    {
-        $productCollection = $this->productCollection->create()->addStoreFilter($storeId);
-        $skus = $productCollection->getColumnValues('sku');
-
-        $connection = $this->itemsQueueResource->getConnection();
-        foreach ($skus as $sku) {
-            $select = $connection->select()
-                ->from($this->itemsQueueResource->getTable('squeezely_items_queue'))
-                ->where('product_sku=?', $sku)
-                ->where('store_id=?', $storeId);
-
-            $result = $connection->fetchRow($select);
-            if ($result == false) {
-                $connection->insert(
-                    $this->itemsQueueResource->getTable('squeezely_items_queue'),
-                    [
-                        'product_sku' => $sku,
-                        'store_id' => $storeId
-                    ]
-                );
-            }
-        }
     }
 }

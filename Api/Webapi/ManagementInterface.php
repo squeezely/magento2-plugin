@@ -37,4 +37,25 @@ interface ManagementInterface
      * @return mixed[]
      */
     public function getModuleInfo();
+
+    /**
+     * GET for api
+     *
+     * @param int $storeId
+     *
+     * @return mixed[]
+     * @api
+     */
+    public function invalidateAll(int $storeId);
+
+    /**
+     * GET for api
+     *
+     * @param int $storeId
+     * @param string $productIds
+     *
+     * @return mixed[]
+     * @api
+     */
+    public function invalidate(int $storeId, string $productIds);
 }
