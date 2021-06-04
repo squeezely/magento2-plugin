@@ -59,11 +59,10 @@ class InvalidateProduct implements ObserverInterface
         try {
             foreach ($storeIds as $storeId) {
                 $result = $this->invalidateByProductId->execute([$productId], (int)$storeId);
-
-                // TODO DO WE NEED TO WRITE RESULT HERE TO LOG?
+                $this->logRepository->addDebugLog('InvalidateProduct Observer', $result);
             }
         } catch (\Exception $exception) {
-            $this->logRepository->addErrorLog('InvalidateProduct', $exception->getMessage());
+            $this->logRepository->addErrorLog('InvalidateProduct Observer', $exception->getMessage());
         }
     }
 }
