@@ -58,7 +58,7 @@ class InvalidateProduct implements ObserverInterface
 
         try {
             foreach ($storeIds as $storeId) {
-                $result = $this->invalidateByProductId->execute([$productId], $storeId);
+                $result = $this->invalidateByProductId->execute([$productId], (int)$storeId);
 
                 // TODO DO WE NEED TO WRITE RESULT HERE TO LOG?
             }
