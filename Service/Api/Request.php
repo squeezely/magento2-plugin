@@ -72,6 +72,15 @@ class Request implements ServiceInterface
     public function execute(array $fields, string $endpoint)
     {
         $this->logRepository->addDebugLog('Request', __('Start'));
+        if (empty($fields['products'])) {
+            $this->logRepository->addDebugLog('Request', __('Skipped empty products'));
+            return [
+                'success' => false,
+                'message' => 'skipped empty products',
+                'created' => 0,
+                'updated' => 0
+            ];
+        }
         $accountId = $this->configRepository->getAccountId();
         $apiKey = $this->configRepository->getApiKey();
         $json = $this->jsonSerializer->serialize($fields);

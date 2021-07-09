@@ -109,7 +109,7 @@ class SyncInvalidated
                 $response = $this->requestRepository->sendProducts(
                     ['products' => $productData]
                 );
-                if ($response['success'] == true) {
+                if ($response['success'] == true || $response['massage'] == 'skipped empty products') {
                     $this->logRepository->addDebugLog(
                         'CRON',
                         __(
