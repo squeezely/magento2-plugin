@@ -455,7 +455,12 @@ class GetData
      */
     public function getFullImageLink(Product $product)
     {
-        return $this->getImageUrl() . $product->getImage();
+        $productImage = $product->getImage();
+        //check if image has .<ext> in the end
+        if ((substr($productImage, -3, 1) == '.') || (substr($productImage, -4, 1) == '.')) {
+            return '';
+        }
+        return $this->getImageUrl() . $productImage;
     }
 
     /**
