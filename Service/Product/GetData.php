@@ -339,9 +339,9 @@ class GetData
                 }
                 return $this->store->getBaseUrl() . 'catalog/product/view/id/' . $product->getId();
             case 'price':
-                return $product->getFinalPrice();
+                return $product->getPrice() ?? $product->getFinalPrice();
             case 'sale_price':
-                return $product->getSpecialPrice();
+                return $product->getSpecialPrice() ?? 0;
             case 'availability':
                 if ($product->isInStock()) {
                     return 'in stock';
@@ -455,7 +455,12 @@ class GetData
      */
     public function getFullImageLink(Product $product)
     {
-        return $this->getImageUrl() . $product->getImage();
+        $productImage = $product->getImage();
+        //check if image has .<ext> in the end
+        if ((substr($productImage, -3, 1) == '.') || (substr($productImage, -4, 1) == '.')) {
+            return '';
+        }
+        return $this->getImageUrl() . $productImage;
     }
 
     /**

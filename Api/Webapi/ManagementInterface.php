@@ -39,6 +39,22 @@ interface ManagementInterface
     public function getModuleInfo();
 
     /**
+     * GET module settings
+     *
+     * @return mixed[]
+     */
+    public function getModuleSettings();
+
+    /**
+     * GET module settings by store
+     *
+     * @param int $storeId
+     *
+     * @return mixed[]
+     */
+    public function getModuleSettingsByStore(int $storeId);
+
+    /**
      * GET for api
      *
      * @param int $storeId

@@ -36,4 +36,16 @@
             <resource ref="Magento_Backend::admin"/>
         </resources>
     </route>
+    <route method="GET" url="/V1/squeezely/moduleSettings">
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getModuleSettings"/>
+        <resources>
+            <resource ref="Magento_Backend::admin"/>
+        </resources>
+    </route>
+    <route method="GET" url="/V1/squeezely/moduleSettings/:storeId">
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getModuleSettingsByStore"/>
+        <resources>
+            <resource ref="Magento_Backend::admin"/>
+        </resources>
+    </route>
 </routes>

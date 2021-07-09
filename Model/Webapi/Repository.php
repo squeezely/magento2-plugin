@@ -7,13 +7,22 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Model\Webapi;
 
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollection;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Magento\Store\Api\StoreRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepositoryInterface;
+use Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface as AdvancedOptionsRepositoryInterface;
+use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepositoryInterface;
+use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepositoryInterface;
+use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as StoreSyncRepositoryInterface;
 use Squeezely\Plugin\Api\Webapi\ManagementInterface;
-use Squeezely\Plugin\Service\Product\GetData as ProductDataService;
-use Squeezely\Plugin\Service\Invalidate\ByStore as InvalidateByStore;
+use Squeezely\Plugin\Model\ItemsQueue\ResourceModel as ItemsQueueResource;
 use Squeezely\Plugin\Service\Invalidate\ByProductId as InvalidateByProductId;
+use Squeezely\Plugin\Service\Invalidate\ByStore as InvalidateByStore;
+use Squeezely\Plugin\Service\Product\GetData as ProductDataService;
 
 /**
  * WebApi Repository
@@ -51,13 +60,45 @@ class Repository implements ManagementInterface
      */
     private $configRepository;
     /**
-     * @var InvalidateByStore
+     * @var StoreSyncRepositoryInterface
      */
-    private $invalidateByStore;
+    private $storeSyncRepository;
+    /**
+     * @var FrontendEventsRepositoryInterface
+     */
+    private $frontendRepository;
+    /**
+     * @var BackendEventsRepositoryInterface
+     */
+    private $backendRepository;
+    /**
+     * @var AdvancedOptionsRepositoryInterface
+     */
+    private $advancedOptionsRepository;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
+    /**
+     * @var ProductCollection
+     */
+    private $productCollection;
+    /**
+     * @var ItemsQueueResource
+     */
+    private $itemsQueueResource;
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
     /**
      * @var InvalidateByProductId
      */
     private $invalidateByProductId;
+    /**
+     * @var InvalidateByStore
+     */
+    private $invalidateByStore;
 
     /**
      * Repository constructor.
@@ -65,6 +106,15 @@ class Repository implements ManagementInterface
      * @param Configurable $catalogProductTypeConfigurable
      * @param JsonSerializer $jsonSerializer
      * @param ProductDataService $productDataService
+     * @param ConfigRepositoryInterface $configRepository
+     * @param StoreSyncRepositoryInterface $storeSyncRepository
+     * @param FrontendEventsRepositoryInterface $frontendRepository
+     * @param BackendEventsRepositoryInterface $backendRepository
+     * @param AdvancedOptionsRepositoryInterface $advancedOptionsRepository
+     * @param StoreRepositoryInterface $storeRepository
+     * @param ProductCollection $productCollection
+     * @param ItemsQueueResource $itemsQueueResource
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Configurable $catalogProductTypeConfigurable,
@@ -72,7 +122,15 @@ class Repository implements ManagementInterface
         InvalidateByStore $invalidateByStore,
         InvalidateByProductId $invalidateByProductId,
         ProductDataService $productDataService,
-        ConfigRepositoryInterface $configRepository
+        ConfigRepositoryInterface $configRepository,
+        StoreSyncRepositoryInterface $storeSyncRepository,
+        FrontendEventsRepositoryInterface $frontendRepository,
+        BackendEventsRepositoryInterface $backendRepository,
+        AdvancedOptionsRepositoryInterface $advancedOptionsRepository,
+        StoreRepositoryInterface $storeRepository,
+        ProductCollection $productCollection,
+        ItemsQueueResource $itemsQueueResource,
+        StoreManagerInterface $storeManager
     ) {
         $this->catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
         $this->jsonSerializer = $jsonSerializer;
@@ -80,6 +138,14 @@ class Repository implements ManagementInterface
         $this->invalidateByProductId = $invalidateByProductId;
         $this->productDataService = $productDataService;
         $this->configRepository = $configRepository;
+        $this->storeSyncRepository = $storeSyncRepository;
+        $this->frontendRepository = $frontendRepository;
+        $this->backendRepository = $backendRepository;
+        $this->advancedOptionsRepository = $advancedOptionsRepository;
+        $this->storeRepository = $storeRepository;
+        $this->productCollection = $productCollection;
+        $this->itemsQueueResource = $itemsQueueResource;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -122,6 +188,150 @@ class Repository implements ManagementInterface
                 'magento_version' => $this->configRepository->getMagentoVersion()
             ]
         ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getModuleSettings(): array
+    {
+        return $this->getModuleConfigValues(0);
+    }
+
+    /**
+     * get module settings by store
+     *
+     * @param int|null $storeId
+     *
+     * @return array
+     */
+    private function getModuleConfigValues(int $storeId = null): array
+    {
+        return [
+            [
+                'general' =>
+                    [
+                        'enabled' => (string)$this->configRepository->isEnabled($storeId),
+                        'account_id' => $this->configRepository->getAccountId($storeId),
+                        'api_key' => $this->configRepository->getApiKey($storeId) ?
+                            'set_' . strlen($this->configRepository->getApiKey($storeId)) : 'not_set',
+                        'webhook_key' => $this->configRepository->getWebhookKey($storeId) ?
+                            'set_' . strlen($this->configRepository->getWebhookKey($storeId)) : 'not_set',
+                    ]
+            ],
+            [
+                'store_sync' =>
+                    [
+                        'enabled' => (string)$this->storeSyncRepository->isEnabled($storeId),
+                        'name' => $this->storeSyncRepository->getAttributeName($storeId),
+                        'description' => $this->storeSyncRepository->getAttributeDescription($storeId),
+                        'brand' => $this->storeSyncRepository->getAttributeBrand($storeId),
+                        'size' => $this->storeSyncRepository->getAttributeSize($storeId),
+                        'color' => $this->storeSyncRepository->getAttributeColor($storeId),
+                        'condition' => $this->storeSyncRepository->getAttributeCondition($storeId),
+                        'use_parent_image_for_simples' => $this->storeSyncRepository->getUseParentImage($storeId),
+                        'extra_fields' => $this->getExtraFields($storeId),
+                        'product_updates' => $this->getProductUpdates($storeId)
+                    ]
+            ],
+            [
+                'frontend_events' =>
+                    [
+                        'enabled' => (string)$this->frontendRepository->isEnabled($storeId)
+                    ]
+            ],
+            [
+                'backend_events' =>
+                    [
+                        'enabled' => (string)$this->backendRepository->isEnabled($storeId),
+                        'events' => $this->backendRepository->getEnabledEvents($storeId)
+                    ]
+            ],
+            [
+                'advanced_options' =>
+                    [
+                        'debug_enabled' => (string)$this->advancedOptionsRepository->isDebugEnabled(),
+                        'endpoint_data_url' => $this->advancedOptionsRepository->getEndpointDataUrl(),
+                        'endpoint_tracker_url' => $this->advancedOptionsRepository->getEndpointTrackerUrl(),
+                        'api_request_uri' => $this->advancedOptionsRepository->getApiRequestUri()
+                    ]
+            ]
+        ];
+    }
+
+    /**
+     * Get extra products fields
+     *
+     * @param int|null $storeId
+     *
+     * @return array
+     */
+    private function getExtraFields(int $storeId = null): array
+    {
+        $value = [];
+        $extraFields = $this->jsonSerializer->unserialize($this->storeSyncRepository->getExtraFields($storeId));
+        if (is_array($extraFields)) {
+            foreach ($extraFields as $extraField) {
+                $value[$extraField['name']] = $extraField['attribute'];
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * Get products updates
+     *
+     * @param int|null $storeId
+     *
+     * @return array
+     */
+    private function getProductUpdates(int $storeId = null): array
+    {
+        $value = [];
+        if ($storeId) {
+            $value[] = $this->getStoreProducts($storeId);
+        } else {
+            foreach ($this->storeManager->getStores() as $store) {
+                $value[] = $this->getStoreProducts((int)$store->getId());
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * get products updates by store
+     *
+     * @param int|null $storeId
+     *
+     * @return array
+     */
+    private function getStoreProducts(int $storeId = null): array
+    {
+        $value = [];
+        try {
+            $productCollection = $this->productCollection->create()->addStoreFilter($storeId);
+            $value[$storeId] = ['products' => $productCollection->getSize()];
+
+            $connection = $this->itemsQueueResource->getConnection();
+            $selectInvalidated = $connection->select()->from(
+                $this->itemsQueueResource->getTable('squeezely_items_queue'),
+                'product_sku'
+            )->where('store_id = ?', $storeId);
+
+            $value[$storeId]['invalidated'] = count($connection->fetchAll($selectInvalidated));
+
+        } catch (NoSuchEntityException $e) {
+            $value[$storeId] = __('No store with id = %1 found', $storeId)->render();
+        }
+        return $value;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getModuleSettingsByStore(int $storeId): array
+    {
+        return $this->getModuleConfigValues($storeId);
     }
 
     /**
