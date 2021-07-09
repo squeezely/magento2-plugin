@@ -15,7 +15,7 @@ use Squeezely\Plugin\Model\Config\Repository as ConfigRepository;
  */
 class StoreSyncRepository extends ConfigRepository implements StoreSyncInterface
 {
-    
+
     /**
      * @inheritDoc
      */
@@ -105,6 +105,28 @@ class StoreSyncRepository extends ConfigRepository implements StoreSyncInterface
     {
         return (string)$this->getStoreValue(
             self::XML_PATH_STORESYNC_ATTRIBUTE_CONDITION,
+            $storeId
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getUseParentImage(int $storeId = null): string
+    {
+        return (string)$this->getStoreValue(
+            self::XML_PATH_STORESYNC_USE_PARENT_IMAGE,
+            $storeId
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getExtraFields(int $storeId = null): string
+    {
+        return (string)$this->getStoreValue(
+            self::XML_PATH_STORESYNC_EXTRA_FIELDS,
             $storeId
         );
     }

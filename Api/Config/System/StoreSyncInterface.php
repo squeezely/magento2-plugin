@@ -24,6 +24,8 @@ interface StoreSyncInterface extends RepositoryInterface
     const XML_PATH_STORESYNC_ATTRIBUTE_SIZE = 'squeezely/store_sync/attribute_size';
     const XML_PATH_STORESYNC_ATTRIBUTE_COLOR = 'squeezely/store_sync/attribute_color';
     const XML_PATH_STORESYNC_ATTRIBUTE_CONDITION = 'squeezely/store_sync/attribute_condition';
+    const XML_PATH_STORESYNC_USE_PARENT_IMAGE = 'squeezely/store_sync/use_parent_image';
+    const XML_PATH_STORESYNC_EXTRA_FIELDS = 'squeezely/store_sync/extra_fields';
     const XML_PATH_SYNC_CRON = 'squeezely/store_sync/cron';
 
     /**
@@ -95,6 +97,24 @@ interface StoreSyncInterface extends RepositoryInterface
      * @return string
      */
     public function getAttributeCondition(int $storeId = null): string;
+
+    /**
+     * Get Use Parent Image
+     *
+     * @param int|null $storeId
+     *
+     * @return string
+     */
+    public function getUseParentImage(int $storeId = null): string;
+
+    /**
+     * Get Extra fields
+     *
+     * @param int|null $storeId
+     *
+     * @return string
+     */
+    public function getExtraFields(int $storeId = null): string;
 
     /**
      * Get cron frequency
