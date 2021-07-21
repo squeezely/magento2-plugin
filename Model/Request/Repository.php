@@ -45,6 +45,15 @@ class Repository implements RequestRepository
      */
     public function sendProducts(array $products): array
     {
+        if (empty($products['products'])) {
+            $this->logRepository->addDebugLog('Request', __('Skipped empty products'));
+            return [
+                'success' => false,
+                'message' => 'skipped empty products',
+                'created' => 0,
+                'updated' => 0
+            ];
+        }
         return $this->requestService->execute($products, self::PRODUCT_END_POINT);
     }
 
