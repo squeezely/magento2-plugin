@@ -54,6 +54,14 @@
                 referenceColumn="store_id"
                 onDelete="CASCADE"
         />
+        <constraint
+            xsi:type="foreign"
+            referenceId="SQUEEZELY_ITEMS_QUEUE_PRODUCT_ID" table="squeezely_items_queue"
+            column="product_id"
+            referenceTable="catalog_product_entity"
+            referenceColumn="entity_id"
+            onDelete="CASCADE"
+        />
         <index referenceId="SQUEEZELY_ITEMS_QUEUE_ENTITY_ID" indexType="btree">
             <column name="entity_id"/>
         </index>

@@ -118,7 +118,7 @@ class SyncInvalidated
                 $response = $this->requestRepository->sendProducts(
                     ['products' => $productData]
                 );
-                if ($response['success'] == true) {
+                if ($response['success'] == true || $response['message'] == 'skipped empty products') {
                     $result[] = [
                         'success' => true,
                         'msg' => sprintf(

@@ -96,9 +96,9 @@ class Invalidate extends Action
 
         $result = $this->invalidateByStore->execute($storeId);
         if ($result['success']) {
-            $this->messageManager->addSuccessMessage($result['message']);
+            $this->messageManager->addSuccessMessage($result['msg']);
         } else {
-            $this->messageManager->addErrorMessage($result['message']);
+            $this->messageManager->addErrorMessage($result['msg']);
         }
         return $resultRedirect->setPath(
             $this->_redirect->getRefererUrl()
