@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Model\Webapi;
 
+use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollection;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -37,6 +38,7 @@ class Repository implements ManagementInterface
      */
     private $resulrtMap = [
         'id' => 'sku',
+        'entity_id' => 'id',
         'link' => 'url',
         'language' => 'locale',
         'sales_price' => 'sale_price',
@@ -174,6 +176,59 @@ class Repository implements ManagementInterface
         }
 
         return $products;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getProducts(
+        int $storeId,
+        int $pageSize = 10,
+        int $currentPage = 1,
+        string $updatedAtFrom = '1970-01-01'
+    ) {
+        if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $updatedAtFrom)) {
+            return 'Param updatedAtFrom is invalid format. Please use YYYY-MM-DD';
+        }
+        try {
+            $timeStart = microtime(true);
+            $productCollection = $this->productCollection->create()->addStoreFilter($storeId);
+            $productCollection
+                ->addAttributeToSelect('sku')
+                ->setPageSize($pageSize)
+                ->setCurPage($currentPage)
+                ->addAttributeToFilter('status', Status::STATUS_ENABLED)
+                ->addAttributeToFilter('updated_at', ['from' => $updatedAtFrom]);
+            $size = $productCollection->getSize();
+            $skus = $productCollection->getColumnValues('sku');
+        } catch (\Exception $e) {
+            return __('No store with id = %1 found', $storeId)->render();
+        }
+        $products = $this->productDataService->execute($skus, $storeId);
+        foreach ($products as $productId => $productData) {
+            foreach ($this->resulrtMap as $oldKey => $newKey) {
+                if (isset($products[$productId][$oldKey])) {
+                    $products[$productId][$newKey] = $products[$productId][$oldKey];
+                    unset($products[$productId][$oldKey]);
+                }
+            }
+        }
+        $result = [
+            [
+                'result' => [
+                    'total' => $size,
+                    'page' => $currentPage,
+                    'output' => count($products),
+                    'totalPages' => ceil($size/$pageSize),
+                    'processingTime' => number_format((microtime(true) - $timeStart), 2)
+                ],
+                'items' => $products
+            ]
+        ];
+        if ($updatedAtFrom != '1970-01-01') {
+            $result[0]['result']['updatedFrom'] = $updatedAtFrom;
+        }
+        return $result;
     }
 
     /**
