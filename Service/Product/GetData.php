@@ -278,6 +278,8 @@ class GetData
         $productData = [];
 
         $this->collectAttributes($storeId);
+        $customFields = $this->getCustomFields($storeId);
+
         try {
             $this->store = $this->storeRepository->getById($storeId);
         } catch (NoSuchEntityException $e) {
@@ -294,6 +296,10 @@ class GetData
             $parentId = $this->getParentId($product);
             foreach ($this->productApiFields as $field) {
                 $oneProduct[$field] = $this->getAttributeValue($field, $product, $parentId, $storeId);
+            }
+            $oneProduct['custom_fields'] = [];
+            foreach ($customFields as $customField) {
+                $oneProduct['custom_fields'][$customField['name']] = $product->getData($customField['attribute']);
             }
             $productData[] = $oneProduct;
         }
@@ -435,7 +441,7 @@ class GetData
         $attributeName = $this->attributes[$field] ?? null;
         if ($attributeName) {
             $attributeType = $this->getAttributeType($attributeName);
-            if ($attributeType == 'select') {
+            if (($attributeType == 'select') && ($attributeName != 'visibility') && ($attributeName != 'status')) {
                 $value = $product->getAttributeText($attributeName);
                 /** @phpstan-ignore-next-line */
                 if (is_object($value)) {
@@ -656,5 +662,10 @@ class GetData
         }
 
         return $this->getMediaGallery($product, $storeId);
+    }
+
+    private function getCustomFields($storeId)
+    {
+        return $this->jsonSerializer->unserialize($this->storeSynConfigRepository->getExtraFields($storeId));
     }
 }
