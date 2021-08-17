@@ -51,6 +51,10 @@
         <plugin name="squeezelyInvoicePay"
                 type="Squeezely\Plugin\Plugin\Invoice" sortOrder="1" disabled="false" />
     </type>
+    <type name="Magento\Framework\Webapi\ServiceOutputProcessor">
+        <plugin name="squeezelyWebapiOutput"
+                type="Squeezely\Plugin\Plugin\Webapi\ServiceOutputProcessor" sortOrder="1" disabled="false" />
+    </type>
 
     <type name="Squeezely\Plugin\Logger\ErrorLogger">
         <arguments>
