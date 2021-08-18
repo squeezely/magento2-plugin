@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Service\Product;
 
+use Magento\Bundle\Model\Product\Type as BundleTypeModel;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Product as ProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
@@ -16,10 +18,15 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableResource;
 use Magento\Eav\Model\Entity\Attribute;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\EntityManager\MetadataPool;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Framework\UrlInterface;
+use Magento\GroupedProduct\Model\Product\Type\Grouped as GroupedTypeModel;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -27,10 +34,6 @@ use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as StoreSyncConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Magento\Bundle\Model\Product\Type as BundleTypeModel;
-use Magento\GroupedProduct\Model\Product\Type\Grouped as GroupedTypeModel;
-use Magento\Framework\Filesystem\Driver\File;
-use Magento\Framework\App\Filesystem\DirectoryList;
 
 /**
  * Product Data Service class
@@ -45,6 +48,7 @@ class GetData
      */
     private $productApiFields = [
         'id',
+        'entity_id',
         'title',
         'link',
         'description',
@@ -53,6 +57,7 @@ class GetData
         'sale_price',
         'currency',
         'image_link',
+        'images',
         'availability',
         'condition',
         'inventory',
@@ -66,7 +71,8 @@ class GetData
         'is_salable',
         'type_id',
         'visibility',
-        'status'
+        'status',
+        'updated_at'
     ];
 
     /**
@@ -90,8 +96,33 @@ class GetData
         'entity_id' => 'entity_id',
         'visibility' => 'visibility',
         'type_id' => 'type_id',
-        'status' => 'status'
+        'status' => 'status',
+        'updated_at' => 'updated_at'
     ];
+
+    /**
+     * Attribute types
+     *
+     * @var array
+     */
+    private $attributeTypes = [];
+
+    /**
+     * Loaded Images
+     *
+     * @var array
+     */
+    private $images = [];
+
+    /**
+     * @var string
+     */
+    private $linkField;
+
+    /**
+     * @var array
+     */
+    private $entityIds = [];
 
     /**
      * @var ProductCollectionFactory
@@ -165,11 +196,14 @@ class GetData
      * @var File
      */
     private $file;
-
     /**
      * @var DirectoryList
      */
     private $directoryList;
+    /**
+     * @var ResourceConnection
+     */
+    private $resource;
 
     /**
      * GetData constructor.
@@ -189,6 +223,7 @@ class GetData
      * @param GroupedTypeModel $groupedModel
      * @param File $file
      * @param DirectoryList $directoryList
+     * @throws \Exception
      */
     public function __construct(
         ProductCollectionFactory $productCollectionFactory,
@@ -205,7 +240,9 @@ class GetData
         BundleTypeModel $bundleModel,
         GroupedTypeModel $groupedModel,
         File $file,
-        DirectoryList $directoryList
+        DirectoryList $directoryList,
+        ResourceConnection $resource,
+        MetadataPool $metadataPool
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
         $this->storeSynConfigRepository = $storeSynConfigRepository;
@@ -221,7 +258,9 @@ class GetData
         $this->bundleModel = $bundleModel;
         $this->groupedModel = $groupedModel;
         $this->file = $file;
+        $this->resource = $resource;
         $this->directoryList = $directoryList;
+        $this->linkField = $metadataPool->getMetadata(ProductInterface::class)->getLinkField();
     }
 
     /**
@@ -239,6 +278,8 @@ class GetData
         $productData = [];
 
         $this->collectAttributes($storeId);
+        $customFields = $this->getCustomFields($storeId);
+
         try {
             $this->store = $this->storeRepository->getById($storeId);
         } catch (NoSuchEntityException $e) {
@@ -246,10 +287,19 @@ class GetData
         }
 
         foreach ($this->getProducts($skus, $storeId) as $product) {
+            if (!$product->getPrice()) {
+                $product->setPrice(
+                    $product->getBasePrice()
+                );
+            }
             $oneProduct = [];
             $parentId = $this->getParentId($product);
             foreach ($this->productApiFields as $field) {
-                $oneProduct[$field] = $this->getAttributeValue($field, $product, $parentId);
+                $oneProduct[$field] = $this->getAttributeValue($field, $product, $parentId, $storeId);
+            }
+            $oneProduct['custom_fields'] = [];
+            foreach ($customFields as $customField) {
+                $oneProduct['custom_fields'][$customField['name']] = $product->getData($customField['attribute']);
             }
             $productData[] = $oneProduct;
         }
@@ -292,10 +342,92 @@ class GetData
             ->addAttributeToSelect(array_values($this->attributes))
             ->addAttributeToSelect(['image', 'special_price'])
             ->addAttributeToFilter('sku', ['in' => $skus])
-            ->addUrlRewrite()
-            ->addFinalPrice();
+            ->addUrlRewrite();
 
+        $joinCond = join(
+            ' AND ',
+            ['inventory.product_id = e.entity_id', 'inventory.website_id = 0']
+        );
+
+        $collection->getSelect()->joinLeft(
+            ['inventory' => $collection->getResource()->getTable('cataloginventory_stock_item')],
+            $joinCond,
+            ['qty', 'is_in_stock']
+        );
+
+        $tableName = ['price_index' => $collection->getTable('catalog_product_index_price')];
+        $joinCond = join(
+            ' AND ',
+            [
+                'price_index.entity_id = e.entity_id',
+                'price_index.website_id = ' . $this->getWebsiteId($storeId),
+                'price_index.customer_group_id = 0'
+            ]
+        );
+        $colls = ['price', 'final_price', 'min_price', 'max_price'];
+        $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
+        $collection = $this->getDefaultPrice($collection);
+        $this->entityIds = $collection->getColumnValues($this->linkField);
         return $collection;
+    }
+
+    private function getDefaultPrice($collection)
+    {
+        $connection = $this->resource->getConnection();
+
+        $selectPrice = $connection->select()
+            ->from(
+                $connection->getTableName('eav_attribute'),
+                'attribute_id'
+            )->where('attribute_code = ?', 'price');
+        $attributeId = $connection->fetchOne($selectPrice);
+
+        $tableName = ['price' => $connection->getTableName('catalog_product_entity_decimal')];
+        $joinCond = join(
+            ' AND ',
+            [
+                'price.entity_id = e.entity_id',
+                'price.attribute_id = ' . $attributeId,
+            ]
+        );
+        $colls = ['base_price' => 'value'];
+
+        $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
+        return $collection;
+    }
+
+    /**
+     * @param int $storeId
+     * @return int
+     */
+    private function getWebsiteId(int $storeId)
+    {
+        try {
+            return $this->storeRepository->getById($storeId)->getWebsiteId();
+        } catch (\Exception $exception) {
+            return 0;
+        }
+    }
+
+    /**
+     * @param Product $product
+     * @return int
+     */
+    private function getParentId(Product $product)
+    {
+        $configurableParentId = $this->configurableResource->getParentIdsByChild($product->getId());
+        if (isset($configurableParentId[0])) {
+            return (int)$configurableParentId[0];
+        }
+        $bundleParentId = $this->bundleModel->getParentIdsByChild($product->getId());
+        if (isset($bundleParentId[0])) {
+            return (int)$bundleParentId[0];
+        }
+        $groupedParentId = $this->groupedModel->getParentIdsByChild($product->getId());
+        if (isset($groupedParentId[0])) {
+            return (int)$groupedParentId[0];
+        }
+        return 0;
     }
 
     /**
@@ -304,33 +436,29 @@ class GetData
      * @param int $parentId
      * @return array|bool|string|float
      */
-    private function getAttributeValue(string $field, Product $product, int $parentId)
+    private function getAttributeValue(string $field, Product $product, int $parentId, int $storeId = 0)
     {
         $attributeName = $this->attributes[$field] ?? null;
-
         if ($attributeName) {
-            try {
-                $productAttribute = $this->eavAttribute->loadByCode('catalog_product', $attributeName);
-                if ($productAttribute->getId() && $productAttribute->getFrontendInput() == 'select') {
-                    $value = $product->getAttributeText($attributeName);
-                    /** @phpstan-ignore-next-line */
-                    if (is_object($value)) {
-                        $value = $value->getText();
-                    }
-                } else {
-                    $value = $product->getData($attributeName);
+            $attributeType = $this->getAttributeType($attributeName);
+            if (($attributeType == 'select') && ($attributeName != 'visibility') && ($attributeName != 'status')) {
+                $value = $product->getAttributeText($attributeName);
+                /** @phpstan-ignore-next-line */
+                if (is_object($value)) {
+                    $value = $value->getText();
                 }
-                if ($field == 'condition' && !in_array($value, $this->conditions)) {
-                    $value = 'new';
-                }
-                return $value;
-            } catch (\Exception $exception) {
-                $this->logRepository->addErrorLog('getAttributeValue', $exception->getMessage());
-                return '';
+            } else {
+                $value = $product->getData($attributeName);
             }
+            if ($field == 'condition' && !in_array($value, $this->conditions)) {
+                $value = 'new';
+            }
+            return $value;
         }
 
         switch ($field) {
+            case 'entity_id':
+                return $product->getEntityId();
             case 'link':
                 if ($product->isVisibleInSiteVisibility()) {
                     return $product->getProductUrl();
@@ -341,28 +469,24 @@ class GetData
             case 'price':
                 return $product->getPrice() ?? $product->getFinalPrice();
             case 'sale_price':
-                return $product->getSpecialPrice() ?? 0;
+                return $product->getFinalPrice() ?? 0;
             case 'availability':
-                if ($product->isInStock()) {
+                if ($product->getData('is_in_stock') == 1) {
                     return 'in stock';
                 } else {
                     return 'out of stock';
                 }
-                // no break
+            // no break
             case 'language':
                 return $this->getLanguage();
             case 'currency':
                 return $this->getCurrency();
             case 'image_link':
                 return $this->getFullImageLink($product);
+            case 'images':
+                return $this->getMediaGallery($product, $storeId);
             case 'inventory':
-                try {
-                    $productStock = $this->stockItem->get($product->getId());
-                    return $productStock->getQty();
-                } catch (NoSuchEntityException $e) {
-                    return '';
-                }
-            // no break
+                return $product->getQty();
             case 'parent_id':
                 if ($parentId) {
                     $sku = $this->productResource
@@ -386,12 +510,32 @@ class GetData
             case 'category_ids':
                 return $product->getCategoryIds();
             case 'is_in_stock':
-                return $product->isInStock();
             case 'is_salable':
-                return $product->isSalable();
+                return ($product->getData('is_in_stock') == 1);
         }
 
         return '';
+    }
+
+    /**
+     * Get attribute type
+     *
+     * @param string $attributeName
+     * @return string
+     */
+    private function getAttributeType(string $attributeName): string
+    {
+        if (!isset($this->attributeTypes[$attributeName])) {
+            try {
+                $productAttribute = $this->eavAttribute->loadByCode('catalog_product', $attributeName);
+                $this->attributeTypes[$attributeName] = $productAttribute->getFrontendInput();
+            } catch (\Exception $exception) {
+                $this->logRepository->addErrorLog('getAttributeValue', $exception->getMessage());
+                $this->attributeTypes[$attributeName] = '';
+            }
+        }
+
+        return $this->attributeTypes[$attributeName];
     }
 
     /**
@@ -456,11 +600,14 @@ class GetData
     public function getFullImageLink(Product $product)
     {
         $productImage = $product->getImage();
-        //check if image has .<ext> in the end
-        if ((substr($productImage, -3, 1) == '.') || (substr($productImage, -4, 1) == '.')) {
+        if (!$productImage) {
             return '';
         }
-        return $this->getImageUrl() . $productImage;
+        //check if image has .<ext> in the end
+        if ((substr($productImage, -3, 1) == '.') || (substr($productImage, -4, 1) == '.')) {
+            return $this->getImageUrl() . $productImage;
+        }
+        return '';
     }
 
     /**
@@ -486,22 +633,39 @@ class GetData
 
     /**
      * @param Product $product
-     * @return int
+     * @param int $storeId
+     * @return array
      */
-    private function getParentId(Product $product)
+    private function getMediaGallery(Product $product, int $storeId): array
     {
-        $configurableParentId = $this->configurableResource->getParentIdsByChild($product->getId());
-        if (isset($configurableParentId[0])) {
-            return (int)$configurableParentId[0];
+        if (!empty($this->images)) {
+            return $this->images[$product->getId()] ?? [];
         }
-        $bundleParentId = $this->bundleModel->getParentIdsByChild($product->getId());
-        if (isset($bundleParentId[0])) {
-            return (int)$bundleParentId[0];
+
+        $mediaGalleryTable = $this->resource->getTableName('catalog_product_entity_media_gallery');
+        $mediaGalleryValueTable = $this->resource->getTableName('catalog_product_entity_media_gallery_value');
+        $select = $this->resource->getConnection()
+            ->select()->from(
+                ['catalog_product_entity_media_gallery' => $mediaGalleryTable],
+                'value'
+            )->joinLeft(
+                ['catalog_product_entity_media_gallery_value' => $mediaGalleryValueTable],
+                'catalog_product_entity_media_gallery.value_id = catalog_product_entity_media_gallery_value.value_id',
+                ['entity_id' => $this->linkField, 'store_id']
+            )->where('catalog_product_entity_media_gallery_value.store_id IN (?)', [0, $storeId])
+            ->where('catalog_product_entity_media_gallery_value.' . $this->linkField . ' IN (?)', $this->entityIds);
+
+        $imagesData = $this->resource->getConnection()->fetchAll($select);
+        foreach ($imagesData as $imageData) {
+            $this->images[$imageData['entity_id']][]
+                = $this->getImageUrl() . $imageData['value'];
         }
-        $groupedParentId = $this->groupedModel->getParentIdsByChild($product->getId());
-        if (isset($groupedParentId[0])) {
-            return (int)$groupedParentId[0];
-        }
-        return 0;
+
+        return $this->getMediaGallery($product, $storeId);
+    }
+
+    private function getCustomFields($storeId)
+    {
+        return $this->jsonSerializer->unserialize($this->storeSynConfigRepository->getExtraFields($storeId));
     }
 }

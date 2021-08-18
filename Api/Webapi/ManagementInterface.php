@@ -32,6 +32,22 @@ interface ManagementInterface
     public function getProductsInfo(string $productIds, int $storeId);
 
     /**
+     * Get products data
+     *
+     * @param int $storeId
+     * @param int $pageSize
+     * @param int $currentPage
+     * @param string $updatedAtFrom
+     * @return mixed
+     */
+    public function getProducts(
+        int $storeId,
+        int $pageSize = 10,
+        int $currentPage = 1,
+        string $updatedAtFrom = '1970-01-01'
+    );
+
+    /**
      * GET module info
      *
      * @return mixed[]

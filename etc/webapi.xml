@@ -18,6 +18,12 @@
             <resource ref="Magento_Backend::admin"/>
         </resources>
     </route>
+    <route method="GET" url="/V1/squeezely/products">
+        <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getProducts"/>
+        <resources>
+            <resource ref="Magento_Backend::admin"/>
+        </resources>
+    </route>
     <route method="GET" url="/V1/squeezely/moduleInfo">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getModuleInfo"/>
         <resources>
