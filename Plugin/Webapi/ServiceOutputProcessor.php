@@ -51,14 +51,14 @@ class ServiceOutputProcessor
      *
      * @param Subject $subject
      * @param callable $proceed
-     * @param $data
-     * @param $type
+     * @param mixed $data
+     * @param string $type
      *
      * @return array|mixed
      */
-    public function aroundConvertValue(Subject $subject, callable $proceed, $data, $type)
+    public function aroundConvertValue(Subject $subject, callable $proceed, $data, string $type)
     {
-        if (strpos($this->request->getRequestUri(), 'squeezely') === null) {
+        if (strpos($this->request->getRequestUri(), 'squeezely') === false) {
             return $proceed($data, $type);
         }
         if (is_array($data)) {
