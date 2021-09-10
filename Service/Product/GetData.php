@@ -101,13 +101,6 @@ class GetData
     ];
 
     /**
-     * Attribute types
-     *
-     * @var array
-     */
-    private $attributeTypes = [];
-
-    /**
      * Loaded Images
      *
      * @var array
@@ -279,7 +272,6 @@ class GetData
 
         $this->collectAttributes($storeId);
         $customFields = $this->getCustomFields($storeId);
-
         try {
             $this->store = $this->storeRepository->getById($storeId);
         } catch (NoSuchEntityException $e) {
@@ -346,52 +338,68 @@ class GetData
 
         $joinCond = join(
             ' AND ',
-            ['inventory.product_id = e.entity_id', 'inventory.website_id = 0']
+            ['inventory.product_id = e.' . $this->linkField, 'inventory.website_id = 0']
         );
 
         $collection->getSelect()->joinLeft(
-            ['inventory' => $collection->getResource()->getTable('cataloginventory_stock_item')],
+            ['inventory' => $this->resource->getTableName('cataloginventory_stock_item')],
             $joinCond,
             ['qty', 'is_in_stock']
         );
 
-        $tableName = ['price_index' => $collection->getTable('catalog_product_index_price')];
+        $tableName = ['price_index' => $this->resource->getTableName('catalog_product_index_price')];
         $joinCond = join(
             ' AND ',
             [
-                'price_index.entity_id = e.entity_id',
+                'price_index.entity_id = e.' . $this->linkField,
                 'price_index.website_id = ' . $this->getWebsiteId($storeId),
                 'price_index.customer_group_id = 0'
             ]
         );
         $colls = ['price', 'final_price', 'min_price', 'max_price'];
         $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
-        $collection = $this->getDefaultPrice($collection);
+        $collection = $this->getDefaultPrice($collection, $storeId);
         $this->entityIds = $collection->getColumnValues($this->linkField);
         return $collection;
     }
 
-    private function getDefaultPrice($collection)
+    /**
+     * @param Collection $collection
+     * @param int $storeId
+     * @return Collection
+     */
+    private function getDefaultPrice(Collection $collection, int $storeId): Collection
     {
         $connection = $this->resource->getConnection();
 
         $selectPrice = $connection->select()
             ->from(
-                $connection->getTableName('eav_attribute'),
+                $this->resource->getTableName('eav_attribute'),
                 'attribute_id'
             )->where('attribute_code = ?', 'price');
         $attributeId = $connection->fetchOne($selectPrice);
 
-        $tableName = ['price' => $connection->getTableName('catalog_product_entity_decimal')];
+        $tableName = ['price' => $this->resource->getTableName('catalog_product_entity_decimal')];
         $joinCond = join(
             ' AND ',
             [
-                'price.entity_id = e.entity_id',
+                'price.' . $this->linkField . ' = e.' . $this->linkField,
                 'price.attribute_id = ' . $attributeId,
+                'price.store_id = ' . $storeId
             ]
         );
-        $colls = ['base_price' => 'value'];
-
+        $colls = [];
+        $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
+        $tableName = ['default_price' => $this->resource->getTableName('catalog_product_entity_decimal')];
+        $joinCond = join(
+            ' AND ',
+            [
+                'default_price.' . $this->linkField . ' = e.' . $this->linkField,
+                'default_price.attribute_id = ' . $attributeId,
+                'default_price.store_id = 0'
+            ]
+        );
+        $colls = ['base_price' => 'COALESCE(price.value, default_price.value)'];
         $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
         return $collection;
     }
@@ -438,10 +446,19 @@ class GetData
      */
     private function getAttributeValue(string $field, Product $product, int $parentId, int $storeId = 0)
     {
+        $connection = $this->resource->getConnection();
+        $select = $connection->select()
+            ->from(
+                $this->resource->getTableName('eav_attribute'),
+                'frontend_input'
+            )->where('attribute_code = ?', $field);
+        $attributeType = $connection->fetchOne($select);
         $attributeName = $this->attributes[$field] ?? null;
+        if (!$attributeType || !$product->getResource()->getAttribute($attributeName)) {
+            return '';
+        }
         if ($attributeName) {
-            $attributeType = $this->getAttributeType($attributeName);
-            if (($attributeType == 'select') && ($attributeName != 'visibility') && ($attributeName != 'status')) {
+            if ($attributeType == 'select') {
                 $value = $product->getAttributeText($attributeName);
                 /** @phpstan-ignore-next-line */
                 if (is_object($value)) {
@@ -471,11 +488,7 @@ class GetData
             case 'sale_price':
                 return $product->getFinalPrice() ?? 0;
             case 'availability':
-                if ($product->getData('is_in_stock') == 1) {
-                    return 'in stock';
-                } else {
-                    return 'out of stock';
-                }
+                return ($product->getData('is_in_stock') == 1) ? ('in stock') : ('out of stock');
             // no break
             case 'language':
                 return $this->getLanguage();
@@ -513,29 +526,7 @@ class GetData
             case 'is_salable':
                 return ($product->getData('is_in_stock') == 1);
         }
-
         return '';
-    }
-
-    /**
-     * Get attribute type
-     *
-     * @param string $attributeName
-     * @return string
-     */
-    private function getAttributeType(string $attributeName): string
-    {
-        if (!isset($this->attributeTypes[$attributeName])) {
-            try {
-                $productAttribute = $this->eavAttribute->loadByCode('catalog_product', $attributeName);
-                $this->attributeTypes[$attributeName] = $productAttribute->getFrontendInput();
-            } catch (\Exception $exception) {
-                $this->logRepository->addErrorLog('getAttributeValue', $exception->getMessage());
-                $this->attributeTypes[$attributeName] = '';
-            }
-        }
-
-        return $this->attributeTypes[$attributeName];
     }
 
     /**
