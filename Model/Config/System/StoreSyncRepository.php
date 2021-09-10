@@ -125,10 +125,14 @@ class StoreSyncRepository extends ConfigRepository implements StoreSyncInterface
      */
     public function getExtraFields(int $storeId = null): string
     {
-        return (string)$this->getStoreValue(
+        $extraFields = $this->getStoreValue(
             self::XML_PATH_STORESYNC_EXTRA_FIELDS,
             $storeId
         );
+        if (!$extraFields) {
+            $extraFields = '[]';
+        }
+        return $extraFields;
     }
 
     /**
