@@ -446,33 +446,6 @@ class GetData
      */
     private function getAttributeValue(string $field, Product $product, int $parentId, int $storeId = 0)
     {
-        $connection = $this->resource->getConnection();
-        $select = $connection->select()
-            ->from(
-                $this->resource->getTableName('eav_attribute'),
-                'frontend_input'
-            )->where('attribute_code = ?', $field);
-        $attributeType = $connection->fetchOne($select);
-        $attributeName = $this->attributes[$field] ?? null;
-        if (!$attributeType || !$product->getResource()->getAttribute($attributeName)) {
-            return '';
-        }
-        if ($attributeName) {
-            if ($attributeType == 'select') {
-                $value = $product->getAttributeText($attributeName);
-                /** @phpstan-ignore-next-line */
-                if (is_object($value)) {
-                    $value = $value->getText();
-                }
-            } else {
-                $value = $product->getData($attributeName);
-            }
-            if ($field == 'condition' && !in_array($value, $this->conditions)) {
-                $value = 'new';
-            }
-            return $value;
-        }
-
         switch ($field) {
             case 'entity_id':
                 return $product->getEntityId();
@@ -525,6 +498,33 @@ class GetData
             case 'is_in_stock':
             case 'is_salable':
                 return ($product->getData('is_in_stock') == 1);
+        }
+
+        $connection = $this->resource->getConnection();
+        $select = $connection->select()
+            ->from(
+                $this->resource->getTableName('eav_attribute'),
+                'frontend_input'
+            )->where('attribute_code = ?', $field);
+        $attributeType = $connection->fetchOne($select);
+        $attributeName = $this->attributes[$field] ?? null;
+        if ($attributeName) {
+            if ($attributeType == 'select') {
+                if (!$product->getResource()->getAttribute($attributeName)) {
+                    return '';
+                }
+                $value = $product->getAttributeText($attributeName);
+                /** @phpstan-ignore-next-line */
+                if (is_object($value)) {
+                    $value = $value->getText();
+                }
+            } else {
+                $value = $product->getData($attributeName);
+            }
+            if ($field == 'condition' && !in_array($value, $this->conditions)) {
+                $value = 'new';
+            }
+            return $value;
         }
         return '';
     }
