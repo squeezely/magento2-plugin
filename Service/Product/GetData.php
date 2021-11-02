@@ -32,7 +32,7 @@ use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
-use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as StoreSyncConfigRepository;
+use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 
 /**
@@ -101,6 +101,13 @@ class GetData
     ];
 
     /**
+     * Custom product attributes
+     *
+     * @var array
+     */
+    private $customFields = [];
+
+    /**
      * Loaded Images
      *
      * @var array
@@ -122,9 +129,9 @@ class GetData
      */
     private $productCollectionFactory;
     /**
-     * @var StoreSyncConfigRepository
+     * @var ConfigRepository
      */
-    private $storeSynConfigRepository;
+    private $configRepository;
     /**
      * @var StoreRepositoryInterface
      */
@@ -202,7 +209,7 @@ class GetData
      * GetData constructor.
      *
      * @param ProductCollectionFactory $productCollectionFactory
-     * @param StoreSyncConfigRepository $storeSynConfigRepository
+     * @param ConfigRepository $configRepository
      * @param StoreRepositoryInterface $storeRepository
      * @param ScopeConfigInterface $scopeConfig
      * @param StockItemRepository $stockItem
@@ -220,7 +227,7 @@ class GetData
      */
     public function __construct(
         ProductCollectionFactory $productCollectionFactory,
-        StoreSyncConfigRepository $storeSynConfigRepository,
+        ConfigRepository $configRepository,
         StoreRepositoryInterface $storeRepository,
         ScopeConfigInterface $scopeConfig,
         StockItemRepository $stockItem,
@@ -238,7 +245,7 @@ class GetData
         MetadataPool $metadataPool
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
-        $this->storeSynConfigRepository = $storeSynConfigRepository;
+        $this->configRepository = $configRepository;
         $this->storeRepository = $storeRepository;
         $this->scopeConfig = $scopeConfig;
         $this->stockItem = $stockItem;
@@ -291,7 +298,8 @@ class GetData
             }
             $oneProduct['custom_fields'] = [];
             foreach ($customFields as $customField) {
-                $oneProduct['custom_fields'][$customField['name']] = $product->getData($customField['attribute']);
+                $oneProduct['custom_fields'][$customField['name']] =
+                    $this->getAttributeValue($customField['attribute'], $product, $parentId, $storeId);
             }
             $productData[] = $oneProduct;
         }
@@ -311,13 +319,17 @@ class GetData
     private function collectAttributes(int $storeId): void
     {
         $this->attributes += [
-            'title' => $this->storeSynConfigRepository->getAttributeName($storeId),
-            'description' => $this->storeSynConfigRepository->getAttributeDescription($storeId),
-            'brand' => $this->storeSynConfigRepository->getAttributeBrand($storeId),
-            'color' => $this->storeSynConfigRepository->getAttributeColor($storeId),
-            'size' => $this->storeSynConfigRepository->getAttributeSize($storeId),
-            'condition' => $this->storeSynConfigRepository->getAttributeCondition($storeId)
+            'title' => $this->configRepository->getAttributeName($storeId),
+            'description' => $this->configRepository->getAttributeDescription($storeId),
+            'brand' => $this->configRepository->getAttributeBrand($storeId),
+            'color' => $this->configRepository->getAttributeColor($storeId),
+            'size' => $this->configRepository->getAttributeSize($storeId),
+            'condition' => $this->configRepository->getAttributeCondition($storeId)
         ];
+        $customFields = $this->getCustomFields($storeId);
+        foreach ($customFields as $customField) {
+            $this->attributes += [$customField['attribute'] => $customField['attribute']];
+        }
     }
 
     /**
@@ -655,8 +667,18 @@ class GetData
         return $this->getMediaGallery($product, $storeId);
     }
 
-    private function getCustomFields($storeId)
+    /**
+     * @param int $storeId
+     *
+     * @return array
+     */
+    private function getCustomFields(int $storeId): array
     {
-        return $this->jsonSerializer->unserialize($this->storeSynConfigRepository->getExtraFields($storeId));
+        if (!$this->customFields) {
+            $this->customFields = $this->jsonSerializer->unserialize(
+                $this->configRepository->getExtraFields($storeId)
+            );
+        }
+        return $this->customFields;
     }
 }
