@@ -40,7 +40,7 @@ class StoreSyncRepository extends ConfigRepository implements StoreSyncInterface
             return false;
         }
 
-        return $this->getFlag(self::XML_PATH_STORESYNC_ENABLED);
+        return $this->getFlag(self::XML_PATH_STORESYNC_ENABLED, $storeId);
     }
 
     /**
