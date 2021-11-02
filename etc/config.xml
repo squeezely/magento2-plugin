@@ -10,7 +10,7 @@
         <squeezely>
             <general>
                 <enabled>1</enabled>
-                <version>v2.4.2</version>
+                <version>v2.4.3</version>
             </general>
             <store_sync>
                 <attribute_name>name</attribute_name>
