@@ -96,12 +96,14 @@ class Quote
         if ($this->frontendEventsRepository->isEnabled() && !$this->request->isAjax()) {
             $this->logRepository->addDebugLog(self::REMOVE_FROM_CART_EVENT_NAME, __('Start'));
             $item = $subject->getItemById($itemId);
-            $eventData = ['products' => ['id' => $item->getSku()]];
-            $this->dataLayer->addEventToQueue(self::REMOVE_FROM_CART_EVENT_NAME, $eventData);
-            $this->logRepository->addDebugLog(
-                self::REMOVE_FROM_CART_EVENT_NAME,
-                'Event data: ' . $this->jsonSerializer->serialize($eventData)
-            );
+            if ($item) {
+                $eventData = ['products' => ['id' => $item->getSku()]];
+                $this->dataLayer->addEventToQueue(self::REMOVE_FROM_CART_EVENT_NAME, $eventData);
+                $this->logRepository->addDebugLog(
+                    self::REMOVE_FROM_CART_EVENT_NAME,
+                    'Event data: ' . $this->jsonSerializer->serialize($eventData)
+                );
+            }
             $this->logRepository->addDebugLog(self::REMOVE_FROM_CART_EVENT_NAME, __('Finish'));
         }
         return $result;

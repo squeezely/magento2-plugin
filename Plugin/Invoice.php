@@ -189,6 +189,9 @@ class Invoice
     private function createdAtStore($order)
     {
         $datetime = \DateTime::createFromFormat('Y-m-d H:i:s', (string)$order->getCreatedAt());
+        if (!$datetime) {
+            return '';
+        }
         $timezone = $this->getTimezoneForStore($order->getStore());
         $storeTime = new \DateTimeZone($timezone);
         $datetime->setTimezone($storeTime);
