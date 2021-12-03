@@ -85,14 +85,32 @@ class Service
     }
 
     /**
-     * Create a new integration
-     *
-     * @return bool
+     * @throws IntegrationException
+     * @throws AuthenticationException
+     * @throws LocalizedException
+     */
+    public function verifyAuth(int $storeId): bool
+    {
+        //check if squezelly integration exists
+        $integration = $this->integrationService->findByName(self::INTEGRATION_NAME);
+        if (!$integration->getId()) {
+            $token = $this->createIntegrationAndGetToken();
+        } else {
+            $consumerId = $integration->getConsumerId();
+            $token = $this->oauthService->getAccessToken($consumerId);
+        }
+        if ($token instanceof OauthTokenModel) {
+            return $this->sendMagentoTokenToSqueezelyAndVerifyAuth($token, $storeId);
+        }
+
+        return false;
+    }
+
+    /**
      * @throws IntegrationException
      * @throws LocalizedException
-     * @throws AuthenticationException
      */
-    public function createIntegration(): bool
+    public function createIntegrationAndGetToken()
     {
         $integrationData = [
             'name' => self::INTEGRATION_NAME,
@@ -107,13 +125,7 @@ class Service
 
         $this->authorizationService->grantAllPermissions($integrationId);
         $this->oauthService->createAccessToken($customerId, true);
-        $token = $this->oauthService->getAccessToken($customerId);
-
-        if ($token instanceof OauthTokenModel) {
-            return $this->sendMagentoTokenToSqueezelyAndVerifyAuth($token);
-        }
-
-        return false;
+        return $this->oauthService->getAccessToken($customerId);
     }
 
     /**
@@ -122,16 +134,24 @@ class Service
      * @throws LocalizedException
      * @throws AuthenticationException
      */
-    public function sendMagentoTokenToSqueezelyAndVerifyAuth(OauthTokenModel $token): bool
+    public function sendMagentoTokenToSqueezelyAndVerifyAuth(OauthTokenModel $token, int $storeId): bool
     {
+        if ($storeId) {
+            $webshopName = $this->storeManager->getStore($storeId)->getName() . " - Magento 2";
+            $webshopUrl = $this->storeManager->getStore($storeId)->getBaseUrl();
+        } else {
+            $webshopName = $this->storeManager->getDefaultStoreView()->getName() . " - Magento 2";
+            $webshopUrl = $this->storeManager->getDefaultStoreView()->getBaseUrl();
+        }
+
         $storeInformationAndToken = $token->toArray() +
             [
-                'webshopName' => $this->storeManager->getDefaultStoreView()->getName() . " - Magento 2",
-                'webshopUrl' => $this->storeManager->getDefaultStoreView()->getBaseUrl(),
+                'webshopName' => $webshopName,
+                'webshopUrl' => $webshopUrl,
                 'webshopSuffix' => ''
             ];
 
-        return $this->requestRepository->sendMagentoTokenToSqueezelyAndVerifyAuth($storeInformationAndToken);
+        return $this->requestRepository->sendMagentoTokenToSqueezelyAndVerifyAuth($storeInformationAndToken, $storeId);
     }
 
     /**
@@ -143,7 +163,6 @@ class Service
     {
         $integration = $this->integrationService->findByName(self::INTEGRATION_NAME);
         if ($integrationId = $integration->getId()) {
-            $integrationId = $integration->getId();
             $consumerId = $integration->getConsumerId();
 
             $this->integrationService->delete($integrationId);

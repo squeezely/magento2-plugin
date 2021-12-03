@@ -83,5 +83,5 @@ interface RepositoryInterface
      * @throws AuthenticationException
      * @throws LocalizedException
      */
-    public function sendMagentoTokenToSqueezelyAndVerifyAuth(array $magentoToken): bool;
+    public function sendMagentoTokenToSqueezelyAndVerifyAuth(array $magentoToken, int $storeId): bool;
 }

@@ -11,6 +11,7 @@ use Magento\Framework\Exception\AuthenticationException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\HTTP\ClientInterface as Curl;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Magento\Store\Model\StoreManagerInterface;
 use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface as AdvancedOptionsConfigRepository;
 use Squeezely\Plugin\Api\Request\ServiceInterface;
@@ -35,6 +36,10 @@ class Request implements ServiceInterface
      */
     private $jsonSerializer;
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+    /**
      * @var Curl
      */
     private $curl;
@@ -49,6 +54,7 @@ class Request implements ServiceInterface
      * @param ConfigRepository $configRepository
      * @param AdvancedOptionsConfigRepository $advancedOptionsRepository
      * @param JsonSerializer $jsonSerializer
+     * @param StoreManagerInterface $storeManager
      * @param Curl $curl
      * @param LogRepository $logRepository
      */
@@ -56,12 +62,14 @@ class Request implements ServiceInterface
         ConfigRepository $configRepository,
         AdvancedOptionsConfigRepository $advancedOptionsRepository,
         JsonSerializer $jsonSerializer,
+        StoreManagerInterface $storeManager,
         Curl $curl,
         LogRepository $logRepository
     ) {
         $this->configRepository = $configRepository;
         $this->advancedOptionsConfigRepository = $advancedOptionsRepository;
         $this->jsonSerializer = $jsonSerializer;
+        $this->storeManager = $storeManager;
         $this->curl = $curl;
         $this->logRepository = $logRepository;
     }
@@ -69,11 +77,14 @@ class Request implements ServiceInterface
     /**
      * @inheritDoc
      */
-    public function execute(array $fields, string $endpoint)
+    public function execute(array $fields, string $endpoint, $storeId = null)
     {
         $this->logRepository->addDebugLog('Request', __('Start'));
-        $accountId = $this->configRepository->getAccountId();
-        $apiKey = $this->configRepository->getApiKey();
+        if (!$storeId) {
+            $storeId = $this->storeManager->getStore()->getId();
+        }
+        $accountId = $this->configRepository->getAccountId((int)$storeId);
+        $apiKey = $this->configRepository->getApiKey((int)$storeId);
         $json = $this->jsonSerializer->serialize($fields);
         $url = $this->advancedOptionsConfigRepository->getApiRequestUri() . $endpoint;
 
