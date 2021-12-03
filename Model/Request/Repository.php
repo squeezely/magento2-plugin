@@ -76,11 +76,12 @@ class Repository implements RequestRepository
     /**
      * @inheritDoc
      */
-    public function sendMagentoTokenToSqueezelyAndVerifyAuth(array $magentoToken): bool
+    public function sendMagentoTokenToSqueezelyAndVerifyAuth(array $magentoToken, int $storeId): bool
     {
         $response = $this->requestService->execute(
             $magentoToken,
-            self::VERIFY_API_LOGIN_END_POINT
+            self::VERIFY_API_LOGIN_END_POINT,
+            $storeId
         );
 
         if (isset($response['verified']) && $response['verified'] == true) {

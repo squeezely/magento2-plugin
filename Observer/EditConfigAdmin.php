@@ -84,9 +84,9 @@ class EditConfigAdmin implements ObserverInterface
      */
     public function execute(EventObserver $observer)
     {
+        $storeId = $observer->getData('store');
         try {
-            $this->integrationService->deleteIntegration();
-            $isVerified = $this->integrationService->createIntegration();
+            $isVerified = $this->integrationService->verifyAuth((int)$storeId);
 
             if ($isVerified) {
                 $msg = (string)self::SUCCESS_MSG;

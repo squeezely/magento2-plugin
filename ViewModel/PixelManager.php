@@ -9,6 +9,7 @@ namespace Squeezely\Plugin\ViewModel;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface as AdvancedOptionsRepository;
 use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
 use Squeezely\Plugin\Api\Service\DataLayerInterface;
@@ -42,9 +43,17 @@ class PixelManager implements ArgumentInterface
      */
     private $urlBuilder;
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+    /**
      * @var LogRepository
      */
     private $logRepository;
+    /**
+     * @var int
+     */
+    private $storeId = 0;
 
     /**
      * PixelManager constructor.
@@ -60,12 +69,14 @@ class PixelManager implements ArgumentInterface
         AdvancedOptionsRepository $advancedOptionsRepository,
         DataLayerInterface $dataLayer,
         UrlInterface $urlBuilder,
+        StoreManagerInterface $storeManager,
         LogRepository $logRepository
     ) {
         $this->configRepository = $configRepository;
         $this->advancedOptionsRepository = $advancedOptionsRepository;
         $this->dataLayer = $dataLayer;
         $this->urlBuilder = $urlBuilder;
+        $this->storeManager = $storeManager;
         $this->logRepository = $logRepository;
     }
 
@@ -76,7 +87,7 @@ class PixelManager implements ArgumentInterface
      */
     public function isEnabled()
     {
-        return $this->configRepository->isEnabled();
+        return $this->configRepository->isEnabled($this->getStoreId());
     }
 
     /**
@@ -97,7 +108,7 @@ class PixelManager implements ArgumentInterface
      */
     private function getAccountId()
     {
-        return $this->configRepository->getAccountId();
+        return $this->configRepository->getAccountId($this->getStoreId());
     }
 
     /**
@@ -116,5 +127,22 @@ class PixelManager implements ArgumentInterface
     public function getAjaxUrl()
     {
         return $this->urlBuilder->getUrl(self::URL_PATH);
+    }
+
+    /**
+     * Return current store id
+     *
+     * @return int
+     */
+    private function getStoreId()
+    {
+        if (!$this->storeId) {
+            try {
+                $this->storeId = (int)$this->storeManager->getStore()->getId();
+            } catch (NoSuchEntityException $e) {
+                $this->logRepository->addDebugLog('pixel manager', $e->getMessage());
+            }
+        }
+        return $this->storeId;
     }
 }
