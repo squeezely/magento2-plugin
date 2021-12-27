@@ -512,15 +512,16 @@ class GetData
                 return ($product->getData('is_in_stock') == 1);
         }
 
-        $connection = $this->resource->getConnection();
-        $select = $connection->select()
-            ->from(
-                $this->resource->getTableName('eav_attribute'),
-                'frontend_input'
-            )->where('attribute_code = ?', $field);
-        $attributeType = $connection->fetchOne($select);
         $attributeName = $this->attributes[$field] ?? null;
         if ($attributeName) {
+            $connection = $this->resource->getConnection();
+            $select = $connection->select()
+                ->from(
+                    $this->resource->getTableName('eav_attribute'),
+                    'frontend_input'
+                )->where('attribute_code = ?', $attributeName);
+            $attributeType = $connection->fetchOne($select);
+
             if ($attributeType == 'select') {
                 if (!$product->getResource()->getAttribute($attributeName)) {
                     return '';
