@@ -24,8 +24,8 @@ use Magento\Framework\Locale\Resolver as LocaleResolver;
 class Success implements ArgumentInterface
 {
 
-    const PURCHASE_EVENT_NAME = 'Purchase';
-    const PRE_PURCHASE_EVENT_NAME = 'PrePurchase';
+    public const PURCHASE_EVENT_NAME = 'Purchase';
+    public const PRE_PURCHASE_EVENT_NAME = 'PrePurchase';
 
     /**
      * @var FrontendEventsRepository

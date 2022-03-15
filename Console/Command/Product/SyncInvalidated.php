@@ -21,7 +21,7 @@ class SyncInvalidated extends Command
     /**
      * Command call name
      */
-    const COMMAND_NAME = 'squeezely:product:sync-invalidated';
+    public const COMMAND_NAME = 'squeezely:product:sync-invalidated';
     /**
      * @var SyncInvalidatedProducts
      */

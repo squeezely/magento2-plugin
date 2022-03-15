@@ -23,29 +23,29 @@ class EditConfigAdmin implements ObserverInterface
     /**
      * Integation name constant
      */
-    const INTEGRATION_NAME = 'Squeezely Integration';
+    public const INTEGRATION_NAME = 'Squeezely Integration';
 
     /**
      * Message on successfully integration
      */
-    const SUCCESS_MSG = 'Squeezely credentials are successfully verified';
+    public const SUCCESS_MSG = 'Squeezely credentials are successfully verified';
 
     /**
      * Message on unsuccessfully integration
      */
-    const ERROR_MSG = 'Could not verify given Squeezely credentials, please try again later or contact '
+    public const ERROR_MSG = 'Could not verify given Squeezely credentials, please try again later or contact '
     . 'support@squeezely.tech.';
 
     /**
      * Message on exception in integration call
      */
-    const EXCEPTION_MSG = 'Could not verify given Squeezely credentials, please try again later or contact ' .
+    public const EXCEPTION_MSG = 'Could not verify given Squeezely credentials, please try again later or contact ' .
     'support@squeezely.tech. Exception message: %1';
 
     /**
      * Message on exception in integration call
      */
-    const EXCEPTION_CREDENTIALS_MSG = 'Credentials are incorect, please try again!';
+    public const EXCEPTION_CREDENTIALS_MSG = 'Credentials are incorect, please try again!';
 
     /**
      * @var LogRepository

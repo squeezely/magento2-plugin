@@ -15,22 +15,22 @@ interface RepositoryInterface
     /**
      * Module Name
      */
-    const SQUEEZELY_PLUGIN_NAME = 'Squeezely_Plugin';
+    public const SQUEEZELY_PLUGIN_NAME = 'Squeezely_Plugin';
 
     /**
      * Config paths for 'general'-group
      */
-    const XML_PATH_ENABLED = 'squeezely/general/enabled';
-    const XML_PATH_ACCOUNT_ID = 'squeezely/general/account_id';
-    const XML_PATH_API_KEY = 'squeezely/general/api_key';
-    const XML_PATH_WEBHOOK_KEY = 'squeezely/general/webhook_key';
-    const XML_PATH_EXTENSION_VERSION = 'squeezely/general/version';
-    const SQUEEZELY_COOKIE_NAME = 'sqzllocal';
+    public const XML_PATH_ENABLED = 'squeezely/general/enabled';
+    public const XML_PATH_ACCOUNT_ID = 'squeezely/general/account_id';
+    public const XML_PATH_API_KEY = 'squeezely/general/api_key';
+    public const XML_PATH_WEBHOOK_KEY = 'squeezely/general/webhook_key';
+    public const XML_PATH_EXTENSION_VERSION = 'squeezely/general/version';
+    public const SQUEEZELY_COOKIE_NAME = 'sqzllocal';
 
     /**
      * Generic extension is not enables message
      */
-    const EXTENSION_DISABLED_ERROR = 'Extension is not enabled';
+    public const EXTENSION_DISABLED_ERROR = 'Extension is not enabled';
 
     /**
      * Check if module is enabled

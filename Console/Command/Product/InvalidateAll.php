@@ -21,7 +21,7 @@ class InvalidateAll extends Command
     /**
      * Command call name
      */
-    const COMMAND_NAME = 'squeezely:product:invalidate-all';
+    public const COMMAND_NAME = 'squeezely:product:invalidate-all';
     /**
      * @var InvalidateAllProducts
      */

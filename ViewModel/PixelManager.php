@@ -24,7 +24,7 @@ class PixelManager implements ArgumentInterface
     /**
      * Url path for ajax call
      */
-    const URL_PATH = 'sqzl/events/get';
+    public const URL_PATH = 'sqzl/events/get';
 
     /**
      * @var FrontendEventsRepository

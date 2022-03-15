@@ -24,8 +24,8 @@ use Magento\Framework\Locale\Resolver as LocaleResolver;
 class Quote
 {
 
-    const REMOVE_FROM_CART_EVENT_NAME = 'RemoveFromCart';
-    const ADD_TO_CART_EVENT_NAME = 'AddToCart';
+    public const REMOVE_FROM_CART_EVENT_NAME = 'RemoveFromCart';
+    public const ADD_TO_CART_EVENT_NAME = 'AddToCart';
 
     /**
      * @var DataLayerInterface

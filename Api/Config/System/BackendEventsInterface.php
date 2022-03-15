@@ -17,8 +17,8 @@ interface BackendEventsInterface extends RepositoryInterface
     /**
      * Config paths for 'backend-events'-group
      */
-    const XML_PATH_BACKENDEVENTS_ENABLED = 'squeezely/backend_events/enabled';
-    const XML_PATH_BACKENDEVENTS_EVENTS = 'squeezely/backend_events/events';
+    public const XML_PATH_BACKENDEVENTS_ENABLED = 'squeezely/backend_events/enabled';
+    public const XML_PATH_BACKENDEVENTS_EVENTS = 'squeezely/backend_events/events';
 
     /**
      * Backend Events Enable FLag

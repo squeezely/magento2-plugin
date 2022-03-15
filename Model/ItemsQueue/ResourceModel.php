@@ -18,12 +18,12 @@ class ResourceModel extends AbstractDb
     /**
      * Table name
      */
-    const ENTITY_TABLE = 'squeezely_items_queue';
+    public const ENTITY_TABLE = 'squeezely_items_queue';
 
     /**
      * Primary field
      */
-    const PRIMARY = 'entity_id';
+    public const PRIMARY = 'entity_id';
 
     /**
      * @inheritDoc

@@ -25,7 +25,7 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 class Checkout implements ArgumentInterface
 {
 
-    const EVENT_NAME = 'InitiateCheckout';
+    public const EVENT_NAME = 'InitiateCheckout';
 
     /**
      * @var FrontendEventsRepository

@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Controller\Adminhtml\Products;
 
 use Magento\Backend\App\Action;
+use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
@@ -25,22 +26,22 @@ class Invalidate extends Action
     /**
      * Error Message: not enabled
      */
-    const ERROR_MSG_ENABLED = 'Store sync not enabled for this store, please enable this first.';
+    public const ERROR_MSG_ENABLED = 'Store sync not enabled for this store, please enable this first.';
 
     /**
      * Error Message
      */
-    const ERROR_MSG_NO_ITEMS = 'Something went wrong, please try again';
+    public const ERROR_MSG_NO_ITEMS = 'Something went wrong, please try again';
 
     /**
      * Success Message
      */
-    const SUCCESS_MSG = '%1 products were invalidated and queued for sync.';
+    public const SUCCESS_MSG = '%1 products were invalidated and queued for sync.';
 
     /**
      * No products to invalidate
      */
-    const NO_PRODUCTS_MSG = 'No products to invalidate.';
+    public const NO_PRODUCTS_MSG = 'No products to invalidate.';
 
     /**
      * @var StoreSyncConfigRepository
@@ -58,6 +59,11 @@ class Invalidate extends Action
     private $invalidateByStore;
 
     /**
+     * @var RedirectInterface
+     */
+    private $redirect;
+
+    /**
      * Invalidate constructor.
      *
      * @param Action\Context $context
@@ -69,12 +75,14 @@ class Invalidate extends Action
         Action\Context $context,
         StoreSyncConfigRepository $storeSyncConfigRepository,
         RequestRepository $requestRepository,
-        InvalidateByStore $invalidateByStore
+        InvalidateByStore $invalidateByStore,
+        RedirectInterface $redirect
     ) {
         $this->messageManager = $context->getMessageManager();
         $this->storeSyncConfigRepository = $storeSyncConfigRepository;
         $this->requestRepository = $requestRepository;
         $this->invalidateByStore = $invalidateByStore;
+        $this->redirect = $redirect;
         parent::__construct($context);
     }
 
@@ -90,7 +98,7 @@ class Invalidate extends Action
             $msg = self::ERROR_MSG_ENABLED;
             $this->messageManager->addErrorMessage(__($msg));
             return $resultRedirect->setPath(
-                $this->_redirect->getRefererUrl()
+                $this->redirect->getRefererUrl()
             );
         }
 
@@ -101,7 +109,7 @@ class Invalidate extends Action
             $this->messageManager->addErrorMessage($result['msg']);
         }
         return $resultRedirect->setPath(
-            $this->_redirect->getRefererUrl()
+            $this->redirect->getRefererUrl()
         );
     }
 }

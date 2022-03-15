@@ -17,11 +17,11 @@ interface DataInterface extends ExtensibleDataInterface
     /**
      * Constants for keys of data array. Identical to the name of the getter in snake case.
      */
-    const ENTITY_ID = 'entity_id';
-    const PRODUCT_ID = 'product_id';
-    const PARENT_ID = 'parent_id';
-    const STORE_ID = 'store_id';
-    const CREATED_AT = 'created_at';
+    public const ENTITY_ID = 'entity_id';
+    public const PRODUCT_ID = 'product_id';
+    public const PARENT_ID = 'parent_id';
+    public const STORE_ID = 'store_id';
+    public const CREATED_AT = 'created_at';
 
     /**
      * @return int

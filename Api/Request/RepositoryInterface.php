@@ -18,32 +18,32 @@ interface RepositoryInterface
     /**
      * Product api endpoint
      */
-    const PRODUCT_END_POINT = "v1/products";
+    public const PRODUCT_END_POINT = "v1/products";
 
     /**
      * Tracker api endpoint
      */
-    const TRACKER_END_POINT = "v1/track";
+    public const TRACKER_END_POINT = "v1/track";
 
     /**
      * Verify api login endpoint v1
      */
-    const VERIFY_API_LOGIN_END_POINT = "v1/verifyAuth?channel=2";
+    public const VERIFY_API_LOGIN_END_POINT = "v1/verifyAuth?channel=2";
 
     /**
      * Event cocd for Email Opt in
      */
-    const EMAIL_OPT_IN_EVENT_NAME = 'EmailOptIn';
+    public const EMAIL_OPT_IN_EVENT_NAME = 'EmailOptIn';
 
     /**
      * Event cocd for Purchase
      */
-    const PURCHASE_EVENT_NAME = 'Purchase';
+    public const PURCHASE_EVENT_NAME = 'Purchase';
 
     /**
      * Number of products per one request
      */
-    const PRODUCTS_PER_REQUEST = 250;
+    public const PRODUCTS_PER_REQUEST = 250;
 
     /**
      * Send product data to API
