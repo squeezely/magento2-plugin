@@ -24,7 +24,7 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 class Product implements ArgumentInterface
 {
 
-    const EVENT_NAME = 'ViewContent';
+    public const EVENT_NAME = 'ViewContent';
 
     /**
      * @var FrontendEventsRepository

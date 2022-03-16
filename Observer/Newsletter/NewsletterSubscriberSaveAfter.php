@@ -21,7 +21,7 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
  */
 class NewsletterSubscriberSaveAfter implements ObserverInterface
 {
-    const EVENT_NAME = 'EmailOptIn';
+    public const EVENT_NAME = 'EmailOptIn';
 
     /**
      * @var DataLayerInterface

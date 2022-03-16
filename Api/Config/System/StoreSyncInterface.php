@@ -17,16 +17,16 @@ interface StoreSyncInterface extends RepositoryInterface
     /**
      * Config paths for 'store_sync'-group
      */
-    const XML_PATH_STORESYNC_ENABLED = 'squeezely/store_sync/enabled';
-    const XML_PATH_STORESYNC_ATTRIBUTE_NAME = 'squeezely/store_sync/attribute_name';
-    const XML_PATH_STORESYNC_ATTRIBUTE_DESCRIPTION = 'squeezely/store_sync/attribute_description';
-    const XML_PATH_STORESYNC_ATTRIBUTE_BRAND = 'squeezely/store_sync/attribute_brand';
-    const XML_PATH_STORESYNC_ATTRIBUTE_SIZE = 'squeezely/store_sync/attribute_size';
-    const XML_PATH_STORESYNC_ATTRIBUTE_COLOR = 'squeezely/store_sync/attribute_color';
-    const XML_PATH_STORESYNC_ATTRIBUTE_CONDITION = 'squeezely/store_sync/attribute_condition';
-    const XML_PATH_STORESYNC_USE_PARENT_IMAGE = 'squeezely/store_sync/use_parent_image';
-    const XML_PATH_STORESYNC_EXTRA_FIELDS = 'squeezely/store_sync/extra_fields';
-    const XML_PATH_SYNC_CRON = 'squeezely/store_sync/cron';
+    public const XML_PATH_STORESYNC_ENABLED = 'squeezely/store_sync/enabled';
+    public const XML_PATH_STORESYNC_ATTRIBUTE_NAME = 'squeezely/store_sync/attribute_name';
+    public const XML_PATH_STORESYNC_ATTRIBUTE_DESCRIPTION = 'squeezely/store_sync/attribute_description';
+    public const XML_PATH_STORESYNC_ATTRIBUTE_BRAND = 'squeezely/store_sync/attribute_brand';
+    public const XML_PATH_STORESYNC_ATTRIBUTE_SIZE = 'squeezely/store_sync/attribute_size';
+    public const XML_PATH_STORESYNC_ATTRIBUTE_COLOR = 'squeezely/store_sync/attribute_color';
+    public const XML_PATH_STORESYNC_ATTRIBUTE_CONDITION = 'squeezely/store_sync/attribute_condition';
+    public const XML_PATH_STORESYNC_USE_PARENT_IMAGE = 'squeezely/store_sync/use_parent_image';
+    public const XML_PATH_STORESYNC_EXTRA_FIELDS = 'squeezely/store_sync/extra_fields';
+    public const XML_PATH_SYNC_CRON = 'squeezely/store_sync/cron';
 
     /**
      * Store Sync Enable FLag

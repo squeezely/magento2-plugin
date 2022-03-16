@@ -22,7 +22,7 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 class Search implements ArgumentInterface
 {
 
-    const EVENT_NAME = 'Search';
+    public const EVENT_NAME = 'Search';
 
     /**
      * @var FrontendEventsRepository

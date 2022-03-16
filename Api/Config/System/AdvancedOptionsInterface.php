@@ -17,10 +17,10 @@ interface AdvancedOptionsInterface extends RepositoryInterface
     /**
      * Config paths for 'advanced'-group
      */
-    const XML_PATH_DEBUG = 'squeezely/advanced/debug';
-    const XML_PATH_ENDPOINT_DATA_URL = 'squeezely/advanced/endpoint_data_url';
-    const XML_PATH_ENDPOINT_TRACKER_URL = 'squeezely/advanced/endpoint_tracker_url';
-    const XML_PATH_API_REQUEST_URI = 'squeezely/advanced/api_request_uri';
+    public const XML_PATH_DEBUG = 'squeezely/advanced/debug';
+    public const XML_PATH_ENDPOINT_DATA_URL = 'squeezely/advanced/endpoint_data_url';
+    public const XML_PATH_ENDPOINT_TRACKER_URL = 'squeezely/advanced/endpoint_tracker_url';
+    public const XML_PATH_API_REQUEST_URI = 'squeezely/advanced/api_request_uri';
 
     /**
      * Is debug loggin enabled

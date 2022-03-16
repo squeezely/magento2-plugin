@@ -17,7 +17,7 @@ interface FrontendEventsInterface extends RepositoryInterface
     /**
      * Config paths for 'frontend events'-group
      */
-    const XML_PATH_FRONTENDEVENTS_ENABLED = 'squeezely/frontend_events/enabled';
+    public const XML_PATH_FRONTENDEVENTS_ENABLED = 'squeezely/frontend_events/enabled';
 
     /**
      * Frontend Events Enable FLag

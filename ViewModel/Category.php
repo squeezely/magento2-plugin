@@ -23,7 +23,7 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 class Category implements ArgumentInterface
 {
 
-    const EVENT_NAME = 'ViewCategory';
+    public const EVENT_NAME = 'ViewCategory';
 
     /**
      * @var FrontendEventsRepository

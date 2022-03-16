@@ -1,4 +1,4 @@
-name: phpstan
+name: setup:di:compile
 on: [pull_request]
 
 jobs:
@@ -6,8 +6,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - PHP_VERSION: php72-fpm
-            MAGENTO_VERSION: 2.3.3
           - PHP_VERSION: php73-fpm
             MAGENTO_VERSION: 2.3.6-p1
           - PHP_VERSION: php74-fpm
@@ -25,8 +23,8 @@ jobs:
       - name: Upload our code into the docker container
         run: docker cp $(pwd) magento-project-community-edition:/data/extensions/
 
-      - name: Install the extensions in Magento
-        run: docker exec magento-project-community-edition composer require squeezely/magento2-plugin:dev-continuous-integration-test-branch fooman/phpstan-magento2-magic-methods:^0.7 phpstan/phpstan:0.*
+      - name: Install the extension in Magento
+        run: docker exec magento-project-community-edition composer require squeezely/magento2-plugin:dev-continuous-integration-test-branch
 
-      - name: Run PHPStan
-        run: docker exec magento-project-community-edition /bin/bash -c "./vendor/bin/phpstan analyse -c /data/extensions/*/phpstan.neon /data/extensions"
+      - name: Run setup:di:compile
+        run: docker exec magento-project-community-edition php bin/magento setup:di:compile

@@ -25,7 +25,7 @@ use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
 class Service
 {
 
-    const INTEGRATION_NAME = 'Squeezely Integration';
+    public const INTEGRATION_NAME = 'Squeezely Integration';
 
     /**
      * @var IntegrationServiceInterface

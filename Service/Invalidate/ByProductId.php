@@ -17,7 +17,7 @@ use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
  */
 class ByProductId
 {
-    const SUCCESS_MESSAGE = 'Store %s, invalidated products: %s';
+    public const SUCCESS_MESSAGE = 'Store %s, invalidated products: %s';
 
     /**
      * @var ResourceConnection
