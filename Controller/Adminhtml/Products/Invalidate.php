@@ -24,6 +24,11 @@ class Invalidate extends Action
 {
 
     /**
+     * @see _isAllowed()
+     */
+    public const ADMIN_RESOURCE = 'Squeezely_Plugin::config';
+
+    /**
      * Error Message: not enabled
      */
     public const ERROR_MSG_ENABLED = 'Store sync not enabled for this store, please enable this first.';

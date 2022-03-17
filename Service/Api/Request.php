@@ -79,7 +79,6 @@ class Request implements ServiceInterface
      */
     public function execute(array $fields, string $endpoint, $storeId = null)
     {
-        $this->logRepository->addDebugLog('Request', __('Start'));
         if (!$storeId) {
             $storeId = $this->storeManager->getStore()->getId();
         }
@@ -100,15 +99,16 @@ class Request implements ServiceInterface
             ]
         );
 
-        $this->logRepository->addDebugLog('Request', 'Data: ' . $json);
+        $this->logRepository->addDebugLog(
+            'Request',
+            sprintf('%s - %s', $url, $json)
+        );
 
         $this->curl->post($url, $json);
 
         $this->logRepository->addDebugLog(
-            'Request',
-            'Response: ' . $this->curl->getBody()
-                . '\n'
-                . 'StatusCode: ' . $this->curl->getStatus()
+            'Response',
+            sprintf('%s - %s', $this->curl->getStatus(), $this->curl->getBody())
         );
 
         $response = $this->jsonSerializer->unserialize($this->curl->getBody());
@@ -122,8 +122,6 @@ class Request implements ServiceInterface
         if (!empty($response['errors']) && !empty($response['errors'][0])) {
             throw new LocalizedException(__($response['errors'][0]));
         }
-
-        $this->logRepository->addDebugLog('Request', __('Finish'));
 
         return $response;
     }

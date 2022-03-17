@@ -21,6 +21,11 @@ class Download extends Action
 {
 
     /**
+     * @see _isAllowed()
+     */
+    public const ADMIN_RESOURCE = 'Squeezely_Plugin::config';
+
+    /**
      * @var FileFactory
      */
     private $fileFactory;
