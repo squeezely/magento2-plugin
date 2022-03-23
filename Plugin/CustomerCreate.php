@@ -10,7 +10,7 @@ namespace Squeezely\Plugin\Plugin;
 use Magento\Customer\Controller\Account\CreatePost;
 use Magento\Customer\Model\Session;
 use Magento\Customer\Api\CustomerRepositoryInterface;
-use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Controller\AbstractResult;
 use Magento\Newsletter\Model\Subscriber;
 use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepository;
 use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
@@ -102,12 +102,12 @@ class CustomerCreate
      * Fire events after new customer registered
      *
      * @param CreatePost $subject
-     * @param Redirect $result
-     * @return Redirect
+     * @param AbstractResult $result
+     * @return AbstractResult
      */
     public function afterExecute(
         CreatePost $subject,
-        Redirect $result
+        AbstractResult $result
     ) {
         try {
             $customerEmail = $this->session->getCustomerFormData()['email'];
