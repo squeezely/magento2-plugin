@@ -41,6 +41,11 @@ interface RepositoryInterface
     public const PURCHASE_EVENT_NAME = 'Purchase';
 
     /**
+     * Event code for CRMUpdate
+     */
+    public const CRM_UPDATE_EVENT_NAME = 'CRMUpdate';
+
+    /**
      * Number of products per one request
      */
     public const PRODUCTS_PER_REQUEST = 250;
@@ -64,6 +69,16 @@ interface RepositoryInterface
      * @throws LocalizedException
      */
     public function sendPurchases(array $purchases): array;
+
+    /**
+     * Send CRMUpdate data to API
+     *
+     * @param array $data
+     * @return array
+     * @throws AuthenticationException
+     * @throws LocalizedException
+     */
+    public function sendCRMUpdate(array $data): array;
 
     /**
      * Send registered customer data to API
