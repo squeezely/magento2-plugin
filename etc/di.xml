@@ -55,6 +55,14 @@
         <plugin name="squeezelyWebapiOutput"
                 type="Squeezely\Plugin\Plugin\Webapi\ServiceOutputProcessor" sortOrder="1" disabled="false" />
     </type>
+    <type name="Magento\Customer\Model\ResourceModel\CustomerRepository">
+        <plugin name="squeezelySaveCustomer"
+                type="Squeezely\Plugin\Plugin\CustomerRepository" sortOrder="1" disabled="false" />
+    </type>
+    <type name="Magento\Newsletter\Model\Subscriber">
+        <plugin name="squeezelySaveSubscriber"
+                type="Squeezely\Plugin\Plugin\Subscriber" sortOrder="1" disabled="false" />
+    </type>
 
     <type name="Squeezely\Plugin\Logger\ErrorLogger">
         <arguments>

@@ -11,7 +11,4 @@
         <observer name="sqzl_layout_load_before"
                   instance="Squeezely\Plugin\Observer\LayoutLoadBefore"/>
     </event>
-    <event name="newsletter_subscriber_save_after">
-        <observer name="sqzl_observer_subscriber_save_after" instance="Squeezely\Plugin\Observer\Newsletter\NewsletterSubscriberSaveAfter"/>
-    </event>
 </config>
