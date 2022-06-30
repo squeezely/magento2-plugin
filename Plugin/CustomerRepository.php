@@ -241,24 +241,6 @@ class CustomerRepository
     }
 
     /**
-     * Get Gender. Properly works only with default magento attribute and options.
-     *
-     * @param CustomerInterface $customer
-     * @return string
-     */
-    private function getGender(CustomerInterface $customer): string
-    {
-        switch ($customer->getGender()) {
-            case 1:
-                return 'M';
-            case 2:
-                return 'F';
-            default:
-                return "U";
-        }
-    }
-
-    /**
      * @param string $email
      * @param CustomerInterface $savedCustomer
      * @return void
