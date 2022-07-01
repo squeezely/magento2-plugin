@@ -68,6 +68,14 @@ class Repository implements RequestRepository
     /**
      * @inheritDoc
      */
+    public function sendCRMUpdate(array $data): array
+    {
+        return $this->requestService->execute($data, self::TRACKER_END_POINT);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function sendCompleteRegistration(array $eventData): array
     {
         return $this->requestService->execute($eventData, self::TRACKER_END_POINT);

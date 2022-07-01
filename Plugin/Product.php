@@ -5,21 +5,18 @@
  */
 declare(strict_types=1);
 
-namespace Squeezely\Plugin\Observer\Product;
+namespace Squeezely\Plugin\Plugin;
 
-use Magento\Catalog\Model\Product;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\Product as Subject;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Service\Invalidate\ByProductId as InvalidateByProductId;
 
 /**
- * Class InvalidateProduct
- * Invalidating product data after it saved
+ * Product Save Plugin
  */
-class InvalidateProduct implements ObserverInterface
+class Product
 {
-
     /**
      * @var LogRepository
      */
@@ -44,25 +41,25 @@ class InvalidateProduct implements ObserverInterface
     }
 
     /**
-     * Add Invalidated Product to Queue
+     * Invalidate product after save
      *
-     * @param Observer $observer
+     * @param Subject $product
+     * @param Subject $result
+     * @return ProductInterface
      */
-    public function execute(Observer $observer)
-    {
-
-        /** @var Product $product */
-        $product = $observer->getEvent()->getProduct();
+    public function afterSave(
+        Subject $product
+    ): ProductInterface {
         $productId = $product->getId();
         $storeIds = $product->getStoreIds();
-
         try {
             foreach ($storeIds as $storeId) {
                 $result = $this->invalidateByProductId->execute([$productId], (int)$storeId);
-                $this->logRepository->addDebugLog('InvalidateProduct Observer', $result);
+                $this->logRepository->addDebugLog('InvalidateProduct Plugin', $result);
             }
         } catch (\Exception $exception) {
-            $this->logRepository->addErrorLog('InvalidateProduct Observer', $exception->getMessage());
+            $this->logRepository->addErrorLog('InvalidateProduct Plugin', $exception->getMessage());
         }
+        return $product;
     }
 }

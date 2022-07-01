@@ -34,6 +34,7 @@ use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
+use Magento\Catalog\Helper\Data as TaxHelper;
 
 /**
  * Product Data Service class
@@ -204,6 +205,10 @@ class GetData
      * @var ResourceConnection
      */
     private $resource;
+    /**
+     * @var TaxHelper
+     */
+    private $taxHelper;
 
     /**
      * GetData constructor.
@@ -223,6 +228,9 @@ class GetData
      * @param GroupedTypeModel $groupedModel
      * @param File $file
      * @param DirectoryList $directoryList
+     * @param ResourceConnection $resource
+     * @param MetadataPool $metadataPool
+     * @param TaxHelper $taxHelper
      * @throws \Exception
      */
     public function __construct(
@@ -242,7 +250,8 @@ class GetData
         File $file,
         DirectoryList $directoryList,
         ResourceConnection $resource,
-        MetadataPool $metadataPool
+        MetadataPool $metadataPool,
+        TaxHelper $taxHelper
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
         $this->configRepository = $configRepository;
@@ -260,6 +269,7 @@ class GetData
         $this->file = $file;
         $this->resource = $resource;
         $this->directoryList = $directoryList;
+        $this->taxHelper = $taxHelper;
         $this->linkField = $metadataPool->getMetadata(ProductInterface::class)->getLinkField();
     }
 
@@ -344,7 +354,7 @@ class GetData
         $collection = $this->productCollectionFactory->create();
         $collection->addStoreFilter($storeId)
             ->addAttributeToSelect(array_values($this->attributes))
-            ->addAttributeToSelect(['image', 'special_price'])
+            ->addAttributeToSelect(['image', 'special_price', 'tax_class_id'])
             ->addAttributeToFilter('sku', ['in' => $skus])
             ->addUrlRewrite();
 
@@ -469,9 +479,10 @@ class GetData
                 }
                 return $this->store->getBaseUrl() . 'catalog/product/view/id/' . $product->getId();
             case 'price':
-                return $product->getPrice() ?? $product->getFinalPrice();
+                return $this->getPriceInclTax($product, $product->getPrice(), $storeId) ??
+                    $this->getPriceInclTax($product, $product->getFinalPrice(), $storeId);
             case 'sale_price':
-                return $product->getFinalPrice() ?? 0;
+                return $this->getPriceInclTax($product, $product->getFinalPrice(), $storeId) ?? 0;
             case 'availability':
                 return ($product->getData('is_in_stock') == 1) ? ('in stock') : ('out of stock');
             // no break
@@ -681,5 +692,27 @@ class GetData
             );
         }
         return $this->customFields;
+    }
+
+    /**
+     * Get price including tax
+     *
+     * @param Product $product
+     * @param $price
+     * @param int $storeId
+     * @return float|null
+     */
+    private function getPriceInclTax(Product $product, $price, int $storeId): ?float
+    {
+        return $this->taxHelper->getTaxPrice(
+            $product,
+            $price,
+            true,
+            null,
+            null,
+            null,
+            $storeId,
+            null
+        );
     }
 }

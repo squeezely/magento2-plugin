@@ -18,7 +18,7 @@ class BackendEvents implements OptionSourceInterface
     /**
      * Available backend events
      */
-    public const EVENTS = ['EmailOptIn', 'Purchase'];
+    public const EVENTS = ['EmailOptIn', 'Purchase', 'CRMUpdate'];
 
     /**
      * Options array
