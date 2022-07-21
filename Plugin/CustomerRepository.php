@@ -86,16 +86,17 @@ class CustomerRepository
      * @param CustomerInterface $customer
      * @return mixed
      */
-    public function aroundSave(Subject $subject, callable $proceed, CustomerInterface $customer)
+    public function aroundSave(Subject $subject, callable $proceed, ...$args)
     {
+        list($customer) = $args;
         if ($customer->getId()) {
             try {
                 $prevCustomerData = $subject->getById($customer->getId());
             } catch (\Exception $e) {
-                return $proceed($customer);
+                return $proceed(...$args);
             }
         } else {
-            return $proceed($customer);
+            return $proceed(...$args);
         }
 
         switch ($this->getAreaCode()) {
@@ -107,7 +108,7 @@ class CustomerRepository
                 break;
         }
 
-        return $proceed($customer);
+        return $proceed(...$args);
     }
 
     /**
