@@ -60,6 +60,14 @@ class Repository implements RequestRepository
     /**
      * @inheritDoc
      */
+    public function sendDeleteProducts(array $products): array
+    {
+        return $this->requestService->execute($products, self::PRODUCT_DELETE_ENDPOINT, null, 'DELETE');
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function sendPurchases(array $purchases): array
     {
         return $this->requestService->execute($purchases, self::TRACKER_END_POINT);
