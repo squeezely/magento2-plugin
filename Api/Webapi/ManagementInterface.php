@@ -17,7 +17,7 @@ interface ManagementInterface
      *
      * @param int $productId
      *
-     * @return array
+     * @return string[]
      */
     public function getParentIdOfProduct(int $productId): array;
 
