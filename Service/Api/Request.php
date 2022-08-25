@@ -101,7 +101,7 @@ class Request implements ServiceInterface
 
         $this->logRepository->addDebugLog(
             'Request',
-            sprintf('%s - %s', $url, $json)
+            sprintf('%s %s - %s', $method, $url, $json)
         );
 
         if ($method == 'POST') {
