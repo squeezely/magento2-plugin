@@ -21,6 +21,11 @@ interface RepositoryInterface
     public const PRODUCT_END_POINT = "v1/products";
 
     /**
+     * Product api endpoint
+     */
+    public const PRODUCT_DELETE_ENDPOINT = "products";
+
+    /**
      * Tracker api endpoint
      */
     public const TRACKER_END_POINT = "v1/track";
@@ -59,6 +64,14 @@ interface RepositoryInterface
      * @throws LocalizedException
      */
     public function sendProducts(array $products): array;
+
+    /**
+     * @param array $products
+     * @return array
+     * @throws AuthenticationException
+     * @throws LocalizedException
+     */
+    public function sendDeleteProducts(array $products): array;
 
     /**
      * Send purchased order data to API

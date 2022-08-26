@@ -63,6 +63,10 @@
         <plugin name="squeezelySaveSubscriber"
                 type="Squeezely\Plugin\Plugin\Subscriber" sortOrder="1" disabled="false" />
     </type>
+    <type name="Magento\Catalog\Model\ProductRepository">
+        <plugin name="squeezelyDeleteProduct"
+                type="Squeezely\Plugin\Plugin\ProductRepository" sortOrder="1" disabled="false" />
+    </type>
 
     <type name="Squeezely\Plugin\Logger\ErrorLogger">
         <arguments>

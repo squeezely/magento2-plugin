@@ -9,7 +9,7 @@ namespace Squeezely\Plugin\Service\Api;
 
 use Magento\Framework\Exception\AuthenticationException;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\HTTP\ClientInterface as Curl;
+use Squeezely\Plugin\Model\Api\CurlExtra as Curl;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Store\Model\StoreManagerInterface;
 use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
@@ -77,7 +77,7 @@ class Request implements ServiceInterface
     /**
      * @inheritDoc
      */
-    public function execute(array $fields, string $endpoint, $storeId = null)
+    public function execute(array $fields, string $endpoint, $storeId = null, $method = 'POST')
     {
         if (!$storeId) {
             $storeId = $this->storeManager->getStore()->getId();
@@ -101,10 +101,14 @@ class Request implements ServiceInterface
 
         $this->logRepository->addDebugLog(
             'Request',
-            sprintf('%s - %s', $url, $json)
+            sprintf('%s %s - %s', $method, $url, $json)
         );
 
-        $this->curl->post($url, $json);
+        if ($method == 'POST') {
+            $this->curl->post($url, $json);
+        } elseif ($method == 'DELETE') {
+            $this->curl->del($url, $json);
+        }
 
         $this->logRepository->addDebugLog(
             'Response',

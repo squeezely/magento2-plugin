@@ -24,5 +24,5 @@ interface ServiceInterface
      * @throws LocalizedException
      * @throws AuthenticationException
      */
-    public function execute(array $fields, string $endpoint, $storeId = null);
+    public function execute(array $fields, string $endpoint, $storeId = null, $method = 'POST');
 }
