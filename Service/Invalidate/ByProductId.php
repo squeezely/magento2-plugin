@@ -58,7 +58,6 @@ class ByProductId
     {
         $count = 0;
         $connection = $this->resource->getConnection();
-        $connection->beginTransaction();
         $selectProductSku = $connection->select()
             ->from(
                 $this->resource->getTableName('squeezely_items_queue'),
@@ -77,6 +76,7 @@ class ByProductId
             )->where('m_product.sku not in (?)', $selectProductSku)
             ->where('m_product.entity_id in (?)', $entityIdsByWebsite);
         $items = $connection->fetchAll($items);
+        $connection->beginTransaction();
         foreach ($items as $item) {
             $connection->insert(
                 $this->resource->getTableName('squeezely_items_queue'),
