@@ -9,6 +9,7 @@ namespace Squeezely\Plugin\Plugin;
 
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\AccountManagement;
+use Magento\Framework\Locale\Resolver as LocaleResolver;
 use Magento\Newsletter\Model\Subscriber;
 use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepository;
 use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
@@ -52,6 +53,10 @@ class CustomerAccountManagement
      * @var JsonSerializer
      */
     private $jsonSerializer;
+    /**
+     * @var LocaleResolver
+     */
+    private $localeResolver;
 
     /**
      * CustomerAccountManagement constructor.
@@ -63,6 +68,7 @@ class CustomerAccountManagement
      * @param FrontendEventsRepository $frontendEventsRepository
      * @param LogRepository $logRepository
      * @param JsonSerializer $jsonSerializer
+     * @param LocaleResolver $localeResolver
      */
     public function __construct(
         Subscriber $subscriber,
@@ -71,7 +77,8 @@ class CustomerAccountManagement
         BackendEventsRepository $backendEventsRepository,
         FrontendEventsRepository $frontendEventsRepository,
         LogRepository $logRepository,
-        JsonSerializer $jsonSerializer
+        JsonSerializer $jsonSerializer,
+        LocaleResolver $localeResolver
     ) {
         $this->subscriber = $subscriber;
         $this->dataLayer = $dataLayer;
@@ -80,6 +87,7 @@ class CustomerAccountManagement
         $this->frontendEventsRepository = $frontendEventsRepository;
         $this->logRepository = $logRepository;
         $this->jsonSerializer = $jsonSerializer;
+        $this->localeResolver = $localeResolver;
     }
 
     /**
@@ -99,7 +107,8 @@ class CustomerAccountManagement
             // Frontend event, to connect email_hash with cookie
             if ($this->frontendEventsRepository->isEnabled()) {
                 $data = [
-                    'email' => hash('sha256', $customer->getEmail())
+                    'email' => hash('sha256', $customer->getEmail()),
+                    'language' => $this->getLanguage()
                 ];
                 $this->dataLayer->addEventToQueue('CompleteRegistration', $data);
             }
@@ -132,5 +141,15 @@ class CustomerAccountManagement
         }
         $this->logRepository->addDebugLog('EmailOptInEvent', __('Finish'));
         return $customer;
+    }
+
+    /**
+     * @return string
+     */
+    private function getLanguage(): string
+    {
+        $locale = $this->localeResolver->getLocale()
+            ?: $this->localeResolver->getDefaultLocale();
+        return str_replace('_', '-', $locale);
     }
 }

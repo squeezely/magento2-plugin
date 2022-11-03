@@ -5,7 +5,8 @@
             "product_sku": true,
             "parent_id": true,
             "store_id": true,
-            "created_at": true
+            "created_at": true,
+            "product_id": true
         },
         "index": {
             "SQUEEZELY_ITEMS_QUEUE_ENTITY_ID": true
@@ -13,7 +14,9 @@
         "constraint": {
             "PRIMARY": true,
             "SQUEEZELY_ITEMS_QUEUE_PRODUCT_ID": true,
-            "SQUEEZELY_ITEMS_QUEUE_STORE_ID": true
+            "SQUEEZELY_ITEMS_QUEUE_STORE_ID": true,
+            "SQUEEZELY_ITEMS_QUEUE_STORE_ID_STORE_STORE_ID": true,
+            "SQUEEZELY_ITEMS_QUEUE_PRD_ID_CAT_PRD_ENTT_ENTT_ID": true
         }
     }
 }
