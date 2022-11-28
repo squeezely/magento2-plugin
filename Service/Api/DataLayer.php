@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Service\Api;
 
 use Magento\Checkout\Model\SessionFactory as Session;
+use Magento\Framework\Escaper;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Squeezely\Plugin\Api\Service\DataLayerInterface;
 use stdClass;
@@ -30,19 +31,26 @@ class DataLayer implements DataLayerInterface
      * @var JsonSerializer
      */
     private $jsonSerializer;
+    /**
+     * @var Escaper
+     */
+    private $escaper;
 
     /**
      * DataLayer constructor.
      *
      * @param Session $checkoutSession
      * @param JsonSerializer $jsonSerializer
+     * @param Escaper $escaper
      */
     public function __construct(
         Session $checkoutSession,
-        JsonSerializer $jsonSerializer
+        JsonSerializer $jsonSerializer,
+        Escaper $escaper
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->jsonSerializer = $jsonSerializer;
+        $this->escaper = $escaper;
         $this->setQueuedEvents();
     }
 
@@ -114,7 +122,7 @@ class DataLayer implements DataLayerInterface
 
         foreach ($queuedEvents as $event) {
             $dataScript .= '_sqzl.push('
-                . $this->jsonSerializer->serialize($event)
+                . $this->jsonSerializer->serialize($this->getSafeData($event))
                 . ')' . PHP_EOL;
         }
 
@@ -133,10 +141,24 @@ class DataLayer implements DataLayerInterface
         $dataScript .= '<script type="text/javascript">'
             . PHP_EOL
             . 'window._sqzl = _sqzl || []; _sqzl.push('
-            . $this->jsonSerializer->serialize($object) . ')'
+            . $this->jsonSerializer->serialize($this->getSafeData($object)) . ')'
             . PHP_EOL
             . '</script>';
 
         return $dataScript;
+    }
+
+    /**
+     * @param $object
+     * @return array|bool|float|int|mixed|string|null
+     */
+    protected function getSafeData($object)
+    {
+        $data = $this->jsonSerializer->unserialize($this->jsonSerializer->serialize($object));
+        foreach ($data as $key => $val) {
+            $data[$key] = $this->escaper->escapeXssInUrl($val);
+        }
+
+        return $data;
     }
 }
