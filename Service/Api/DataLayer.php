@@ -156,7 +156,9 @@ class DataLayer implements DataLayerInterface
     {
         $data = $this->jsonSerializer->unserialize($this->jsonSerializer->serialize($object));
         foreach ($data as $key => $val) {
-            $data[$key] = $this->escaper->escapeXssInUrl($val);
+            if (!is_array($val)) {
+                $data[$key] = $this->escaper->escapeXssInUrl($val);
+            }
         }
 
         return $data;
