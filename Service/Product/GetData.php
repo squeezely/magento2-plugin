@@ -676,7 +676,7 @@ class GetData
                 = $this->getImageUrl() . $imageData['value'];
         }
 
-        return $this->getMediaGallery($product, $storeId);
+        return $this->images[$product->getId()] ?? [];
     }
 
     /**
