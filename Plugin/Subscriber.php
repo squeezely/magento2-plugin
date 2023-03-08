@@ -88,13 +88,9 @@ class Subscriber
      */
     public function afterSave(Subject $subscriber, Subject $result): Subject
     {
-        switch ($this->getAreaCode()) {
-            case 'adminhtml':
-                $this->executeBackendEvent($subscriber);
-                break;
-            case 'frontend':
-                $this->executeFrontendEvent($subscriber);
-                break;
+        $this->executeBackendEvent($subscriber);
+        if ($this->getAreaCode() == 'frontend') {
+            $this->executeFrontendEvent($subscriber);
         }
 
         return $result;

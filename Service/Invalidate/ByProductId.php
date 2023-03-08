@@ -122,7 +122,7 @@ class ByProductId
             ['product_id']
         )->where('store.store_id = ?', $storeId)
             ->where('catalog_product_website.product_id in (?)', $entityIds);
-        return $connection->fetchCol($select, 'catalog_product_website.product_id');
+        return $connection->fetchCol($select);
     }
 
     /**

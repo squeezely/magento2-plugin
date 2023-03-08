@@ -119,6 +119,6 @@ class ByStore
             'catalog_product_website.website_id = store.website_id',
             ['product_id']
         )->where('store.store_id = ?', $storeId);
-        return $connection->fetchCol($select, 'catalog_product_website.product_id');
+        return $connection->fetchCol($select);
     }
 }
