@@ -93,6 +93,7 @@ class SyncInvalidated
 
         $result = [];
         $storeIds = $this->configRepository->getAllEnabledStoreIds();
+
         foreach ($storeIds as $storeId) {
             $itemsCollection = $this->itemsQueueCollectionFactory->create();
             $itemsCollection->addFieldToFilter('store_id', $storeId)

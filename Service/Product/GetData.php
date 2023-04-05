@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Service\Product;
 
+use Exception;
 use Magento\Bundle\Model\Product\Type as BundleTypeModel;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\Product;
@@ -59,17 +60,13 @@ class GetData
         'currency',
         'image_link',
         'images',
-        'availability',
         'condition',
-        'inventory',
         'brand',
         'size',
         'color',
         'parent_id',
         'category_ids',
         'parent_url',
-        'is_in_stock',
-        'is_salable',
         'type_id',
         'visibility',
         'status',
@@ -209,6 +206,10 @@ class GetData
      * @var TaxHelper
      */
     private $taxHelper;
+    /**
+     * @var Collector\Stock
+     */
+    private $stock;
 
     /**
      * GetData constructor.
@@ -231,7 +232,8 @@ class GetData
      * @param ResourceConnection $resource
      * @param MetadataPool $metadataPool
      * @param TaxHelper $taxHelper
-     * @throws \Exception
+     * @param Collector\Stock $stock
+     * @throws Exception
      */
     public function __construct(
         ProductCollectionFactory $productCollectionFactory,
@@ -251,7 +253,8 @@ class GetData
         DirectoryList $directoryList,
         ResourceConnection $resource,
         MetadataPool $metadataPool,
-        TaxHelper $taxHelper
+        TaxHelper $taxHelper,
+        Collector\Stock $stock
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
         $this->configRepository = $configRepository;
@@ -270,6 +273,7 @@ class GetData
         $this->resource = $resource;
         $this->directoryList = $directoryList;
         $this->taxHelper = $taxHelper;
+        $this->stock = $stock;
         $this->linkField = $metadataPool->getMetadata(ProductInterface::class)->getLinkField();
     }
 
@@ -280,6 +284,7 @@ class GetData
      */
     public function execute(array $skus = [], $storeId = 0): array
     {
+        $websiteId = $this->getWebsiteId($storeId);
         $this->logRepository->addDebugLog('GetProductData', __('Start'));
         $this->logRepository->addDebugLog(
             'GetProductData',
@@ -289,13 +294,17 @@ class GetData
 
         $this->collectAttributes($storeId);
         $customFields = $this->getCustomFields($storeId);
+
         try {
             $this->store = $this->storeRepository->getById($storeId);
         } catch (NoSuchEntityException $e) {
             return $productData;
         }
 
-        foreach ($this->getProducts($skus, $storeId) as $product) {
+        $products = $this->getProducts($skus, $storeId);
+        $stock = $this->stock->execute($products->getAllIds());
+
+        foreach ($products as $product) {
             if (!$product->getPrice()) {
                 $product->setPrice(
                     $product->getBasePrice()
@@ -310,6 +319,18 @@ class GetData
             foreach ($customFields as $customField) {
                 $oneProduct['custom_fields'][$customField['name']] =
                     $this->getAttributeValue($customField['attribute'], $product, $parentId, $storeId);
+            }
+            if (isset($stock[$product->getId()]['msi'][$websiteId])) {
+                $oneProduct['inventory'] = $stock[$product->getId()]['msi'][$this->getWebsiteId($storeId)]['qty'];
+                $oneProduct['availability'] =
+                    ($stock[$product->getId()]['msi'][$this->getWebsiteId($storeId)]['is_salable'] == 1) ?
+                        ('in stock') :
+                        ('out of stock');
+            } else {
+                $oneProduct['inventory'] = $stock[$product->getId()]['qty'];
+                $oneProduct['availability'] = ($stock[$product->getId()]['is_in_stock'] == 1) ?
+                    ('in stock') :
+                    ('out of stock');
             }
             $productData[] = $oneProduct;
         }
@@ -348,7 +369,7 @@ class GetData
      *
      * @return Collection
      */
-    private function getProducts(array $skus = [], int $storeId = 0)
+    private function getProducts(array $skus = [], int $storeId = 0): Collection
     {
         /** @var Collection $collection */
         $collection = $this->productCollectionFactory->create();
@@ -357,17 +378,6 @@ class GetData
             ->addAttributeToSelect(['image', 'special_price', 'tax_class_id'])
             ->addAttributeToFilter('sku', ['in' => $skus])
             ->addUrlRewrite();
-
-        $joinCond = join(
-            ' AND ',
-            ['inventory.product_id = e.' . $this->linkField, 'inventory.website_id = 0']
-        );
-
-        $collection->getSelect()->joinLeft(
-            ['inventory' => $this->resource->getTableName('cataloginventory_stock_item')],
-            $joinCond,
-            ['qty', 'is_in_stock']
-        );
 
         $tableName = ['price_index' => $this->resource->getTableName('catalog_product_index_price')];
         $joinCond = join(
@@ -378,8 +388,8 @@ class GetData
                 'price_index.customer_group_id = 0'
             ]
         );
-        $colls = ['price', 'final_price', 'min_price', 'max_price'];
-        $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
+        $cols = ['price', 'final_price', 'min_price', 'max_price'];
+        $collection->getSelect()->joinLeft($tableName, $joinCond, $cols);
         $collection = $this->getDefaultPrice($collection, $storeId);
         $this->entityIds = $collection->getColumnValues($this->linkField);
         return $collection;
@@ -410,8 +420,8 @@ class GetData
                 'price.store_id = ' . $storeId
             ]
         );
-        $colls = [];
-        $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
+        $cols = [];
+        $collection->getSelect()->joinLeft($tableName, $joinCond, $cols);
         $tableName = ['default_price' => $this->resource->getTableName('catalog_product_entity_decimal')];
         $joinCond = join(
             ' AND ',
@@ -421,8 +431,8 @@ class GetData
                 'default_price.store_id = 0'
             ]
         );
-        $colls = ['base_price' => 'COALESCE(price.value, default_price.value)'];
-        $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
+        $cols = ['base_price' => 'COALESCE(price.value, default_price.value)'];
+        $collection->getSelect()->joinLeft($tableName, $joinCond, $cols);
         return $collection;
     }
 
@@ -430,11 +440,11 @@ class GetData
      * @param int $storeId
      * @return int
      */
-    private function getWebsiteId(int $storeId)
+    private function getWebsiteId(int $storeId): int
     {
         try {
-            return $this->storeRepository->getById($storeId)->getWebsiteId();
-        } catch (\Exception $exception) {
+            return (int)$this->storeRepository->getById($storeId)->getWebsiteId();
+        } catch (Exception $exception) {
             return 0;
         }
     }
@@ -443,7 +453,7 @@ class GetData
      * @param Product $product
      * @return int
      */
-    private function getParentId(Product $product)
+    private function getParentId(Product $product): int
     {
         $configurableParentId = $this->configurableResource->getParentIdsByChild($product->getId());
         if (isset($configurableParentId[0])) {
@@ -464,6 +474,7 @@ class GetData
      * @param string $field
      * @param Product $product
      * @param int $parentId
+     * @param int $storeId
      * @return array|bool|string|float
      */
     private function getAttributeValue(string $field, Product $product, int $parentId, int $storeId = 0)
@@ -483,8 +494,6 @@ class GetData
                     $this->getPriceInclTax($product, $product->getFinalPrice(), $storeId);
             case 'sale_price':
                 return $this->getPriceInclTax($product, $product->getFinalPrice(), $storeId) ?? 0;
-            case 'availability':
-                return ($product->getData('is_in_stock') == 1) ? ('in stock') : ('out of stock');
             // no break
             case 'language':
                 return $this->getLanguage();
@@ -494,8 +503,6 @@ class GetData
                 return $this->getFullImageLink($product);
             case 'images':
                 return $this->getMediaGallery($product, $storeId);
-            case 'inventory':
-                return $product->getQty();
             case 'parent_id':
                 if ($parentId) {
                     $sku = $this->productResource
@@ -518,9 +525,6 @@ class GetData
             // no break
             case 'category_ids':
                 return $product->getCategoryIds();
-            case 'is_in_stock':
-            case 'is_salable':
-                return ($product->getData('is_in_stock') == 1);
         }
 
         $attributeName = $this->attributes[$field] ?? null;
@@ -598,7 +602,7 @@ class GetData
         if (!$this->currency) {
             try {
                 $this->currency = $this->store->getCurrentCurrency()->getCode();
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 $this->currency = '';
             }
         }
@@ -612,7 +616,7 @@ class GetData
      *
      * @return string
      */
-    public function getFullImageLink(Product $product)
+    public function getFullImageLink(Product $product): string
     {
         $productImage = $product->getImage();
         if (!$productImage) {
