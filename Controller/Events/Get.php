@@ -7,18 +7,17 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Controller\Events;
 
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
+use Magento\Framework\App\Action\HttpGetActionInterface as HttpGetActionInterface;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Squeezely\Plugin\Service\Api\DataLayer;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Squeezely\Plugin\Service\Api\DataLayer;
 
 /**
  * Class Get
  * Ajax controller to get queued events
  */
-class Get extends Action implements HttpPostActionInterface
+class Get implements HttpGetActionInterface
 {
 
     /**
@@ -37,13 +36,11 @@ class Get extends Action implements HttpPostActionInterface
     /**
      * Get constructor.
      *
-     * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param DataLayer $dataLayer
      * @param JsonSerializer $jsonSerializer
      */
     public function __construct(
-        Context $context,
         JsonFactory $resultJsonFactory,
         DataLayer $dataLayer,
         JsonSerializer $jsonSerializer
@@ -51,11 +48,10 @@ class Get extends Action implements HttpPostActionInterface
         $this->resultJsonFactory = $resultJsonFactory;
         $this->dataLayer = $dataLayer;
         $this->jsonSerializer = $jsonSerializer;
-        parent::__construct($context);
     }
 
     /**
-     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\Result\Json|\Magento\Framework\Controller\ResultInterface
+     * @return Json
      */
     public function execute()
     {
