@@ -5,26 +5,25 @@
  */
 declare(strict_types=1);
 
-namespace Squeezely\Plugin\Model\Command\Product;
+namespace Squeezely\Plugin\Service\ItemUpdate;
 
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
+use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
 use Squeezely\Plugin\Model\ItemsQueue\CollectionFactory as ItemsQueueCollectionFactory;
 use Squeezely\Plugin\Model\ItemsQueue\ResourceModel as ItemsQueueResource;
 use Squeezely\Plugin\Service\Product\GetData as ProductData;
 
 /**
- * Sync invalidated products command model
+ * Service to sync products
  */
-class SyncInvalidated
+class SyncAll
 {
-
     /**
      * @var ItemsQueueResource
      */
-    private $itemsQueueResource;
+    protected $itemsQueueResource;
     /**
      * @var RequestRepository
      */
@@ -34,78 +33,74 @@ class SyncInvalidated
      */
     private $configRepository;
     /**
-     * @var ProductCollectionFactory
+     * @var ItemsQueueCollectionFactory
      */
-    private $productCollectionFactory;
-    /**
-     * @var ProductData
-     */
-    private $productData;
+    private $itemsQueueCollectionFactory;
     /**
      * @var StoreRepositoryInterface
      */
     private $storeRepository;
     /**
-     * @var ItemsQueueCollectionFactory
+     * @var ProductData
      */
-    private $itemsQueueCollectionFactory;
+    private $productData;
+    /**
+     * @var LogRepository
+     */
+    private $logRepository;
 
     /**
      * SyncInvalidated constructor.
      *
      * @param RequestRepository $requestRepository
      * @param ConfigRepository $configRepository
-     * @param ProductCollectionFactory $productCollectionFactory
-     * @param ProductData $productData
-     * @param StoreRepositoryInterface $storeRepository
      * @param ItemsQueueCollectionFactory $itemsQueueCollection
+     * @param StoreRepositoryInterface $storeRepository
+     * @param ProductData $productData
+     * @param LogRepository $logRepository
      * @param ItemsQueueResource $itemsQueueResource
      */
     public function __construct(
         RequestRepository $requestRepository,
         ConfigRepository $configRepository,
-        ProductCollectionFactory $productCollectionFactory,
-        ProductData $productData,
-        StoreRepositoryInterface $storeRepository,
         ItemsQueueCollectionFactory $itemsQueueCollection,
+        StoreRepositoryInterface $storeRepository,
+        ProductData $productData,
+        LogRepository $logRepository,
         ItemsQueueResource $itemsQueueResource
     ) {
         $this->requestRepository = $requestRepository;
         $this->configRepository = $configRepository;
-        $this->productCollectionFactory = $productCollectionFactory;
-        $this->productData = $productData;
-        $this->storeRepository = $storeRepository;
         $this->itemsQueueCollectionFactory = $itemsQueueCollection;
+        $this->storeRepository = $storeRepository;
+        $this->productData = $productData;
+        $this->logRepository = $logRepository;
         $this->itemsQueueResource = $itemsQueueResource;
     }
 
     /**
-     *  {@inheritdoc}
+     * Send Invalidated products to API
+     *
+     * @return array
      */
     public function execute(): array
     {
+        $return = [];
         if (!$this->configRepository->isEnabled()) {
-            return [
-                'success' => false,
-                'msg' => sprintf('<error>%s</error>', ConfigRepository::EXTENSION_DISABLED_ERROR)
-            ];
+            $return['message'] = 'Items sync is not enabled';
+            return $return;
         }
 
-        $result = [];
         $storeIds = $this->configRepository->getAllEnabledStoreIds();
-
         foreach ($storeIds as $storeId) {
             $itemsCollection = $this->itemsQueueCollectionFactory->create();
             $itemsCollection->addFieldToFilter('store_id', $storeId)
                 ->setPageSize(RequestRepository::PRODUCTS_PER_REQUEST)
                 ->setCurPage(1);
             if ($itemsCollection->getSize() == 0) {
-                $result[] = [
+                $return[$storeId] = [
                     'success' => true,
-                    'msg' => sprintf(
-                        '<info>Store %s: there is no invalidated products</info>',
-                        $storeId
-                    )
+                    'message' => [sprintf('Store %s: there is no invalidated products', $storeId)]
                 ];
                 continue;
             }
@@ -114,40 +109,37 @@ class SyncInvalidated
                 $skus,
                 (int)$storeId
             );
-
             try {
                 $response = $this->requestRepository->sendProducts(
                     ['products' => $productData]
                 );
-                if ($response['success'] == true || $response['message'] == 'skipped empty products') {
-                    $result[] = [
-                        'success' => true,
-                        'msg' => sprintf(
-                            '<info>Store %s, created %s, updated %s</info>',
-                            $storeId,
-                            $response['created'],
-                            $response['updated']
-                        )
-                    ];
+                if ($response['success'] || $response['message'] == 'skipped empty products') {
+                    $message = __(
+                        'Store %1, created %2, updated %3',
+                        $storeId,
+                        $response['created'],
+                        $response['updated']
+                    );
+                    $this->logRepository->addDebugLog(
+                        'Sync Items',
+                        $message
+                    );
                     $connection = $this->itemsQueueResource->getConnection();
                     $tableName = $this->itemsQueueResource->getTable('squeezely_items_queue');
                     $connection->delete($tableName, ['store_id' => $storeId, 'product_sku in (?)' => $skus]);
+                    $return[$storeId] = ['success' => true, 'message' => [$message]];
                 } else {
+                    $return[$storeId] = ['success' => false, 'message' => []];
                     foreach ($response['errors'] as $error) {
-                        $result[] = [
-                            'success' => false,
-                            'msg' => sprintf('<error>%s</error>', $error)
-                        ];
+                        $this->logRepository->addDebugLog('Sync Items', $error);
+                        $return[$storeId]['message'][] = $error;
                     }
                 }
             } catch (\Exception $exception) {
-                $result[] = [
-                    'success' => false,
-                    'msg' => sprintf('<error>Exception: %s</error>', $exception->getMessage())
-                ];
+                $this->logRepository->addErrorLog('Sync Items', $exception->getMessage());
+                $return[$storeId] = ['success' => false, 'message' => [$exception->getMessage()]];
             }
         }
-
-        return $result;
+        return $return;
     }
 }

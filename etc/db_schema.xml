@@ -10,7 +10,6 @@
     <table name="squeezely_items_queue" engine="innodb" resource="default" comment="Squeezely Items Queue Table">
         <column name="entity_id" xsi:type="int" padding="10" identity="true" nullable="false" unsigned="true" comment="Entity ID"/>
         <column name="product_sku" xsi:type="varchar" length="100" nullable="false" comment="Product SKU"/>
-        <column name="parent_id" xsi:type="int" padding="10" nullable="true" unsigned="true" comment="Parent ID"/>
         <column name="product_id" xsi:type="int" padding="10" nullable="true" unsigned="true" comment="Product ID"/>
         <column name="store_id" xsi:type="smallint" padding="5" nullable="false" unsigned="true" comment="Product ID"/>
         <column name="created_at" xsi:type="timestamp" on_update="false" default="CURRENT_TIMESTAMP" comment="Created At"/>

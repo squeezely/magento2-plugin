@@ -13,7 +13,6 @@ use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as StoreSyncConfigRepository;
-use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
 use Squeezely\Plugin\Service\Invalidate\ByStore as InvalidateByStore;
 
 /**
@@ -32,37 +31,19 @@ class Invalidate extends Action
      * Error Message: not enabled
      */
     public const ERROR_MSG_ENABLED = 'Store sync not enabled for this store, please enable this first.';
-
-    /**
-     * Error Message
-     */
-    public const ERROR_MSG_NO_ITEMS = 'Something went wrong, please try again';
-
     /**
      * Success Message
      */
     public const SUCCESS_MSG = '%1 products were invalidated and queued for sync.';
 
     /**
-     * No products to invalidate
-     */
-    public const NO_PRODUCTS_MSG = 'No products to invalidate.';
-
-    /**
      * @var StoreSyncConfigRepository
      */
     private $storeSyncConfigRepository;
-
-    /**
-     * @var RequestRepository
-     */
-    private $requestRepository;
-
     /**
      * @var InvalidateByStore;
      */
     private $invalidateByStore;
-
     /**
      * @var RedirectInterface
      */
@@ -73,19 +54,17 @@ class Invalidate extends Action
      *
      * @param Action\Context $context
      * @param StoreSyncConfigRepository $storeSyncConfigRepository
-     * @param RequestRepository $requestRepository
      * @param InvalidateByStore $invalidateByStore
+     * @param RedirectInterface $redirect
      */
     public function __construct(
         Action\Context $context,
         StoreSyncConfigRepository $storeSyncConfigRepository,
-        RequestRepository $requestRepository,
         InvalidateByStore $invalidateByStore,
         RedirectInterface $redirect
     ) {
         $this->messageManager = $context->getMessageManager();
         $this->storeSyncConfigRepository = $storeSyncConfigRepository;
-        $this->requestRepository = $requestRepository;
         $this->invalidateByStore = $invalidateByStore;
         $this->redirect = $redirect;
         parent::__construct($context);
@@ -97,8 +76,8 @@ class Invalidate extends Action
     public function execute()
     {
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
-        $storeId = (int)$this->getRequest()->getParam('store_id');
 
+        $storeId = (int)$this->getRequest()->getParam('store_id');
         if (!$this->storeSyncConfigRepository->isEnabled($storeId)) {
             $msg = self::ERROR_MSG_ENABLED;
             $this->messageManager->addErrorMessage(__($msg));
@@ -113,6 +92,7 @@ class Invalidate extends Action
         } else {
             $this->messageManager->addErrorMessage($result['msg']);
         }
+
         return $resultRedirect->setPath(
             $this->redirect->getRefererUrl()
         );

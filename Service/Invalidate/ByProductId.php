@@ -69,10 +69,6 @@ class ByProductId
             ->from(
                 ['m_product' => $this->resource->getTableName('catalog_product_entity')],
                 ['entity_id' => $this->linkField, 'sku']
-            )->joinLeft(
-                ['relations' => $this->resource->getTableName('catalog_product_relation')],
-                "m_product.{$this->linkField} = relations.child_id",
-                'parent_id'
             )->where('m_product.sku not in (?)', $selectProductSku)
             ->where('m_product.entity_id in (?)', $entityIdsByWebsite);
         $items = $connection->fetchAll($items);
@@ -84,7 +80,6 @@ class ByProductId
                     'product_sku' => $item['sku'],
                     'store_id' => $storeId,
                     'product_id' => $item['entity_id'],
-                    'parent_id' => $item['parent_id']
                 ]
             );
             $count++;

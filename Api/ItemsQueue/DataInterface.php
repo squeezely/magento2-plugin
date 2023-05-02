@@ -19,7 +19,7 @@ interface DataInterface extends ExtensibleDataInterface
      */
     public const ENTITY_ID = 'entity_id';
     public const PRODUCT_ID = 'product_id';
-    public const PARENT_ID = 'parent_id';
+    public const PRODUCT_SKU = 'product_sku';
     public const STORE_ID = 'store_id';
     public const CREATED_AT = 'created_at';
 
@@ -46,15 +46,15 @@ interface DataInterface extends ExtensibleDataInterface
     public function setProductId(int $productId): self;
 
     /**
-     * @return int
+     * @return string
      */
-    public function getParentId(): int;
+    public function getProductSku(): string;
 
     /**
-     * @param int $parentId
+     * @param string $productSku
      * @return $this
      */
-    public function setParentId(int $parentId): self;
+    public function setProductSku(string $productSku): self;
 
     /**
      * @return int
