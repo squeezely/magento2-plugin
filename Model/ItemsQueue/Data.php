@@ -61,17 +61,17 @@ class Data extends AbstractModel implements ExtensibleDataInterface, ItemsQueueD
     /**
      * @inheritDoc
      */
-    public function getParentId(): int
+    public function getProductSku(): string
     {
-        return (int)$this->getData(self::PARENT_ID);
+        return (string)$this->getData(self::PRODUCT_SKU);
     }
 
     /**
      * @inheritDoc
      */
-    public function setParentId(int $parentId): ItemsQueueData
+    public function setProductSku(string $productSku): ItemsQueueData
     {
-        return $this->setData(self::PARENT_ID, $parentId);
+        return $this->setData(self::PRODUCT_SKU, $productSku);
     }
 
     /**

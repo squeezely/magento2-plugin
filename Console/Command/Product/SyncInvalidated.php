@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Console\Command\Product;
 
-use Squeezely\Plugin\Model\Command\Product\SyncInvalidated as SyncInvalidatedProducts;
+use Squeezely\Plugin\Service\ItemUpdate\SyncAll;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,18 +23,19 @@ class SyncInvalidated extends Command
      */
     public const COMMAND_NAME = 'squeezely:product:sync-invalidated';
     /**
-     * @var SyncInvalidatedProducts
+     * @var SyncAll
      */
-    private $syncInvalidatedProducts;
+    private $syncAll;
 
     /**
      * SyncInvalidated constructor.
-     * @param SyncInvalidatedProducts $syncInvalidatedProducts
+     *
+     * @param SyncAll $syncAll
      */
     public function __construct(
-        SyncInvalidatedProducts $syncInvalidatedProducts
+        SyncAll $syncAll
     ) {
-        $this->syncInvalidatedProducts = $syncInvalidatedProducts;
+        $this->syncAll = $syncAll;
         parent::__construct();
     }
 
@@ -53,9 +54,17 @@ class SyncInvalidated extends Command
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $results = $this->syncInvalidatedProducts->execute();
+        $results = $this->syncAll->execute();
         foreach ($results as $result) {
-            $output->writeln($result['msg']);
+            if ($result['success']) {
+                foreach ($result['message'] as $message) {
+                    $output->writeln('<info>' . $message . '</info>');
+                }
+            } else {
+                foreach ($result['message'] as $message) {
+                    $output->writeln('<error>' . $message . '</error>');
+                }
+            }
         }
 
         return 0;

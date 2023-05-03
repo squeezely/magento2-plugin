@@ -53,7 +53,7 @@ interface RepositoryInterface
     /**
      * Number of products per one request
      */
-    public const PRODUCTS_PER_REQUEST = 250;
+    public const PRODUCTS_PER_REQUEST = 150;
 
     /**
      * Send product data to API

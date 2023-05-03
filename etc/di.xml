@@ -93,8 +93,7 @@
     </type>
     <type name="Squeezely\Plugin\Console\Command\Product\SyncInvalidated">
         <arguments>
-            <argument name="syncInvalidatedProducts"
-                      xsi:type="object">Squeezely\Plugin\Model\Command\Product\SyncInvalidated\Proxy</argument>
+            <argument name="SyncAll" xsi:type="object">Squeezely\Plugin\Service\ItemUpdate\SyncAll\Proxy</argument>
         </arguments>
     </type>
 
@@ -105,6 +104,34 @@
                       xsi:type="object">Squeezely\Plugin\Console\Command\Product\SyncInvalidated</item>
                 <item name="SqueezelyInvalidateAllProducts"
                       xsi:type="object">Squeezely\Plugin\Console\Command\Product\InvalidateAll</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <virtualType name="ItemGridFilterPool" type="Magento\Framework\View\Element\UiComponent\DataProvider\FilterPool">
+        <arguments>
+            <argument name="appliers" xsi:type="array">
+                <item name="regular" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilter</item>
+                <item name="fulltext" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="ItemGridDataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+        <arguments>
+            <argument name="collection" xsi:type="object" shared="false">Squeezely\Plugin\Model\ItemsQueue\Collection</argument>
+            <argument name="filterPool" xsi:type="object" shared="false">ItemGridFilterPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Squeezely\Plugin\Model\ResourceModel\Item\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">squeezely_items_queue</argument>
+            <argument name="resourceModel" xsi:type="string">Squeezely\Plugin\Model\ItemsQueue\ResourceModel</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="squeezely_item_grid_data_source" xsi:type="string">Squeezely\Plugin\Model\ResourceModel\Item\Grid\Collection</item>
             </argument>
         </arguments>
     </type>

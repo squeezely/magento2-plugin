@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">squeezely_item_grid.squeezely_item_grid_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <buttons>
+            <button class="Squeezely\Plugin\Block\Adminhtml\Items\Button\RunQueue" name="run_queue"/>
+            <button class="Squeezely\Plugin\Block\Adminhtml\Items\Button\Flush" name="flush"/>
+        </buttons>
+        <spinner>squeezely_item_columns</spinner>
+        <deps>
+            <dep>squeezely_item_grid.squeezely_item_grid_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="squeezely_item_grid_data_source" component="Magento_Ui/js/grid/provider">
+        <settings>
+            <storageConfig>
+                <param name="indexField" xsi:type="string">entity_id</param>
+            </storageConfig>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <dataProvider class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"
+                      name="squeezely_item_grid_data_source">
+            <settings>
+                <requestFieldName>id</requestFieldName>
+                <primaryFieldName>entity_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <settings>
+            <sticky>true</sticky>
+        </settings>
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters"/>
+        <paging name="listing_paging"/>
+        <exportButton name="export_button"/>
+    </listingToolbar>
+    <columns name="squeezely_item_columns">
+        <selectionsColumn name="ids">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="indexField" xsi:type="string">entity_id</item>
+                </item>
+            </argument>
+        </selectionsColumn>
+        <column name="entity_id">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Item ID</label>
+            </settings>
+        </column>
+        <column name="store_id" class="Magento\Store\Ui\Component\Listing\Column\Store">
+            <settings>
+                <label translate="true">Store View</label>
+                <bodyTmpl>ui/grid/cells/html</bodyTmpl>
+                <sortable>false</sortable>
+            </settings>
+        </column>
+        <column name="product_sku">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">SKU</label>
+            </settings>
+        </column>
+        <column name="product_id">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Product ID</label>
+            </settings>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date"
+                component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <label translate="true">Created At</label>
+                <timezone>false</timezone>
+            </settings>
+        </column>
+        <actionsColumn name="actions" class="Squeezely\Plugin\Ui\Component\Listing\Column\Item\Actions">
+            <settings>
+                <indexField>review_id</indexField>
+            </settings>
+        </actionsColumn>
+    </columns>
+</listing>
