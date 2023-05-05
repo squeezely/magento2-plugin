@@ -10,14 +10,13 @@ namespace Squeezely\Plugin\Service\Product;
 use Exception;
 use Magento\Bundle\Model\Product\Type as BundleTypeModel;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Helper\Data as TaxHelper;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Product as ProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
-use Magento\CatalogInventory\Model\Stock\StockItemRepository;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableResource;
-use Magento\Eav\Model\Entity\Attribute;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ResourceConnection;
@@ -35,7 +34,6 @@ use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Magento\Catalog\Helper\Data as TaxHelper;
 
 /**
  * Product Data Service class
@@ -139,17 +137,9 @@ class GetData
      */
     private $scopeConfig;
     /**
-     * @var StockItemRepository
-     */
-    private $stockItem;
-    /**
      * @var ConfigurableResource
      */
     private $configurableResource;
-    /**
-     * @var Attribute
-     */
-    private $eavAttribute;
     /**
      * @var StoreInterface;
      */
@@ -218,9 +208,7 @@ class GetData
      * @param ConfigRepository $configRepository
      * @param StoreRepositoryInterface $storeRepository
      * @param ScopeConfigInterface $scopeConfig
-     * @param StockItemRepository $stockItem
      * @param ConfigurableResource $configurableResource
-     * @param Attribute $attribute
      * @param LogRepository $logRepository
      * @param JsonSerializer $jsonSerializer
      * @param UrlFinderInterface $urlFinder
@@ -240,9 +228,7 @@ class GetData
         ConfigRepository $configRepository,
         StoreRepositoryInterface $storeRepository,
         ScopeConfigInterface $scopeConfig,
-        StockItemRepository $stockItem,
         ConfigurableResource $configurableResource,
-        Attribute $attribute,
         LogRepository $logRepository,
         JsonSerializer $jsonSerializer,
         UrlFinderInterface $urlFinder,
@@ -260,9 +246,7 @@ class GetData
         $this->configRepository = $configRepository;
         $this->storeRepository = $storeRepository;
         $this->scopeConfig = $scopeConfig;
-        $this->stockItem = $stockItem;
         $this->configurableResource = $configurableResource;
-        $this->eavAttribute = $attribute;
         $this->logRepository = $logRepository;
         $this->jsonSerializer = $jsonSerializer;
         $this->urlFinder = $urlFinder;
@@ -282,16 +266,15 @@ class GetData
      * @param int $storeId
      * @return array
      */
-    public function execute(array $skus = [], $storeId = 0): array
+    public function execute(array $skus = [], int $storeId = 0): array
     {
-        $websiteId = $this->getWebsiteId($storeId);
         $this->logRepository->addDebugLog('GetProductData', __('Start'));
         $this->logRepository->addDebugLog(
             'GetProductData',
             'Requested skus: ' . $this->jsonSerializer->serialize($skus)
         );
-        $productData = [];
 
+        $productData = [];
         $this->collectAttributes($storeId);
         $customFields = $this->getCustomFields($storeId);
 
@@ -303,6 +286,7 @@ class GetData
 
         $products = $this->getProducts($skus, $storeId);
         $stock = $this->stock->execute($products->getAllIds());
+        $salesChannel = $this->stock->getChannelByStoreId($storeId);
 
         foreach ($products as $product) {
             if (!$product->getPrice()) {
@@ -315,29 +299,27 @@ class GetData
             foreach ($this->productApiFields as $field) {
                 $oneProduct[$field] = $this->getAttributeValue($field, $product, $parentId, $storeId);
             }
+
             $oneProduct['custom_fields'] = [];
             foreach ($customFields as $customField) {
                 $oneProduct['custom_fields'][$customField['name']] =
                     $this->getAttributeValue($customField['attribute'], $product, $parentId, $storeId);
             }
-            if (isset($stock[$product->getId()]['msi'][$websiteId])) {
-                $oneProduct['inventory'] = $stock[$product->getId()]['msi'][$this->getWebsiteId($storeId)]['qty'];
-                $oneProduct['availability'] =
-                    ($stock[$product->getId()]['msi'][$this->getWebsiteId($storeId)]['is_salable'] == 1) ?
-                        ('in stock') :
-                        ('out of stock');
-            } else {
-                $oneProduct['inventory'] = $stock[$product->getId()]['qty'];
-                $oneProduct['availability'] = ($stock[$product->getId()]['is_in_stock'] == 1) ?
-                    ('in stock') :
-                    ('out of stock');
-            }
+
+            $inventory = $salesChannel && isset($stock[$product->getId()]['msi'][$salesChannel])
+                ? $stock[$product->getId()]['msi'][$salesChannel]
+                : $stock[$product->getId()];
+
+            $oneProduct['inventory'] = $inventory['qty'];
+            $oneProduct['availability'] = $inventory['availability'] == 1 ? ('in stock') : ('out of stock');
+
             $productData[] = $oneProduct;
         }
         $this->logRepository->addDebugLog(
             'GetProductData',
             'Response: ' . $this->jsonSerializer->serialize($productData)
         );
+
         $this->logRepository->addDebugLog('GetProductData', __('Finish'));
         return $productData;
     }
@@ -361,6 +343,21 @@ class GetData
         foreach ($customFields as $customField) {
             $this->attributes += [$customField['attribute'] => $customField['attribute']];
         }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return array
+     */
+    private function getCustomFields(int $storeId): array
+    {
+        if (!$this->customFields) {
+            $this->customFields = $this->jsonSerializer->unserialize(
+                $this->configRepository->getExtraFields($storeId)
+            );
+        }
+        return $this->customFields;
     }
 
     /**
@@ -393,6 +390,19 @@ class GetData
         $collection = $this->getDefaultPrice($collection, $storeId);
         $this->entityIds = $collection->getColumnValues($this->linkField);
         return $collection;
+    }
+
+    /**
+     * @param int $storeId
+     * @return int
+     */
+    private function getWebsiteId(int $storeId): int
+    {
+        try {
+            return (int)$this->storeRepository->getById($storeId)->getWebsiteId();
+        } catch (Exception $exception) {
+            return 0;
+        }
     }
 
     /**
@@ -434,19 +444,6 @@ class GetData
         $cols = ['base_price' => 'COALESCE(price.value, default_price.value)'];
         $collection->getSelect()->joinLeft($tableName, $joinCond, $cols);
         return $collection;
-    }
-
-    /**
-     * @param int $storeId
-     * @return int
-     */
-    private function getWebsiteId(int $storeId): int
-    {
-        try {
-            return (int)$this->storeRepository->getById($storeId)->getWebsiteId();
-        } catch (Exception $exception) {
-            return 0;
-        }
     }
 
     /**
@@ -580,6 +577,28 @@ class GetData
     }
 
     /**
+     * Get price including tax
+     *
+     * @param Product $product
+     * @param $price
+     * @param int $storeId
+     * @return float|null
+     */
+    private function getPriceInclTax(Product $product, $price, int $storeId): ?float
+    {
+        return $this->taxHelper->getTaxPrice(
+            $product,
+            $price,
+            true,
+            null,
+            null,
+            null,
+            $storeId,
+            null
+        );
+    }
+
+    /**
      * @return string
      */
     private function getLanguage(): string
@@ -681,42 +700,5 @@ class GetData
         }
 
         return $this->images[$product->getId()] ?? [];
-    }
-
-    /**
-     * @param int $storeId
-     *
-     * @return array
-     */
-    private function getCustomFields(int $storeId): array
-    {
-        if (!$this->customFields) {
-            $this->customFields = $this->jsonSerializer->unserialize(
-                $this->configRepository->getExtraFields($storeId)
-            );
-        }
-        return $this->customFields;
-    }
-
-    /**
-     * Get price including tax
-     *
-     * @param Product $product
-     * @param $price
-     * @param int $storeId
-     * @return float|null
-     */
-    private function getPriceInclTax(Product $product, $price, int $storeId): ?float
-    {
-        return $this->taxHelper->getTaxPrice(
-            $product,
-            $price,
-            true,
-            null,
-            null,
-            null,
-            $storeId,
-            null
-        );
     }
 }
