@@ -51,7 +51,7 @@ class Update extends Action
         $itemId = $this->getRequest()->getParam('item_id');
 
         $result = $this->syncByItemIds->execute($itemId);
-        if ($result['success']) {
+        if (!empty($result['success'])) {
             $this->messageManager->addSuccessMessage(__($result['message']));
         } else {
             $this->messageManager->addErrorMessage(__($result['message']));

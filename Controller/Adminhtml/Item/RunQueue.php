@@ -51,16 +51,11 @@ class RunQueue extends Action
     public function execute(): Redirect
     {
         $results = $this->syncAll->execute();
-
         foreach ($results as $result) {
-            if ($result['success']) {
-                foreach ($result['message'] as $message) {
-                    $this->messageManager->addSuccessMessage(__($message));
-                }
+            if (!empty($result['success'])) {
+                $this->messageManager->addSuccessMessage(__($result['message']));
             } else {
-                foreach ($result['message'] as $message) {
-                    $this->messageManager->addErrorMessage(__($result['message']));
-                }
+                $this->messageManager->addErrorMessage(__($result['message']));
             }
         }
 

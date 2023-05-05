@@ -7,16 +7,18 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Service\Invalidate;
 
+use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Select;
 use Magento\Framework\EntityManager\MetadataPool;
-use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
 
 /**
  * Products invalidator by product id
  */
 class ByProductId
 {
+
     public const SUCCESS_MESSAGE = 'Store %s, invalidated products: %s';
 
     /**
@@ -24,55 +26,45 @@ class ByProductId
      */
     private $resource;
     /**
-     * @var ConfigRepository
-     */
-    private $configRepository;
-    /**
      * @var string
      */
     private $linkField;
 
     /**
      * InvalidateAll constructor.
-     *
-     * @param ConfigRepository $configRepository
      * @param ResourceConnection $resource
      * @param MetadataPool $metadataPool
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct(
-        ConfigRepository $configRepository,
         ResourceConnection $resource,
         MetadataPool $metadataPool
     ) {
-        $this->configRepository = $configRepository;
         $this->resource = $resource;
         $this->linkField = $metadataPool->getMetadata(ProductInterface::class)->getLinkField();
     }
 
     /**
      * @param array $productIds
+     * @param int $storeId
      * @return array
      */
     public function execute(array $productIds, int $storeId): array
     {
-        $count = 0;
         $connection = $this->resource->getConnection();
-        $selectProductSku = $connection->select()
-            ->from(
-                $this->resource->getTableName('squeezely_items_queue'),
-                'product_sku'
-            )->where('store_id = ?', $storeId);
-        $productIds = $this->collectRelated($productIds);
-        $entityIdsByWebsite = $this->filterWebsite($productIds, $storeId);
         $items = $connection->select()
             ->from(
                 ['m_product' => $this->resource->getTableName('catalog_product_entity')],
                 ['entity_id' => $this->linkField, 'sku']
-            )->where('m_product.sku not in (?)', $selectProductSku)
-            ->where('m_product.entity_id in (?)', $entityIdsByWebsite);
+            )->where(
+                'm_product.sku not in (?)',
+                $this->filterExistingSkus($storeId)
+            )->where(
+                'm_product.entity_id in (?)',
+                $this->filterWebsite($this->collectRelated($productIds), $storeId)
+            );
+
         $items = $connection->fetchAll($items);
-        $connection->beginTransaction();
         foreach ($items as $item) {
             $connection->insert(
                 $this->resource->getTableName('squeezely_items_queue'),
@@ -82,20 +74,31 @@ class ByProductId
                     'product_id' => $item['entity_id'],
                 ]
             );
-            $count++;
         }
-        try {
-            $connection->commit();
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'msg' => $e->getMessage()
-            ];
-        }
+
         return [
             'success' => true,
-            'msg' =>  sprintf(self::SUCCESS_MESSAGE, $storeId, $count)
+            'msg' => sprintf(self::SUCCESS_MESSAGE, $storeId, count($items))
         ];
+    }
+
+    /**
+     * Filter skus to exclude products that are already validated
+     *
+     * @param int $storeId
+     * @return Select
+     */
+    private function filterExistingSkus(int $storeId): Select
+    {
+        $connection = $this->resource->getConnection();
+        return $connection->select()
+            ->from(
+                $this->resource->getTableName('squeezely_items_queue'),
+                'product_sku'
+            )->where(
+                'store_id = ?',
+                $storeId
+            );
     }
 
     /**
@@ -108,15 +111,22 @@ class ByProductId
     private function filterWebsite(array $entityIds, int $storeId): array
     {
         $connection = $this->resource->getConnection();
-        $select = $connection->select()->from(
-            ['store' => $this->resource->getTableName('store')],
-            []
-        )->joinLeft(
-            ['catalog_product_website' => $this->resource->getTableName('catalog_product_website')],
-            'catalog_product_website.website_id = store.website_id',
-            ['product_id']
-        )->where('store.store_id = ?', $storeId)
-            ->where('catalog_product_website.product_id in (?)', $entityIds);
+        $select = $connection->select()
+            ->from(
+                ['store' => $this->resource->getTableName('store')],
+                []
+            )->joinLeft(
+                ['catalog_product_website' => $this->resource->getTableName('catalog_product_website')],
+                'catalog_product_website.website_id = store.website_id',
+                ['product_id']
+            )->where(
+                'store.store_id = ?',
+                $storeId
+            )->where(
+                'catalog_product_website.product_id in (?)',
+                $entityIds
+            );
+
         return $connection->fetchCol($select);
     }
 
@@ -129,15 +139,23 @@ class ByProductId
     private function collectRelated(array $entityIds): array
     {
         $connection = $this->resource->getConnection();
-        $select = $connection->select()->from(
-            ['rel' => $this->resource->getTableName('catalog_product_relation')]
-        )->where('parent_id in (?)', $entityIds)
-            ->orWhere('child_id in (?)', $entityIds);
-        $result =  $connection->fetchAll($select);
+        $select = $connection->select()
+            ->from(
+                ['rel' => $this->resource->getTableName('catalog_product_relation')]
+            )->where(
+                'parent_id in (?)',
+                $entityIds
+            )->orWhere(
+                'child_id in (?)',
+                $entityIds
+            );
+
+        $result = $connection->fetchAll($select);
         foreach ($result as $item) {
             $entityIds[] = $item['parent_id'];
             $entityIds[] = $item['child_id'];
         }
+
         return array_unique($entityIds);
     }
 }

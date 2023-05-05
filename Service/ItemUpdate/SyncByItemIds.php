@@ -8,11 +8,11 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Service\ItemUpdate;
 
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
+use Squeezely\Plugin\Api\ItemsQueue\RepositoryInterface as ItemsQueueRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
 use Squeezely\Plugin\Model\ItemsQueue\ResourceModel as ItemsQueueResource;
 use Squeezely\Plugin\Service\Product\GetData as ProductData;
-use Squeezely\Plugin\Api\ItemsQueue\RepositoryInterface as ItemsQueueRepository;
 
 /**
  * Service to sync products
@@ -73,59 +73,61 @@ class SyncByItemIds
     /**
      * Send Invalidated products to API
      *
+     * @param $itemId
      * @return array
      */
-    public function execute($itemId)
+    public function execute($itemId): array
     {
-        $return = ['success' => false, 'message' => ''];
         if (!$this->configRepository->isEnabled()) {
-            $return['message'] = 'Items sync is not enabled';
-            return $return;
+            return ['success' => false, 'message' => 'Items sync is not enabled'];
         }
 
         try {
             $item = $this->itemsQueueRepository->get((int)$itemId);
         } catch (\Exception $e) {
-            $return['message'] = 'No item found';
-            return $return;
+            return ['success' => false, 'message' => 'No item found'];
         }
 
         $productData = $this->productData->execute(
             [$item->getProductSku()],
             $item->getStoreId()
         );
+
         try {
             $response = $this->requestRepository->sendProducts(
                 ['products' => $productData]
             );
-            if ($response['success'] == true || $response['message'] == 'skipped empty products') {
-                $this->logRepository->addDebugLog(
-                    'Sync Items',
-                    __(
-                        'Store %1, created %2, updated %3',
-                        $item->getStoreId(),
-                        $response['created'],
-                        $response['updated']
-                    )
-                );
-                $connection = $this->itemsQueueResource->getConnection();
-                $tableName = $this->itemsQueueResource->getTable('squeezely_items_queue');
-                $connection->delete(
-                    $tableName,
-                    "store_id = " . $item->getStoreId() .  " AND product_sku = '" . $item->getProductSku() . "'"
-                );
-            } else {
-                foreach ($response['errors'] as $error) {
-                    $this->logRepository->addDebugLog('Sync Items', $error);
-                }
-            }
+
+            $message = __(
+                'Created %1, updated %2, skipped: %3',
+                $response['created'] ?? 0,
+                $response['updated'] ?? 0,
+                !empty($response['errors']) ? count($response['errors']) : 0
+            );
+
+            $this->logRepository->addDebugLog('Sync Items', $message);
+            $this->removeFromQueue($item->getProductSku(), $item->getStoreId());
+            return ['success' => true, 'message' => $message];
         } catch (\Exception $exception) {
             $this->logRepository->addErrorLog('Sync Items', $exception->getMessage());
-            $return['message'] = $exception->getMessage();
-            return $return;
+            return ['success' => false, 'message' => $exception->getMessage()];
         }
-        $return['success'] = true;
-        $return['message'] = 'Items has been synced';
-        return $return;
+    }
+
+    /**
+     * @param string $sku
+     * @param int $storeId
+     * @return void
+     */
+    private function removeFromQueue(string $sku, int $storeId)
+    {
+        $connection = $this->itemsQueueResource->getConnection();
+        $connection->delete(
+            $this->itemsQueueResource->getTable('squeezely_items_queue'),
+            [
+                'store_id = ?' => $storeId,
+                'product_sku = ?' => $sku
+            ]
+        );
     }
 }

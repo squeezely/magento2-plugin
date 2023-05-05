@@ -79,9 +79,7 @@ class Request implements ServiceInterface
      */
     public function execute(array $fields, string $endpoint, $storeId = null, $method = 'POST')
     {
-        if (!$storeId) {
-            $storeId = $this->storeManager->getStore()->getId();
-        }
+        $storeId = $storeId ?: $this->storeManager->getStore()->getId();
         $accountId = $this->configRepository->getAccountId((int)$storeId);
         $apiKey = $this->configRepository->getApiKey((int)$storeId);
         $json = $this->jsonSerializer->serialize($fields);
@@ -118,15 +116,32 @@ class Request implements ServiceInterface
         $response = $this->jsonSerializer->unserialize($this->curl->getBody());
         $httpStatus = $this->curl->getStatus();
 
-        if ($httpStatus == 401 || $httpStatus == 403) {
-            $msg = !empty($response['errors'][0]) ? $response['errors'][0] : 'Authentication Failed';
-            throw new AuthenticationException(__($msg));
+        // We should also treat $httpStatus = 400 as success on products push.
+        if ($endpoint == 'v1/products' && $httpStatus = 400) {
+            $httpStatus = 200;
         }
 
-        if (!empty($response['errors']) && !empty($response['errors'][0])) {
-            throw new LocalizedException(__($response['errors'][0]));
+        if ($httpStatus == 401 || $httpStatus == 403) {
+            $error = $this->checkForErrorMessage($response) ?: 'Authentication Failed';
+            throw new AuthenticationException(__($error));
+        }
+
+        if ($httpStatus !== 200) {
+            $error = $this->checkForErrorMessage($response) ?: 'Unknown response from API';
+            throw new LocalizedException(__($error));
         }
 
         return $response;
+    }
+
+    /**
+     * @param array $response
+     * @return mixed|void
+     */
+    private function checkForErrorMessage(array $response)
+    {
+        if (!empty($response['errors']) && !empty($response['errors'][0])) {
+            return $response['errors'][0];
+        }
     }
 }
