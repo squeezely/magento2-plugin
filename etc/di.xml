@@ -93,7 +93,7 @@
     </type>
     <type name="Squeezely\Plugin\Console\Command\Product\SyncInvalidated">
         <arguments>
-            <argument name="SyncAll" xsi:type="object">Squeezely\Plugin\Service\ItemUpdate\SyncAll\Proxy</argument>
+            <argument name="syncAll" xsi:type="object">Squeezely\Plugin\Service\ItemUpdate\SyncAll\Proxy</argument>
         </arguments>
     </type>
 

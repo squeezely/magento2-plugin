@@ -12,6 +12,7 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\EntityManager\MetadataPool;
 use Magento\Framework\Module\Manager as ModuleManager;
+use Magento\Store\Api\StoreRepositoryInterface;
 
 /**
  * Service class for stock data
@@ -38,22 +39,29 @@ class Stock
      * @var string
      */
     private $linkField;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
 
     /**
      * Price constructor.
      *
      * @param ResourceConnection $resource
      * @param ModuleManager $moduleManager
+     * @param StoreRepositoryInterface $storeRepository
      * @param MetadataPool $metadataPool
      * @throws Exception
      */
     public function __construct(
         ResourceConnection $resource,
         ModuleManager $moduleManager,
+        StoreRepositoryInterface $storeRepository,
         MetadataPool $metadataPool
     ) {
         $this->resource = $resource;
         $this->moduleManager = $moduleManager;
+        $this->storeRepository = $storeRepository;
         $this->linkField = $metadataPool->getMetadata(ProductInterface::class)->getLinkField();
     }
 
@@ -105,9 +113,10 @@ class Stock
      *      reserved
      *      salable_qty
      *      ["msi"]=> [
-     *          website_id => [
+     *          channel => [
      *              qty
      *              salable_qty
+     *              is_salable
      *          ]
      *      ]
      * ]
@@ -119,23 +128,26 @@ class Stock
         $channels = $this->getChannels();
         $stockData = $this->collectMsi($channels);
         $result = $this->getNoMsiStock(true);
+
         foreach ($stockData as $value) {
             foreach ($channels as $channel) {
                 if (!array_key_exists($value['product_id'], $result)) {
                     continue;
                 }
-                $qty = $result[$value['product_id']]['qty'];
+
+                $qty = $value[sprintf('quantity_%s', (int)$channel)];
                 $reserved = $result[$value['product_id']]['reserved'] * -1;
                 $salableQty = max($qty, $qty - $reserved);
-                $result[$value['product_id']]
-                ['msi']
-                [$channel] = [
-                    'qty' => $value[sprintf('quantity_%s', $channel)],
-                    'is_salable' => $value[sprintf('is_salable_%s', $channel)],
-                    'salable_qty' => $salableQty
+
+                $result[$value['product_id']]['msi'][$channel] = [
+                    'qty' => $value[sprintf('quantity_%s', (int)$channel)] ?? 0,
+                    'is_salable' => $value[sprintf('is_salable_%s', (int)$channel)] ?? 0,
+                    'availability' => $value[sprintf('is_salable_%s', (int)$channel)] ?? 0,
+                    'salable_qty' => $salableQty ?? 0
                 ];
             }
         }
+
         return $result;
     }
 
@@ -146,19 +158,10 @@ class Stock
      */
     private function getChannels(): array
     {
-        $selectChannels = $this->resource->getConnection()
-            ->select()
-            ->from(
-                $this->resource->getTableName('inventory_stock_sales_channel'),
-                [
-                    'stock_id'
-                ]
-            )->where('type = ?', 'website');
-        $channels = array_unique($this->resource->getConnection()->fetchCol($selectChannels));
-        if (count($channels) == 1 && reset($channels) != 1) {
-            $channels = [1];
-        }
-        return $channels;
+        $select = $this->resource->getConnection()->select()
+            ->from($this->resource->getTableName('inventory_stock_sales_channel'), ['stock_id'])
+            ->where('type = ?', 'website');
+        return array_unique($this->resource->getConnection()->fetchCol($select));
     }
 
     /**
@@ -169,50 +172,25 @@ class Stock
      */
     private function collectMsi(array $channels): array
     {
-        $channel = min($channels);
-        $channels = array_flip($channels);
-        unset($channels[$channel]);
-        $channels = array_flip($channels);
-        $stockTablePrimary = $this->resource->getTableName(sprintf('inventory_stock_%s', $channel));
-        if (!$this->resource->getConnection()->isTableExists($stockTablePrimary)) {
-            return [];
-        }
-        $selectStock = $this->resource->getConnection()
-            ->select()
+        $select = $this->resource->getConnection()->select()
             ->from(
-                $stockTablePrimary,
+                ['cpe' => $this->resource->getTableName('catalog_product_entity')],
+                ['product_id' => 'entity_id']
+            )->where('cpe.entity_id IN (?)', $this->entityIds);
+
+        foreach ($channels as $channel) {
+            $table = sprintf('inventory_stock_%s', (int)$channel);
+            $select->joinLeft(
+                [$table => $this->resource->getTableName($table)],
+                "cpe.sku = {$table}.sku",
                 [
-                    'product_id',
-                    'website_id',
-                    sprintf('quantity_%s', $channel) => 'quantity',
-                    sprintf('is_salable_%s', $channel) => 'is_salable'
+                    sprintf('quantity_%s', (int)$channel) => "{$table}.quantity",
+                    sprintf('is_salable_%s', (int)$channel) => "{$table}.is_salable"
                 ]
             );
-        foreach ($channels as $channel) {
-            $stockTable = sprintf('inventory_stock_%s', $channel);
-            if (!$this->resource->getConnection()->tableColumnExists($stockTable, 'website_id')) {
-                $selectStock->joinLeft(
-                    $stockTable,
-                    "{$stockTable}.sku = {$stockTablePrimary}.sku",
-                    [
-                        sprintf('quantity_%s', $channel) => 'quantity',
-                        sprintf('is_salable_%s', $channel) => "{$stockTable}.is_salable"
-                    ]
-                );
-            } else {
-                $selectStock->joinLeft(
-                    $stockTable,
-                    "{$stockTable}.website_id = {$stockTablePrimary}.website_id and
-                 {$stockTable}.product_id = {$stockTablePrimary}.product_id",
-                    [
-                        sprintf('quantity_%s', $channel) => 'quantity',
-                        sprintf('is_salable_%s', $channel) => "{$stockTable}.is_salable"
-                    ]
-                );
-            }
         }
-        $selectStock->where("{$stockTablePrimary}.product_id IN (?)", $this->entityIds);
-        return $this->resource->getConnection()->fetchAll($selectStock);
+
+        return $this->resource->getConnection()->fetchAll($select);
     }
 
     /**
@@ -267,6 +245,7 @@ class Stock
                 [
                     'qty' => (int)$value['qty'],
                     'is_in_stock' => (int)$value['is_in_stock'],
+                    'availability' => (int)$value['is_in_stock'],
                     'manage_stock' => (int)$value['manage_stock'],
                     'qty_increments' => (int)$value['qty_increments'],
                     'min_sale_qty' => (int)$value['min_sale_qty']
@@ -279,6 +258,33 @@ class Stock
             }
         }
         return $result;
+    }
+
+    /**
+     * @param int $storeId
+     * @return string|null
+     */
+    public function getChannelByStoreId(int $storeId): ?string
+    {
+        if (!$this->isMsiEnabled()) {
+            return null;
+        }
+
+        $salesChannelsTable = $this->resource->getTableName('inventory_stock_sales_channel');
+        if (!$this->resource->getConnection()->isTableExists($salesChannelsTable)) {
+            return null;
+        }
+
+        try {
+            $code = $this->storeRepository->getById($storeId)->getWebsite()->getCode();
+            $select = $this->resource->getConnection()->select()
+                ->from($salesChannelsTable, ['stock_id'])
+                ->where('code = ?', $code);
+
+            return $this->resource->getConnection()->fetchOne($select);
+        } catch (\Exception $exception) {
+            return null;
+        }
     }
 
     /**
