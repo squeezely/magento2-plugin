@@ -7,12 +7,10 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Api\Config\System;
 
-use Squeezely\Plugin\Api\Config\RepositoryInterface;
-
 /**
  * Store Sync Events group interface
  */
-interface StoreSyncInterface extends RepositoryInterface
+interface StoreSyncInterface extends FrontendEventsInterface
 {
     /**
      * Config paths for 'store_sync'-group

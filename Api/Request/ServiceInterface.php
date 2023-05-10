@@ -20,9 +20,18 @@ interface ServiceInterface
      *
      * @param array $fields
      * @param string $endpoint
+     * @param null $storeId
+     * @param string $method
+     * @param bool $allowSoftFail
      * @return mixed
      * @throws LocalizedException
      * @throws AuthenticationException
      */
-    public function execute(array $fields, string $endpoint, $storeId = null, $method = 'POST');
+    public function execute(
+        array $fields,
+        string $endpoint,
+        $storeId = null,
+        string $method = 'POST',
+        bool $allowSoftFail = true
+    );
 }

@@ -10,7 +10,7 @@ namespace Squeezely\Plugin\Api\Config;
 /**
  * Config repository interface
  */
-interface RepositoryInterface
+interface RepositoryInterface extends System\StoreSyncInterface
 {
     /**
      * Module Name
@@ -26,6 +26,21 @@ interface RepositoryInterface
     public const XML_PATH_WEBHOOK_KEY = 'squeezely/general/webhook_key';
     public const XML_PATH_EXTENSION_VERSION = 'squeezely/general/version';
     public const SQUEEZELY_COOKIE_NAME = 'sqzllocal';
+
+    /**
+     * All Events Codes
+     */
+    public const VIEW_CONTENT_EVENT = 'ViewContent';
+    public const VIEW_CATEGORY_EVENT = 'ViewCategory';
+    public const SEARCH_EVENT = 'Search';
+    public const ADD_TO_CART_EVENT = 'AddToCart';
+    public const REMOVE_FROM_CART_EVENT = 'RemoveFromCart';
+    public const INITIATE_CHECKOUT_EVENT = 'InitiateCheckout';
+    public const EMAIL_OPT_IN_EVENT = 'EmailOptIn';
+    public const PURCHASE_EVENT = 'Purchase';
+    public const PRE_PURCHASE_EVENT = 'PrePurchase';
+    public const CRM_UPDATE_EVENT = 'CRMUpdate';
+    public const COMPLETE_REGISTRATION_EVENT = 'CompleteRegistration';
 
     /**
      * Generic extension is not enables message

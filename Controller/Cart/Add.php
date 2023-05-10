@@ -62,6 +62,7 @@ class Add extends Action
      * @param ProductRepositoryInterface $productRepository
      * @param Product $product
      * @param RedirectInterface $redirectInterface
+     * @param LogRepository $logRepository
      */
     public function __construct(
         Context $context,

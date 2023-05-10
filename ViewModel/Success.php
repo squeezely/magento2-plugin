@@ -9,14 +9,13 @@ namespace Squeezely\Plugin\ViewModel;
 
 use Magento\Checkout\Model\Session;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Locale\Resolver as LocaleResolver;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\StoreManagerInterface;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
-use Squeezely\Plugin\Api\Service\DataLayerInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
-use Magento\Framework\Locale\Resolver as LocaleResolver;
+use Squeezely\Plugin\Api\Service\DataLayerInterface;
 
 /**
  * Class Success
@@ -24,16 +23,11 @@ use Magento\Framework\Locale\Resolver as LocaleResolver;
 class Success implements ArgumentInterface
 {
 
-    public const PURCHASE_EVENT_NAME = 'Purchase';
-    public const PRE_PURCHASE_EVENT_NAME = 'PrePurchase';
-
     /**
-     * @var FrontendEventsRepository
+     * @var ConfigRepository
      */
-    private $frontendEventsRepository;
+    private $configRepository;
     /**
-     * Checkout Session
-     *
      * @var Session
      */
     private $checkoutSession;
@@ -50,10 +44,6 @@ class Success implements ArgumentInterface
      */
     private $logRepository;
     /**
-     * @var JsonSerializer
-     */
-    private $jsonSerializer;
-    /**
      * @var LocaleResolver
      */
     private $localeResolver;
@@ -61,93 +51,65 @@ class Success implements ArgumentInterface
     /**
      * Success constructor.
      *
-     * @param FrontendEventsRepository $frontendEventsRepository
+     * @param ConfigRepository $configRepository
      * @param Session $checkoutSession
      * @param StoreManagerInterface $storeManager
      * @param DataLayerInterface $dataLayer
      * @param LogRepository $logRepository
-     * @param JsonSerializer $jsonSerializer
      * @param LocaleResolver $localeResolver
      */
     public function __construct(
-        FrontendEventsRepository $frontendEventsRepository,
+        ConfigRepository $configRepository,
         Session $checkoutSession,
         StoreManagerInterface $storeManager,
         DataLayerInterface $dataLayer,
         LogRepository $logRepository,
-        JsonSerializer $jsonSerializer,
         LocaleResolver $localeResolver
     ) {
-        $this->frontendEventsRepository = $frontendEventsRepository;
+        $this->configRepository = $configRepository;
         $this->checkoutSession = $checkoutSession;
         $this->storeManager = $storeManager;
         $this->dataLayer = $dataLayer;
         $this->logRepository = $logRepository;
-        $this->jsonSerializer = $jsonSerializer;
         $this->localeResolver = $localeResolver;
     }
 
     /**
      * @return string
      */
-    public function getDataScript()
+    public function getDataScript(): ?string
     {
-        $dataScript = '';
-
-        if ($this->frontendEventsRepository->isEnabled()) {
-            $order = $this->getOrder();
-            if ($order->hasInvoices()) {
-                $this->logRepository->addDebugLog(self::PURCHASE_EVENT_NAME, __('Start'));
-            } else {
-                $this->logRepository->addDebugLog(self::PRE_PURCHASE_EVENT_NAME, __('Start'));
-            }
-            $productItems = [];
-            foreach ($order->getAllVisibleItems() as $item) {
-                $productItem = [];
-                $productItem['id'] = $item->getSku();
-                $productItem['language'] = $this->getStoreLocale();
-                $productItem['name'] = $item->getName();
-                $productItem['price'] = $item->getPrice();
-                $productItem['quantity']
-                    = (int)$item->getQtyOrdered();
-                $productItems[] = (object)$productItem;
-            }
-
-            if ($order->hasInvoices()) {
-                $event = self::PURCHASE_EVENT_NAME;
-            } else {
-                $event = self::PRE_PURCHASE_EVENT_NAME;
-            }
-
-            $objOrder = (object)[
-                'event' => $event,
-                'email' => $order->getCustomerEmail(),
-                'orderid' => $order->getIncrementId(),
-                'firstname' => $order->getCustomerFirstname(),
-                'lastname' => $order->getCustomerLastname(),
-                'userid' => $order->getCustomerId(),
-                'service' => 'enabled',
-                'products' => $productItems,
-                'currency' => $this->getStoreCurrency()
-            ];
-
-            $dataScript = $this->dataLayer->generateDataScript($objOrder);
-            if ($order->hasInvoices()) {
-                $this->logRepository->addDebugLog(
-                    self::PURCHASE_EVENT_NAME,
-                    'Event data: ' . $this->jsonSerializer->serialize($objOrder)
-                );
-                $this->logRepository->addDebugLog(self::PURCHASE_EVENT_NAME, __('Finish'));
-            } else {
-                $this->logRepository->addDebugLog(
-                    self::PRE_PURCHASE_EVENT_NAME,
-                    'Event data: ' . $this->jsonSerializer->serialize($objOrder)
-                );
-                $this->logRepository->addDebugLog(self::PRE_PURCHASE_EVENT_NAME, __('Finish'));
-            }
+        if (!$this->configRepository->isFrontendEventEnabled(ConfigRepository::PURCHASE_EVENT)) {
+            return null;
         }
 
-        return $dataScript;
+        $order = $this->getOrder();
+        $productItems = [];
+        foreach ($order->getAllVisibleItems() as $item) {
+            $productItem = [];
+            $productItem['id'] = $item->getSku();
+            $productItem['language'] = $this->getStoreLocale();
+            $productItem['name'] = $item->getName();
+            $productItem['price'] = $item->getPrice();
+            $productItem['quantity'] = (int)$item->getQtyOrdered();
+            $productItems[] = (object)$productItem;
+        }
+
+        $objOrder = (object)[
+            'event' => $order->hasInvoices()
+                ? ConfigRepository::PURCHASE_EVENT
+                : ConfigRepository::PRE_PURCHASE_EVENT,
+            'email' => $order->getCustomerEmail(),
+            'orderid' => $order->getIncrementId(),
+            'firstname' => $order->getCustomerFirstname(),
+            'lastname' => $order->getCustomerLastname(),
+            'userid' => $order->getCustomerId(),
+            'service' => 'enabled',
+            'products' => $productItems,
+            'currency' => $this->getStoreCurrency()
+        ];
+
+        return $this->dataLayer->generateDataScript($objOrder);
     }
 
     /**
@@ -155,23 +117,9 @@ class Success implements ArgumentInterface
      *
      * @return Order
      */
-    protected function getOrder()
+    protected function getOrder(): Order
     {
         return $this->checkoutSession->getLastRealOrder();
-    }
-
-    /**
-     * @return string
-     */
-    protected function getStoreCurrency()
-    {
-        $currencyCode = '';
-        try {
-            $currencyCode = $this->storeManager->getStore()->getCurrentCurrencyCode();
-        } catch (NoSuchEntityException $e) {
-            $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
-        }
-        return $currencyCode;
     }
 
     /**
@@ -182,5 +130,18 @@ class Success implements ArgumentInterface
         $locale = $this->localeResolver->getLocale()
             ?: $this->localeResolver->getDefaultLocale();
         return str_replace('_', '-', $locale);
+    }
+
+    /**
+     * @return string
+     */
+    private function getStoreCurrency(): string
+    {
+        try {
+            return $this->storeManager->getStore()->getCurrentCurrencyCode();
+        } catch (NoSuchEntityException $e) {
+            $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
+            return '';
+        }
     }
 }

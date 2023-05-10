@@ -18,16 +18,6 @@
             <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
             <config_path>squeezely/store_sync/enabled</config_path>
         </field>
-        <!--<field id="cron" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="1"-->
-        <!--showInStore="1">-->
-        <!--<label>Sync frequency</label>-->
-        <!--<source_model>Squeezely\Plugin\Model\Config\Source\Frequency</source_model>-->
-        <!--<config_path>squeezely/store_sync/cron</config_path>-->
-        <!--<comment>Select the frequency for the new product export.</comment>-->
-        <!--<depends>-->
-        <!--<field id="enabled">1</field>-->
-        <!--</depends>-->
-        <!--</field>-->
         <field id="attribute_name" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1"
                showInStore="1">
             <label>Name</label>

@@ -12,10 +12,9 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Api\Service\DataLayerInterface;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 
 /**
  * Class Category
@@ -23,12 +22,10 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 class Category implements ArgumentInterface
 {
 
-    public const EVENT_NAME = 'ViewCategory';
-
     /**
-     * @var FrontendEventsRepository
+     * @var ConfigRepository
      */
-    private $frontendEventsRepository;
+    private $configRepository;
     /**
      * @var Http
      */
@@ -49,82 +46,64 @@ class Category implements ArgumentInterface
      * @var LogRepository
      */
     private $logRepository;
-    /**
-     * @var JsonSerializer
-     */
-    private $jsonSerializer;
 
     /**
      * Category constructor.
      *
-     * @param FrontendEventsRepository $frontendEventsRepository
+     * @param ConfigRepository $configRepository
      * @param Http $request
      * @param CategoryRepositoryInterface $categoryRepository
      * @param StoreManagerInterface $storeManager
      * @param DataLayerInterface $dataLayer
      * @param LogRepository $logRepository
-     * @param JsonSerializer $jsonSerializer
      */
     public function __construct(
-        FrontendEventsRepository $frontendEventsRepository,
+        ConfigRepository $configRepository,
         Http $request,
         CategoryRepositoryInterface $categoryRepository,
         StoreManagerInterface $storeManager,
         DataLayerInterface $dataLayer,
-        LogRepository $logRepository,
-        JsonSerializer $jsonSerializer
+        LogRepository $logRepository
     ) {
-        $this->frontendEventsRepository = $frontendEventsRepository;
+        $this->configRepository = $configRepository;
         $this->request = $request;
         $this->categoryRepository = $categoryRepository;
         $this->storeManager = $storeManager;
         $this->dataLayer = $dataLayer;
         $this->logRepository = $logRepository;
-        $this->jsonSerializer = $jsonSerializer;
     }
 
     /**
      * @return string|null
      */
-    public function getDataScript()
+    public function getDataScript(): ?string
     {
-        $dataScript = '';
-        if ($this->frontendEventsRepository->isEnabled()) {
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Start'));
-            try {
-                $categoryId = (int)$this->request->getParam('id', false);
-                $category = $this->categoryRepository->get(
-                    $categoryId,
-                    $this->getStoreId()
-                );
-            } catch (NoSuchEntityException $e) {
-                $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
-                return null;
-            }
-
-            $objViewCategory = (object)[
-                'event' => self::EVENT_NAME,
-                'category_id' => $categoryId,
-                'objectname' => $category->getName()
-            ];
-
-            $dataScript = $this->dataLayer->generateDataScript($objViewCategory);
-            $this->logRepository->addDebugLog(
-                self::EVENT_NAME,
-                'Event data: ' . $this->jsonSerializer->serialize($objViewCategory)
-            );
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Finish'));
+        if (!$this->configRepository->isFrontendEventEnabled(ConfigRepository::VIEW_CATEGORY_EVENT)) {
+            return null;
         }
-        return $dataScript;
+
+        try {
+            $categoryId = (int)$this->request->getParam('id', false);
+            $category = $this->categoryRepository->get($categoryId, $this->getStoreId());
+        } catch (NoSuchEntityException $e) {
+            $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
+            return null;
+        }
+
+        return $this->dataLayer->generateDataScript((object)[
+            'event' => ConfigRepository::VIEW_CATEGORY_EVENT,
+            'category_id' => $categoryId,
+            'objectname' => $category->getName()
+        ]);
     }
 
     /**
      * @return int|null
      */
-    protected function getStoreId()
+    protected function getStoreId(): ?int
     {
         try {
-            return $this->storeManager->getStore()->getId();
+            return (int)$this->storeManager->getStore()->getId();
         } catch (NoSuchEntityException $e) {
             $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
             return null;

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Model\Command\Product;
 
-use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Service\Invalidate\ByStore as InvalidateByStore;
 
 /**

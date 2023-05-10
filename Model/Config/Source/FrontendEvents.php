@@ -13,19 +13,20 @@ use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 /**
  * Backend Events Option Source model
  */
-class BackendEvents implements OptionSourceInterface
+class FrontendEvents implements OptionSourceInterface
 {
 
     /**
      * Available backend events
      */
     public const EVENTS = [
-        ConfigRepository::EMAIL_OPT_IN_EVENT,
-        ConfigRepository::PURCHASE_EVENT,
-        ConfigRepository::CRM_UPDATE_EVENT,
+        ConfigRepository::VIEW_CONTENT_EVENT,
+        ConfigRepository::VIEW_CATEGORY_EVENT,
+        ConfigRepository::SEARCH_EVENT,
         ConfigRepository::ADD_TO_CART_EVENT,
         ConfigRepository::REMOVE_FROM_CART_EVENT,
-        ConfigRepository::COMPLETE_REGISTRATION_EVENT
+        ConfigRepository::INITIATE_CHECKOUT_EVENT,
+        ConfigRepository::PURCHASE_EVENT,
     ];
 
     /**

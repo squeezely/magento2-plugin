@@ -9,11 +9,7 @@ namespace Squeezely\Plugin\Plugin;
 
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\ProductRepository as Subject;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
-use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
+use Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface as ProcessingQueueRepository;
 
 /**
  * ProductRepository Plugin
@@ -21,40 +17,19 @@ use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 class ProductRepository
 {
     /**
-     * @var RequestRepository
+     * @var ProcessingQueueRepository
      */
-    private $requestRepository;
-    /**
-     * @var LogRepository
-     */
-    private $logRepository;
-    /**
-     * @var StoreManagerInterface
-     */
-    private $storeManager;
-    /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
+    private $processingQueueRepository;
 
     /**
      * ProductRepository constructor.
      *
-     * @param StoreManagerInterface $storeManager
-     * @param RequestRepository $requestRepository
-     * @param LogRepository $logRepository
-     * @param ScopeConfigInterface $scopeConfig
+     * @param ProcessingQueueRepository $processingQueueRepository
      */
     public function __construct(
-        StoreManagerInterface $storeManager,
-        RequestRepository $requestRepository,
-        LogRepository $logRepository,
-        ScopeConfigInterface $scopeConfig
+        ProcessingQueueRepository $processingQueueRepository
     ) {
-        $this->storeManager = $storeManager;
-        $this->requestRepository = $requestRepository;
-        $this->logRepository = $logRepository;
-        $this->scopeConfig = $scopeConfig;
+        $this->processingQueueRepository = $processingQueueRepository;
     }
 
     /**
@@ -66,39 +41,13 @@ class ProductRepository
     public function afterDelete(Subject $subject, $result, ProductInterface $product)
     {
         if ($result === true) {
-            $products = [];
-            foreach ($this->getLanguages() as $language) {
-                $products[] = [
-                    'id' => $product->getSku(),
-                    'language' => $language
-                ];
-            }
-            $productData = ['products' => $products];
-
-            try {
-                $this->requestRepository->sendDeleteProducts($productData);
-            } catch (\Exception $e) {
-                $this->logRepository->addErrorLog('delete product', $e->getMessage());
-            }
+            $process = $this->processingQueueRepository->create();
+            $process->setType('product')
+                ->setProcessingData([
+                    'product_id' => $product->getId()
+                ]);
+            $this->processingQueueRepository->save($process);
         }
         return $result;
-    }
-
-    /**
-     * @return array
-     */
-    private function getLanguages(): array
-    {
-        $languages = [];
-        $stores = $this->storeManager->getStores();
-        foreach ($stores as $store) {
-            $languages[] = (string)$this->scopeConfig->getValue(
-                'general/locale/code',
-                ScopeInterface::SCOPE_STORE,
-                $store->getId()
-            );
-        }
-
-        return array_unique($languages);
     }
 }

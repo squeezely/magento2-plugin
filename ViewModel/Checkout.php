@@ -13,11 +13,10 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Store\Model\StoreManagerInterface;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
-use Squeezely\Plugin\Api\Service\DataLayerInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
+use Squeezely\Plugin\Api\Service\DataLayerInterface;
 use stdClass;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 
 /**
  * Class Checkout
@@ -25,12 +24,10 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 class Checkout implements ArgumentInterface
 {
 
-    public const EVENT_NAME = 'InitiateCheckout';
-
     /**
-     * @var FrontendEventsRepository
+     * @var ConfigRepository
      */
-    private $frontendEventsRepository;
+    private $configRepository;
     /**
      * @var Session
      */
@@ -47,88 +44,73 @@ class Checkout implements ArgumentInterface
      * @var LogRepository
      */
     private $logRepository;
-    /**
-     * @var JsonSerializer
-     */
-    private $jsonSerializer;
 
     /**
      * Checkout constructor.
      *
-     * @param FrontendEventsRepository $frontendEventsRepository
+     * @param ConfigRepository $configRepository
      * @param Session $checkoutSession
      * @param StoreManagerInterface $storeManager
      * @param DataLayerInterface $dataLayer
      * @param LogRepository $logRepository
-     * @param JsonSerializer $jsonSerializer
      */
     public function __construct(
-        FrontendEventsRepository $frontendEventsRepository,
+        ConfigRepository $configRepository,
         Session $checkoutSession,
         StoreManagerInterface $storeManager,
         DataLayerInterface $dataLayer,
-        LogRepository $logRepository,
-        JsonSerializer $jsonSerializer
+        LogRepository $logRepository
     ) {
-        $this->frontendEventsRepository = $frontendEventsRepository;
+        $this->configRepository = $configRepository;
         $this->checkoutSession = $checkoutSession;
         $this->storeManager = $storeManager;
         $this->dataLayer = $dataLayer;
         $this->logRepository = $logRepository;
-        $this->jsonSerializer = $jsonSerializer;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDataScript()
+    public function getDataScript(): ?string
     {
-        $dataScript = '';
-
-        if ($this->frontendEventsRepository->isEnabled()) {
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Start'));
-            $quote = $this->getQuote();
-            if ($quote == null) {
-                return $dataScript;
-            }
-            $productItems = [];
-            foreach ($quote->getAllVisibleItems() as $item) {
-                $productItems[] = (object)[
-                    'id' => $item->getSku(),
-                    'name' => $item->getName(),
-                    'price' => $item->getPrice(),
-                    'quantity' => (int)$item->getQty()
-                ];
-            }
-
-            $objOrder = new stdClass();
-
-            $objOrder->event = 'InitiateCheckout';
-
-            if ($quote->getCustomerEmail()) {
-                $objOrder->email = $quote->getCustomerEmail();
-            }
-            if ($quote->getCustomerFirstname()) {
-                $objOrder->firstname = $quote->getCustomerFirstname();
-            }
-            if ($quote->getCustomerLastname()) {
-                $objOrder->lastname = $quote->getCustomerLastname();
-            }
-            if ($quote->getCustomerId()) {
-                $objOrder->userid = $quote->getCustomerId();
-            }
-            $objOrder->products = $productItems;
-            $objOrder->currency = $this->getStoreCurrency();
-
-            $dataScript = $this->dataLayer->generateDataScript($objOrder);
-            $this->logRepository->addDebugLog(
-                self::EVENT_NAME,
-                'Event data: ' . $this->jsonSerializer->serialize($objOrder)
-            );
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Finish'));
+        if (!$this->configRepository->isFrontendEventEnabled(ConfigRepository::INITIATE_CHECKOUT_EVENT)) {
+            return null;
         }
 
-        return $dataScript;
+        $quote = $this->getQuote();
+        if ($this->getQuote() == null) {
+            return null;
+        }
+
+        $productItems = [];
+        foreach ($quote->getAllVisibleItems() as $item) {
+            $productItems[] = (object)[
+                'id' => $item->getSku(),
+                'name' => $item->getName(),
+                'price' => $item->getPrice(),
+                'quantity' => (int)$item->getQty()
+            ];
+        }
+
+        $objOrder = new stdClass();
+        $objOrder->event = 'InitiateCheckout';
+
+        if ($quote->getCustomerEmail()) {
+            $objOrder->email = $quote->getCustomerEmail();
+        }
+        if ($quote->getCustomerFirstname()) {
+            $objOrder->firstname = $quote->getCustomerFirstname();
+        }
+        if ($quote->getCustomerLastname()) {
+            $objOrder->lastname = $quote->getCustomerLastname();
+        }
+        if ($quote->getCustomerId()) {
+            $objOrder->userid = $quote->getCustomerId();
+        }
+        $objOrder->products = $productItems;
+        $objOrder->currency = $this->getStoreCurrency();
+
+        return $this->dataLayer->generateDataScript($objOrder);
     }
 
     /**
@@ -136,7 +118,7 @@ class Checkout implements ArgumentInterface
      *
      * @return Quote|null
      */
-    private function getQuote()
+    private function getQuote(): ?Quote
     {
         $quote = null;
         try {
@@ -152,14 +134,13 @@ class Checkout implements ArgumentInterface
     /**
      * @return string
      */
-    private function getStoreCurrency()
+    private function getStoreCurrency(): string
     {
-        $currencyCode = '';
         try {
-            $currencyCode = $this->storeManager->getStore()->getCurrentCurrencyCode();
+            return $this->storeManager->getStore()->getCurrentCurrencyCode();
         } catch (NoSuchEntityException $e) {
             $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
+            return '';
         }
-        return $currencyCode;
     }
 }

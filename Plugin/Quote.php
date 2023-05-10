@@ -7,75 +7,50 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Plugin;
 
-use Magento\Quote\Model\Quote as QuoteModel;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
-use Squeezely\Plugin\Api\Service\DataLayerInterface;
 use Magento\Catalog\Model\Product;
-use Magento\Quote\Model\Quote\Item;
-use Magento\Framework\App\RequestInterface;
-use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Framework\Locale\Resolver as LocaleResolver;
+use Magento\Framework\Stdlib\CookieManagerInterface;
+use Magento\Quote\Model\Quote as QuoteModel;
+use Magento\Quote\Model\Quote\Item;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
+use Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface as ProcessingQueueRepository;
 
-/**
- * Class Quote
- * Plugin for quote model
- */
 class Quote
 {
 
-    public const REMOVE_FROM_CART_EVENT_NAME = 'RemoveFromCart';
-    public const ADD_TO_CART_EVENT_NAME = 'AddToCart';
-
     /**
-     * @var DataLayerInterface
+     * @var ConfigRepository
      */
-    private $dataLayer;
-    /**
-     * @var FrontendEventsRepository
-     */
-    private $frontendEventsRepository;
-    /**
-     * @var RequestInterface
-     */
-    private $request;
-    /**
-     * @var LogRepository
-     */
-    private $logRepository;
-    /**
-     * @var JsonSerializer
-     */
-    private $jsonSerializer;
+    private $configRepository;
     /**
      * @var LocaleResolver
      */
     private $localeResolver;
+    /**
+     * @var ProcessingQueueRepository
+     */
+    private $processingQueueRepository;
+    /**
+     * @var CookieManagerInterface
+     */
+    private $cookieManager;
 
     /**
-     * Quote constructor.
-     *
-     * @param DataLayerInterface $dataLayer
-     * @param FrontendEventsRepository $frontendEventsRepository
-     * @param RequestInterface $request
-     * @param LogRepository $logRepository
-     * @param JsonSerializer $jsonSerializer
+     * @param ConfigRepository $configRepository
      * @param LocaleResolver $localeResolver
+     * @param ProcessingQueueRepository $processingQueueRepository
+     * @param CookieManagerInterface $cookieManager
      */
     public function __construct(
-        DataLayerInterface $dataLayer,
-        FrontendEventsRepository $frontendEventsRepository,
-        RequestInterface $request,
-        LogRepository $logRepository,
-        JsonSerializer $jsonSerializer,
-        LocaleResolver $localeResolver
+        ConfigRepository $configRepository,
+        LocaleResolver $localeResolver,
+        ProcessingQueueRepository $processingQueueRepository,
+        CookieManagerInterface $cookieManager
     ) {
-        $this->dataLayer = $dataLayer;
-        $this->frontendEventsRepository = $frontendEventsRepository;
-        $this->request = $request;
-        $this->logRepository = $logRepository;
-        $this->jsonSerializer = $jsonSerializer;
+        $this->configRepository = $configRepository;
         $this->localeResolver = $localeResolver;
+        $this->processingQueueRepository = $processingQueueRepository;
+        $this->cookieManager = $cookieManager;
     }
 
     /**
@@ -92,20 +67,24 @@ class Quote
         QuoteModel $result,
         int $itemId
     ) {
-        /** @phpstan-ignore-next-line */
-        if ($this->frontendEventsRepository->isEnabled() && !$this->request->isAjax()) {
-            $this->logRepository->addDebugLog(self::REMOVE_FROM_CART_EVENT_NAME, __('Start'));
-            $item = $subject->getItemById($itemId);
-            if ($item) {
-                $eventData = ['products' => ['id' => $item->getSku()]];
-                $this->dataLayer->addEventToQueue(self::REMOVE_FROM_CART_EVENT_NAME, $eventData);
-                $this->logRepository->addDebugLog(
-                    self::REMOVE_FROM_CART_EVENT_NAME,
-                    'Event data: ' . $this->jsonSerializer->serialize($eventData)
-                );
-            }
-            $this->logRepository->addDebugLog(self::REMOVE_FROM_CART_EVENT_NAME, __('Finish'));
+        if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::ADD_TO_CART_EVENT)
+            || $this->configRepository->isFrontendEventEnabled(ConfigRepository::ADD_TO_CART_EVENT)) {
+            return $result;
         }
+
+        if ($item = $subject->getItemById($itemId)) {
+            $process = $this->processingQueueRepository->create();
+            $process->setType('remove_from_cart')
+                ->setProcessingData([
+                    'event' => ConfigRepository::REMOVE_FROM_CART_EVENT,
+                    'products' => ['id' => $item->getSku()],
+                    'sqzly_cookie' => $this->cookieManager->getCookie(
+                        ConfigRepository::SQUEEZELY_COOKIE_NAME
+                    )
+                ]);
+            $this->processingQueueRepository->save($process);
+        }
+
         return $result;
     }
 
@@ -123,20 +102,26 @@ class Quote
         $result,
         Product $product
     ) {
-        if ($this->frontendEventsRepository->isEnabled()) {
-            $this->logRepository->addDebugLog(self::ADD_TO_CART_EVENT_NAME, __('Start'));
-            $eventData = ['products' => [
-                'id' => $product->getSku(),
-                'language' => $this->getStoreLocale(),
-                'quantity' => $product->getQty()
-            ]];
-            $this->dataLayer->addEventToQueue(self::ADD_TO_CART_EVENT_NAME, $eventData);
-            $this->logRepository->addDebugLog(
-                self::ADD_TO_CART_EVENT_NAME,
-                'Event data: ' . $this->jsonSerializer->serialize($eventData)
-            );
-            $this->logRepository->addDebugLog(self::ADD_TO_CART_EVENT_NAME, __('Finish'));
+        if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::ADD_TO_CART_EVENT)
+            || $this->configRepository->isFrontendEventEnabled(ConfigRepository::ADD_TO_CART_EVENT)) {
+            return $result;
         }
+
+        $process = $this->processingQueueRepository->create();
+        $process->setType('add_to_cart')
+            ->setProcessingData([
+                'event' => ConfigRepository::ADD_TO_CART_EVENT,
+                'products' => [
+                    'id' => $product->getSku(),
+                    'language' => $this->getStoreLocale(),
+                    'quantity' => $product->getQty()
+                ],
+                'sqzly_cookie' => $this->cookieManager->getCookie(
+                    ConfigRepository::SQUEEZELY_COOKIE_NAME
+                )
+            ]);
+        $this->processingQueueRepository->save($process);
+
         return $result;
     }
 

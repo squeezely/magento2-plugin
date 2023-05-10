@@ -7,14 +7,10 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Plugin;
 
-use Magento\Newsletter\Model\Subscriber;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Invoice as InvoiceModel;
-use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepository;
-use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
+use Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface as ProcessingQueueRepository;
 
 /**
  * Class Quote
@@ -24,54 +20,26 @@ class Invoice
 {
 
     /**
-     * @var RequestRepository
+     * @var ConfigRepository
      */
-    private $requestRepository;
+    private $configRepository;
     /**
-     * @var Subscriber
+     * @var ProcessingQueueRepository
      */
-    private $subscriber;
-    /**
-     * @var BackendEventsRepository
-     */
-    private $backendEventsRepository;
-    /**
-     * @var LogRepository
-     */
-    private $logRepository;
-    /**
-     * @var JsonSerializer
-     */
-    private $jsonSerializer;
-    /**
-     * @var TimezoneInterface
-     */
-    protected $localeDate;
+    private $processingQueueRepository;
 
     /**
      * Invoice constructor.
      *
-     * @param RequestRepository $requestRepository
-     * @param Subscriber $subscriber
-     * @param BackendEventsRepository $backendEventsRepository
-     * @param LogRepository $logRepository
-     * @param JsonSerializer $jsonSerializer
-     * @param TimezoneInterface $localeDate
+     * @param ConfigRepository $configRepository
+     * @param ProcessingQueueRepository $processingQueueRepository
      */
     public function __construct(
-        RequestRepository $requestRepository,
-        Subscriber $subscriber,
-        BackendEventsRepository $backendEventsRepository,
-        LogRepository $logRepository,
-        JsonSerializer $jsonSerializer,
-        TimezoneInterface $localeDate
+        ConfigRepository $configRepository,
+        ProcessingQueueRepository $processingQueueRepository
     ) {
-        $this->requestRepository = $requestRepository;
-        $this->subscriber = $subscriber;
-        $this->backendEventsRepository = $backendEventsRepository;
-        $this->logRepository = $logRepository;
-        $this->jsonSerializer = $jsonSerializer;
-        $this->localeDate = $localeDate;
+        $this->configRepository = $configRepository;
+        $this->processingQueueRepository = $processingQueueRepository;
     }
 
     /**
@@ -86,129 +54,20 @@ class Invoice
         InvoiceModel $subject,
         InvoiceModel $result
     ) {
-        if ($this->backendEventsRepository->isEnabled()
-            && in_array(
-                RequestRepository::PURCHASE_EVENT_NAME,
-                $this->backendEventsRepository->getEnabledEvents()
-            )
-        ) {
-            $this->logRepository->addDebugLog('Purchase event', __('Start'));
-            try {
-                $order = $subject->getOrder();
-                $this->logRepository->addDebugLog(
-                    'Purchase event',
-                    'Order id: ' . $order->getIncrementId()
-                );
-                if ($subject->getState() === Order\Invoice::STATE_PAID) {
-                    $this->requestRepository->sendPurchases(
-                        $this->transformOrderData($order)
-                    );
-                }
-            } catch (\Exception $exception) {
-                $this->logRepository->addErrorLog('afterPay plugin', $exception->getMessage());
-            }
+        if ($this->configRepository->isBackendEventEnabled(ConfigRepository::PURCHASE_EVENT)) {
+            return $result;
         }
-        $this->logRepository->addDebugLog('Purchase event', __('Finish'));
+
+        $order = $subject->getOrder();
+        if ($subject->getState() === Order\Invoice::STATE_PAID) {
+            $process = $this->processingQueueRepository->create();
+            $process->setType('order')
+                ->setProcessingData([
+                    'order_id' => $order->getId()
+                ]);
+            $this->processingQueueRepository->save($process);
+        }
+
         return $result;
-    }
-
-    /**
-     * @param Order $order
-     *
-     * @return array
-     */
-    private function transformOrderData($order): array
-    {
-        $data = [
-            'event' => 'Purchase',
-            'email' => $order->getCustomerEmail(),
-            'firstname' => $order->getCustomerFirstname(),
-            'lastname' => $order->getCustomerLastname(),
-            'orderid' => $order->getRealOrderId(),
-            'timestamp' => $this->createdAtStore($order),
-            'userid' => $order->getCustomerId() ?? null,
-            'gender' => $order->getCustomerGender(),
-            'birthdate' => $order->getCustomerDob(),
-            'phone' => $order->getBillingAddress()->getTelephone(),
-            'postcode' => $order->getBillingAddress()->getPostcode(),
-            'city' => $order->getBillingAddress()->getCity(),
-            'country' => $order->getBillingAddress()->getCountryId(),
-            'currency' => $order->getOrderCurrencyCode(),
-            'service' => 'yes',
-            'newsletter' => $this->getSubscriberStatus($order->getCustomerEmail()),
-            'products' => $this->retrieveProductsFromOrder($order->getAllVisibleItems())
-        ];
-        $this->logRepository->addDebugLog(
-            'Purchase event',
-            'Event data: ' . $this->jsonSerializer->serialize($data)
-        );
-        return $data;
-    }
-
-    /**
-     * @param string $email
-     * @return string
-     */
-    private function getSubscriberStatus(string $email): string
-    {
-        $checkSubscriber = $this->subscriber->loadByEmail($email);
-
-        switch ($checkSubscriber->getStatus()) {
-            case Subscriber::STATUS_SUBSCRIBED:
-                return 'yes';
-            case Subscriber::STATUS_UNSUBSCRIBED:
-                return 'no';
-            default:
-                return '';
-        }
-    }
-
-    /**
-     * @param array $items
-     *
-     * @return array
-     */
-    private function retrieveProductsFromOrder(array $items): array
-    {
-        $productItems = [];
-        foreach ($items as $item) {
-            $productItems[] = [
-                'id' => $item->getSku(),
-                'name' => $item->getName(),
-                'price' => $item->getPrice(),
-                'quantity' => (int)$item->getQtyOrdered(),
-            ];
-        }
-        return $productItems;
-    }
-
-    /**
-     * @param Order $order
-     * @return string
-     */
-    private function createdAtStore($order)
-    {
-        $datetime = \DateTime::createFromFormat('Y-m-d H:i:s', (string)$order->getCreatedAt());
-        if (!$datetime) {
-            return '';
-        }
-        $timezone = $this->getTimezoneForStore($order->getStore());
-        $storeTime = new \DateTimeZone($timezone);
-        $datetime->setTimezone($storeTime);
-        return $datetime->format('Y-m-d H:i:s');
-    }
-
-    /**
-     * Get timezone for store
-     *
-     * @param mixed $store
-     * @return string
-     */
-    private function getTimezoneForStore($store)
-    {
-        return $this->localeDate->getConfigTimezone(
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-            $store->getCode()
-        );
     }
 }

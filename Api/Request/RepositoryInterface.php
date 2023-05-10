@@ -36,21 +36,6 @@ interface RepositoryInterface
     public const VERIFY_API_LOGIN_END_POINT = "v1/verifyAuth?channel=2";
 
     /**
-     * Event cocd for Email Opt in
-     */
-    public const EMAIL_OPT_IN_EVENT_NAME = 'EmailOptIn';
-
-    /**
-     * Event cocd for Purchase
-     */
-    public const PURCHASE_EVENT_NAME = 'Purchase';
-
-    /**
-     * Event code for CRMUpdate
-     */
-    public const CRM_UPDATE_EVENT_NAME = 'CRMUpdate';
-
-    /**
      * Number of products per one request
      */
     public const PRODUCTS_PER_REQUEST = 150;
@@ -74,39 +59,20 @@ interface RepositoryInterface
     public function sendDeleteProducts(array $products): array;
 
     /**
-     * Send purchased order data to API
-     *
-     * @param array $purchases
-     * @return array
-     * @throws AuthenticationException
-     * @throws LocalizedException
-     */
-    public function sendPurchases(array $purchases): array;
-
-    /**
-     * Send CRMUpdate data to API
-     *
-     * @param array $data
-     * @return array
-     * @throws AuthenticationException
-     * @throws LocalizedException
-     */
-    public function sendCRMUpdate(array $data): array;
-
-    /**
-     * Send registered customer data to API
+     * Send event data to API
      *
      * @param array $eventData
      * @return array
      * @throws AuthenticationException
      * @throws LocalizedException
      */
-    public function sendCompleteRegistration(array $eventData): array;
+    public function sendToPlatform(array $eventData): array;
 
     /**
      * Send request for credentials validation
      *
      * @param array $magentoToken
+     * @param int $storeId
      * @return bool
      * @throws AuthenticationException
      * @throws LocalizedException

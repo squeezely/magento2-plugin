@@ -6,7 +6,7 @@
                    as="productManager"
                    class="Magento\Framework\View\Element\Template"
                    template="Squeezely_Plugin::data_script.phtml"
-                   after="pixelManager" >
+                   after="pixelManager">
                 <arguments>
                     <argument name="view_model" xsi:type="object">Squeezely\Plugin\ViewModel\Product</argument>
                 </arguments>

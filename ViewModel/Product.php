@@ -11,12 +11,12 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Locale\Resolver as LocaleResolver;
+use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Api\Service\DataLayerInterface;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 
 /**
  * Class Product
@@ -24,12 +24,10 @@ use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 class Product implements ArgumentInterface
 {
 
-    public const EVENT_NAME = 'ViewContent';
-
     /**
-     * @var FrontendEventsRepository
+     * @var ConfigRepository
      */
-    private $frontendEventsRepository;
+    private $configRepository;
     /**
      * @var Http
      */
@@ -62,7 +60,7 @@ class Product implements ArgumentInterface
     /**
      * Product constructor.
      *
-     * @param FrontendEventsRepository $frontendEventsRepository
+     * @param ConfigRepository $configRepository
      * @param Http $request
      * @param ProductRepositoryInterface $productRepository
      * @param StoreManagerInterface $storeManager
@@ -72,7 +70,7 @@ class Product implements ArgumentInterface
      * @param JsonSerializer $jsonSerializer
      */
     public function __construct(
-        FrontendEventsRepository $frontendEventsRepository,
+        ConfigRepository $configRepository,
         Http $request,
         ProductRepositoryInterface $productRepository,
         StoreManagerInterface $storeManager,
@@ -81,7 +79,7 @@ class Product implements ArgumentInterface
         LogRepository $logRepository,
         JsonSerializer $jsonSerializer
     ) {
-        $this->frontendEventsRepository = $frontendEventsRepository;
+        $this->configRepository = $configRepository;
         $this->request = $request;
         $this->productRepository = $productRepository;
         $this->storeManager = $storeManager;
@@ -94,55 +92,42 @@ class Product implements ArgumentInterface
     /**
      * @return null|string
      */
-    public function getDataScript()
+    public function getDataScript(): ?string
     {
-        $dataScript = '';
-        if ($this->frontendEventsRepository->isEnabled()) {
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Start'));
-            try {
-                $productId = (int)$this->request->getParam('id', false);
-                $product = $this->productRepository->getById(
-                    $productId,
-                    false,
-                    $this->getStoreId()
-                );
-            } catch (NoSuchEntityException $e) {
-                $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
-                return null;
-            }
-            $categoryCollection = $product->getCategoryCollection();
+        if (!$this->configRepository->isFrontendEventEnabled(ConfigRepository::VIEW_CONTENT_EVENT)) {
+            return null;
+        }
 
-            $objProduct = (object)[
+        try {
+            $productId = (int)$this->request->getParam('id', false);
+            $product = $this->productRepository->getById($productId, false, $this->getStoreId());
+        } catch (NoSuchEntityException $e) {
+            $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
+            return null;
+        }
+
+        $objEcommerce = (object)[
+            'event' => ConfigRepository::VIEW_CONTENT_EVENT,
+            'products' => (object)[
                 'name' => $product->getName(),
                 'id' => $product->getSku(),
                 'price' => $product->getFinalPrice(),
                 'language' => $this->getStoreLocale(),
-                'category_ids' => $categoryCollection->getAllIds()
-            ];
+                'category_ids' => $product->getCategoryCollection()->getAllIds()
+            ],
+            'currency' => $this->getStoreCurrency()
+        ];
 
-            $objEcommerce = (object)[
-                'event' => self::EVENT_NAME,
-                'products' => $objProduct,
-                'currency' => $this->getStoreCurrency()
-            ];
-
-            $dataScript = $this->dataLayer->generateDataScript($objEcommerce);
-            $this->logRepository->addDebugLog(
-                self::EVENT_NAME,
-                'Event data: ' . $this->jsonSerializer->serialize($objEcommerce)
-            );
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Finish'));
-        }
-        return $dataScript;
+        return $this->dataLayer->generateDataScript($objEcommerce);
     }
 
     /**
      * @return int|null
      */
-    private function getStoreId()
+    private function getStoreId(): ?int
     {
         try {
-            return $this->storeManager->getStore()->getId();
+            return (int)$this->storeManager->getStore()->getId();
         } catch (NoSuchEntityException $e) {
             $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
             return null;
@@ -164,12 +149,11 @@ class Product implements ArgumentInterface
      */
     private function getStoreCurrency(): string
     {
-        $currencyCode = '';
         try {
-            $currencyCode = $this->storeManager->getStore()->getCurrentCurrencyCode();
+            return $this->storeManager->getStore()->getCurrentCurrencyCode();
         } catch (NoSuchEntityException $e) {
             $this->logRepository->addErrorLog('NoSuchEntityException', $e->getMessage());
+            return '';
         }
-        return $currencyCode;
     }
 }
