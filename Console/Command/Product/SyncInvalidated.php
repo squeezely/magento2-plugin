@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Console\Command\Product;
 
+use Magento\Framework\Console\Cli;
 use Squeezely\Plugin\Service\ItemUpdate\SyncAll;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -40,7 +41,7 @@ class SyncInvalidated extends Command
     }
 
     /**
-     *  {@inheritdoc}
+     * @inheritdoc
      */
     public function configure()
     {
@@ -50,23 +51,19 @@ class SyncInvalidated extends Command
     }
 
     /**
-     *  {@inheritdoc}
+     * @inheritdoc
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $results = $this->syncAll->execute();
         foreach ($results as $result) {
             if ($result['success']) {
-                foreach ($result['message'] as $message) {
-                    $output->writeln('<info>' . $message . '</info>');
-                }
+                $output->writeln('<info>' . $result['message'] . '</info>');
             } else {
-                foreach ($result['message'] as $message) {
-                    $output->writeln('<error>' . $message . '</error>');
-                }
+                $output->writeln('<error>' . $result['message'] . '</error>');
             }
         }
 
-        return 0;
+        return Cli::RETURN_SUCCESS;
     }
 }

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Console\Command\Product;
 
+use Magento\Framework\Console\Cli;
 use Squeezely\Plugin\Model\Command\Product\InvalidateAll as InvalidateAllProducts;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,7 +40,7 @@ class InvalidateAll extends Command
     }
 
     /**
-     *  {@inheritdoc}
+     * @inheritdoc
      */
     public function configure()
     {
@@ -49,7 +50,7 @@ class InvalidateAll extends Command
     }
 
     /**
-     *  {@inheritdoc}
+     * @inheritdoc
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
@@ -58,6 +59,6 @@ class InvalidateAll extends Command
             $output->writeln($result['msg']);
         }
 
-        return 0;
+        return Cli::RETURN_SUCCESS;
     }
 }
