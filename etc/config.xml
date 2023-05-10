@@ -26,6 +26,9 @@
                 <endpoint_tracker_url>https://squeezely.tech/tracker/%s/sqzl.js</endpoint_tracker_url>
                 <api_request_uri>https://api.squeezely.tech/</api_request_uri>
             </advanced>
+            <backend_events>
+                <pool_size>50</pool_size>
+            </backend_events>
         </squeezely>
     </default>
 </config>
