@@ -57,6 +57,7 @@ class GetData
         'sale_price',
         'currency',
         'image_link',
+        'image_links',
         'images',
         'condition',
         'brand',
@@ -268,7 +269,6 @@ class GetData
      */
     public function execute(array $skus = [], int $storeId = 0): array
     {
-        $this->logRepository->addDebugLog('GetProductData', __('Start'));
         $this->logRepository->addDebugLog(
             'GetProductData',
             'Requested skus: ' . $this->jsonSerializer->serialize($skus)
@@ -320,7 +320,6 @@ class GetData
             'Response: ' . $this->jsonSerializer->serialize($productData)
         );
 
-        $this->logRepository->addDebugLog('GetProductData', __('Finish'));
         return $productData;
     }
 
