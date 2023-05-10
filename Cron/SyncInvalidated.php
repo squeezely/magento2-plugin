@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Cron;
 
+use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Service\ItemUpdate\SyncAll;
 
 /**
@@ -18,15 +19,21 @@ class SyncInvalidated
      * @var SyncAll
      */
     private $syncAll;
+    /**
+     * @var LogRepository
+     */
+    private $logRepository;
 
     /**
-     * SyncInvalidated constructor.
      * @param SyncAll $syncAll
+     * @param LogRepository $logRepository
      */
     public function __construct(
-        SyncAll $syncAll
+        SyncAll $syncAll,
+        LogRepository $logRepository
     ) {
         $this->syncAll = $syncAll;
+        $this->logRepository = $logRepository;
     }
 
     /**
@@ -36,6 +43,10 @@ class SyncInvalidated
      */
     public function execute()
     {
-        $this->syncAll->execute();
+        try {
+            $this->syncAll->execute();
+        } catch (\Exception $exception) {
+            $this->logRepository->addErrorLog('SyncInvalidated Cron', $exception->getMessage());
+        }
     }
 }
