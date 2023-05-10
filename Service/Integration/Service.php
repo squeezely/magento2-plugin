@@ -10,8 +10,8 @@ namespace Squeezely\Plugin\Service\Integration;
 use Magento\Framework\Exception\AuthenticationException;
 use Magento\Framework\Exception\IntegrationException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Integration\Api\AuthorizationServiceInterface;
-use Magento\Integration\Api\CustomerTokenServiceInterface;
 use Magento\Integration\Api\IntegrationServiceInterface;
 use Magento\Integration\Api\OauthServiceInterface;
 use Magento\Integration\Model\Oauth\Token as OauthTokenModel;
@@ -20,7 +20,7 @@ use Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface as ConfigReposit
 use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
 
 /**
- * Sevice model to create and delete integrations
+ * Service model to create and delete integrations
  */
 class Service
 {
@@ -44,10 +44,6 @@ class Service
      */
     private $authorizationService;
     /**
-     * @var CustomerTokenServiceInterface
-     */
-    private $customerTokenService;
-    /**
      * @var StoreManagerInterface
      */
     private $storeManager;
@@ -62,7 +58,6 @@ class Service
      * @param IntegrationServiceInterface $integrationService
      * @param OauthServiceInterface $oauthService
      * @param AuthorizationServiceInterface $authorizationService
-     * @param CustomerTokenServiceInterface $customerTokenService
      * @param StoreManagerInterface $storeManager
      * @param RequestRepository $requestRepository
      */
@@ -71,7 +66,6 @@ class Service
         IntegrationServiceInterface $integrationService,
         OauthServiceInterface $oauthService,
         AuthorizationServiceInterface $authorizationService,
-        CustomerTokenServiceInterface $customerTokenService,
         StoreManagerInterface $storeManager,
         RequestRepository $requestRepository
     ) {
@@ -79,7 +73,6 @@ class Service
         $this->integrationService = $integrationService;
         $this->oauthService = $oauthService;
         $this->authorizationService = $authorizationService;
-        $this->customerTokenService = $customerTokenService;
         $this->storeManager = $storeManager;
         $this->requestRepository = $requestRepository;
     }
@@ -91,7 +84,7 @@ class Service
      */
     public function verifyAuth(int $storeId): bool
     {
-        //check if squezelly integration exists
+        //check if squeezely integration exists
         $integration = $this->integrationService->findByName(self::INTEGRATION_NAME);
         if (!$integration->getId()) {
             $token = $this->createIntegrationAndGetToken();
@@ -130,9 +123,11 @@ class Service
 
     /**
      * @param OauthTokenModel $token
+     * @param int $storeId
      * @return bool
-     * @throws LocalizedException
      * @throws AuthenticationException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     public function sendMagentoTokenToSqueezelyAndVerifyAuth(OauthTokenModel $token, int $storeId): bool
     {
