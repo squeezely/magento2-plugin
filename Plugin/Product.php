@@ -21,7 +21,6 @@ class Product
      * @var LogRepository
      */
     private $logRepository;
-
     /**
      * @var InvalidateByProductId
      */
@@ -44,7 +43,6 @@ class Product
      * Invalidate product after save
      *
      * @param Subject $product
-     * @param Subject $result
      * @return ProductInterface
      */
     public function afterSave(

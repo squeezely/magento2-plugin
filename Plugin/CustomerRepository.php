@@ -10,12 +10,9 @@ namespace Squeezely\Plugin\Plugin;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\ResourceModel\CustomerRepository as Subject;
 use Magento\Framework\App\State;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
-use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepository;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
-use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
-use Squeezely\Plugin\Api\Service\DataLayerInterface;
+use Magento\Framework\Stdlib\CookieManagerInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
+use Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface as ProcessingQueueRepository;
 
 /**
  * CustomerRepository Plugin
@@ -23,67 +20,46 @@ use Squeezely\Plugin\Api\Service\DataLayerInterface;
 class CustomerRepository
 {
     /**
-     * @var BackendEventsRepository
+     * @var ConfigRepository
      */
-    private $backendEventsRepository;
-    /**
-     * @var FrontendEventsRepository
-     */
-    private $frontendEventsRepository;
-    /**
-     * @var DataLayerInterface
-     */
-    private $dataLayer;
-    /**
-     * @var LogRepository
-     */
-    private $logRepository;
-    /**
-     * @var RequestRepository
-     */
-    private $requestRepository;
+    private $configRepository;
     /**
      * @var State
      */
     private $state;
     /**
-     * @var JsonSerializer
+     * @var ProcessingQueueRepository
      */
-    private $jsonSerializer;
+    private $processingQueueRepository;
+    /**
+     * @var CookieManagerInterface
+     */
+    private $cookieManager;
 
     /**
      * CustomerRepository constructor.
      *
-     * @param BackendEventsRepository $backendEventsRepository
-     * @param FrontendEventsRepository $frontendEventsRepository
-     * @param DataLayerInterface $dataLayer
-     * @param RequestRepository $requestRepository
+     * @param ConfigRepository $configRepository
      * @param State $state
-     * @param JsonSerializer $jsonSerializer
-     * @param LogRepository $logRepository
+     * @param ProcessingQueueRepository $processingQueueRepository
+     * @param CookieManagerInterface $cookieManager
      */
     public function __construct(
-        BackendEventsRepository $backendEventsRepository,
-        FrontendEventsRepository $frontendEventsRepository,
-        DataLayerInterface $dataLayer,
-        RequestRepository $requestRepository,
+        ConfigRepository $configRepository,
         State $state,
-        JsonSerializer $jsonSerializer,
-        LogRepository $logRepository
+        ProcessingQueueRepository $processingQueueRepository,
+        CookieManagerInterface $cookieManager
     ) {
-        $this->backendEventsRepository = $backendEventsRepository;
-        $this->frontendEventsRepository = $frontendEventsRepository;
-        $this->dataLayer = $dataLayer;
-        $this->requestRepository = $requestRepository;
+        $this->configRepository = $configRepository;
         $this->state = $state;
-        $this->jsonSerializer = $jsonSerializer;
-        $this->logRepository = $logRepository;
+        $this->processingQueueRepository = $processingQueueRepository;
+        $this->cookieManager = $cookieManager;
     }
 
     /**
      * @param Subject $subject
      * @param callable $proceed
-     * @param CustomerInterface $customer
+     * @param mixed ...$args
      * @return mixed
      */
     public function aroundSave(Subject $subject, callable $proceed, ...$args)
@@ -133,32 +109,9 @@ class CustomerRepository
      */
     private function executeBackendEvents(CustomerInterface $prevCustomerData, CustomerInterface $newCustomerData)
     {
-        if (!$this->backendEventsRepository->isEnabled()
-            || !in_array(
-                RequestRepository::CRM_UPDATE_EVENT_NAME,
-                $this->backendEventsRepository->getEnabledEvents()
-            )
-        ) {
-            return;
-        }
-
-        $this->sendCRMUpdateEvent($prevCustomerData, $newCustomerData);
-        $this->sendEmailOptInEvent($prevCustomerData, $newCustomerData);
-    }
-
-    /**
-     * Execute frontend events
-     *
-     * @param CustomerInterface $prevCustomerData
-     * @param CustomerInterface $newCustomerData
-     */
-    private function executeFrontendEvents(CustomerInterface $prevCustomerData, CustomerInterface $newCustomerData)
-    {
-        if ($this->frontendEventsRepository->isEnabled() &&
-            ($prevCustomerData->getEmail() != $newCustomerData->getEmail())) {
-            $this->logRepository->addDebugLog(RequestRepository::EMAIL_OPT_IN_EVENT_NAME, __('Start'));
-            $this->addFrontendEvent($newCustomerData->getEmail(), $newCustomerData);
-            $this->logRepository->addDebugLog(RequestRepository::EMAIL_OPT_IN_EVENT_NAME, __('Finish'));
+        if ($this->configRepository->isBackendEventEnabled(ConfigRepository::CRM_UPDATE_EVENT)) {
+            $this->sendCRMUpdateEvent($prevCustomerData, $newCustomerData);
+            $this->sendEmailOptInEvent($prevCustomerData, $newCustomerData);
         }
     }
 
@@ -176,50 +129,18 @@ class CustomerRepository
             ($prevCustomerData->getDob() != $newCustomerData->getDob()) ||
             ($prevCustomerData->getGender() != $newCustomerData->getGender())
         ) {
-            $this->logRepository->addDebugLog('CRMUpdate event', __('Start'));
-            $data = [
-                "event" => "CRMUpdate",
-                "userid" => $newCustomerData->getId(),
-                "email" => $newCustomerData->getEmail(),
-                "firstname" => $newCustomerData->getFirstname(),
-                "lastname" => $newCustomerData->getLastname(),
-                'gender' => $this->getGender($newCustomerData),
-                "birthdate" => $newCustomerData->getDob()
-            ];
-            try {
-                $this->requestRepository->sendCRMUpdate($data);
-            } catch (\Exception $exception) {
-                $this->logRepository->addErrorLog('after customer save plugin', $exception->getMessage());
-            }
-            $this->logRepository->addDebugLog('CRMUpdate event', __('Finish'));
-        }
-    }
-
-    /**
-     * Send backend EmailOptIn event
-     *
-     * @param CustomerInterface $prevCustomerData
-     * @param CustomerInterface $newCustomerData
-     */
-    private function sendEmailOptInEvent(CustomerInterface $prevCustomerData, CustomerInterface $newCustomerData)
-    {
-        if ($prevCustomerData->getEmail() == $newCustomerData->getEmail()) {
-            return;
-        }
-
-        $data = [
-            'event' => RequestRepository::EMAIL_OPT_IN_EVENT_NAME,
-            'userid' => $newCustomerData->getId(),
-            'email' => $newCustomerData->getEmail()
-        ];
-        $this->logRepository->addDebugLog(
-            'EmailOptInEvent',
-            'Event data: ' . $this->jsonSerializer->serialize($data)
-        );
-        try {
-            $this->requestRepository->sendCompleteRegistration($data);
-        } catch (\Exception $exception) {
-            $this->logRepository->addErrorLog('CustomerAccountManagement', $exception->getMessage());
+            $process = $this->processingQueueRepository->create();
+            $process->setType('crm_update')
+                ->setProcessingData([
+                    "event" => "CRMUpdate",
+                    "userid" => $newCustomerData->getId(),
+                    "email" => $newCustomerData->getEmail(),
+                    "firstname" => $newCustomerData->getFirstname(),
+                    "lastname" => $newCustomerData->getLastname(),
+                    'gender' => $this->getGender($newCustomerData),
+                    "birthdate" => $newCustomerData->getDob()
+                ]);
+            $this->processingQueueRepository->save($process);
         }
     }
 
@@ -242,20 +163,58 @@ class CustomerRepository
     }
 
     /**
+     * Send backend EmailOptIn event
+     *
+     * @param CustomerInterface $prevCustomerData
+     * @param CustomerInterface $newCustomerData
+     */
+    private function sendEmailOptInEvent(CustomerInterface $prevCustomerData, CustomerInterface $newCustomerData)
+    {
+        if ($prevCustomerData->getEmail() == $newCustomerData->getEmail()) {
+            return;
+        }
+
+        $process = $this->processingQueueRepository->create();
+        $process->setType('registration')
+            ->setProcessingData([
+                'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
+                'userid' => $newCustomerData->getId(),
+                'email' => $newCustomerData->getEmail()
+            ]);
+        $this->processingQueueRepository->save($process);
+    }
+
+    /**
+     * Execute frontend events
+     *
+     * @param CustomerInterface $prevCustomerData
+     * @param CustomerInterface $newCustomerData
+     */
+    private function executeFrontendEvents(CustomerInterface $prevCustomerData, CustomerInterface $newCustomerData)
+    {
+        if ($this->configRepository->isBackendEventEnabled(ConfigRepository::EMAIL_OPT_IN_EVENT) &&
+            ($prevCustomerData->getEmail() != $newCustomerData->getEmail())) {
+            $this->addFrontendEvent($newCustomerData->getEmail(), $newCustomerData);
+        }
+    }
+
+    /**
      * @param string $email
      * @param CustomerInterface $savedCustomer
      * @return void
      */
     private function addFrontendEvent(string $email, CustomerInterface $savedCustomer): void
     {
-        $eventData = [
-            'email' => hash('sha256', $email),
-            'userid' => $savedCustomer->getId()
-        ];
-        $this->dataLayer->addEventToQueue(RequestRepository::EMAIL_OPT_IN_EVENT_NAME, $eventData);
-        $this->logRepository->addDebugLog(
-            RequestRepository::EMAIL_OPT_IN_EVENT_NAME,
-            'Event data: ' . $this->jsonSerializer->serialize($eventData)
-        );
+        $process = $this->processingQueueRepository->create();
+        $process->setType('email_optin')
+            ->setProcessingData([
+                'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
+                'email' => hash('sha256', $email),
+                'userid' => $savedCustomer->getId(),
+                'sqzly_cookie' => $this->cookieManager->getCookie(
+                    ConfigRepository::SQUEEZELY_COOKIE_NAME
+                )
+            ]);
+        $this->processingQueueRepository->save($process);
     }
 }

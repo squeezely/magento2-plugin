@@ -35,6 +35,13 @@
     <preference for="Squeezely\Plugin\Api\ItemsQueue\SearchResultsInterface"
                 type="Magento\Framework\Api\SearchResults"/>
 
+    <preference for="Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface"
+                type="Squeezely\Plugin\Model\ProcessingQueue\Repository"/>
+    <preference for="Squeezely\Plugin\Api\ProcessingQueue\DataInterface"
+                type="Squeezely\Plugin\Model\ProcessingQueue\Data"/>
+    <preference for="Squeezely\Plugin\Api\ProcessingQueue\SearchResultsInterface"
+                type="Magento\Framework\Api\SearchResults"/>
+
     <type name="Magento\Quote\Model\Quote">
         <plugin name="squeezelyRemoveItemAfter"
                 type="Squeezely\Plugin\Plugin\Quote" sortOrder="1" disabled="false" />

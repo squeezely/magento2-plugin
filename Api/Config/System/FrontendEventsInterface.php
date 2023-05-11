@@ -7,17 +7,16 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Api\Config\System;
 
-use Squeezely\Plugin\Api\Config\RepositoryInterface;
-
 /**
  * Frontend Events group interface
  */
-interface FrontendEventsInterface extends RepositoryInterface
+interface FrontendEventsInterface extends BackendEventsInterface
 {
     /**
      * Config paths for 'frontend events'-group
      */
-    public const XML_PATH_FRONTENDEVENTS_ENABLED = 'squeezely/frontend_events/enabled';
+    public const XML_PATH_FRONTEND_EVENTS_ENABLED = 'squeezely/frontend_events/enabled';
+    public const XML_PATH_FRONTEND_EVENTS_EVENTS = 'squeezely/frontend_events/events';
 
     /**
      * Frontend Events Enable FLag
@@ -26,5 +25,22 @@ interface FrontendEventsInterface extends RepositoryInterface
      *
      * @return bool
      */
-    public function isEnabled(int $storeId = null): bool;
+    public function isFrontendEventsEnabled(int $storeId = null): bool;
+
+    /**
+     * Get Array of Enabled Frontend Events
+     *
+     * @param int|null $storeId
+     *
+     * @return array
+     */
+    public function getEnabledFrontendEvents(int $storeId = null): array;
+
+    /**
+     * Check if event enabled
+     *
+     * @param string $eventName
+     * @return bool
+     */
+    public function isFrontendEventEnabled(string $eventName): bool;
 }

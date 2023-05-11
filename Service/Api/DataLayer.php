@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Service\Api;
 
-use Magento\Checkout\Model\SessionFactory as Session;
 use Magento\Framework\Escaper;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Squeezely\Plugin\Api\Service\DataLayerInterface;
@@ -20,14 +19,6 @@ class DataLayer implements DataLayerInterface
 {
 
     /**
-     * @var array
-     */
-    private $queuedEvents = [];
-    /**
-     * @var Session
-     */
-    private $checkoutSession;
-    /**
      * @var JsonSerializer
      */
     private $jsonSerializer;
@@ -39,97 +30,15 @@ class DataLayer implements DataLayerInterface
     /**
      * DataLayer constructor.
      *
-     * @param Session $checkoutSession
      * @param JsonSerializer $jsonSerializer
      * @param Escaper $escaper
      */
     public function __construct(
-        Session $checkoutSession,
         JsonSerializer $jsonSerializer,
         Escaper $escaper
     ) {
-        $this->checkoutSession = $checkoutSession;
         $this->jsonSerializer = $jsonSerializer;
         $this->escaper = $escaper;
-        $this->setQueuedEvents();
-    }
-
-    /**
-     *  Set Queued Events
-     */
-    protected function setQueuedEvents()
-    {
-        $sessionEvents = $this->checkoutSession->create()->getSqueezelyQueuedEvents();
-        if ($sessionEvents) {
-            $this->queuedEvents = $this->jsonSerializer->unserialize($sessionEvents) ?? [];
-        }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function addEventToQueue(string $eventName, array $data)
-    {
-        $data['event'] = $eventName;
-        $this->queuedEvents[] = $data; //It can be several events with same name, e.g. AddToCart
-        $this->checkoutSession->create()->setSqueezelyQueuedEvents(
-            $this->jsonSerializer->serialize($this->queuedEvents)
-        );
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getQueuedEvents()
-    {
-        $queuedEvents = $this->queuedEvents;
-        return $queuedEvents;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function clearQueuedEvents(string $type = 'all'): bool
-    {
-        if ($type == 'all') {
-            $this->queuedEvents = [];
-            $this->checkoutSession->create()->setSqueezelyQueuedEvents(false);
-        } else {
-            $queuedEvents = $this->getQueuedEvents();
-            foreach ($queuedEvents as $key => $event) {
-                if ($event['event'] == $type) {
-                    unset($queuedEvents[$key]);
-                }
-            }
-
-            $this->checkoutSession->create()->setSqueezelyQueuedEvents($queuedEvents);
-        }
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function fireQueuedEvents()
-    {
-        $queuedEvents = $this->getQueuedEvents();
-        if (!$queuedEvents) {
-            return '';
-        }
-
-        $dataScript = '<script type="text/javascript">' . PHP_EOL;
-        $dataScript .= 'window._sqzl = _sqzl || [];';
-
-        foreach ($queuedEvents as $event) {
-            $dataScript .= '_sqzl.push('
-                . $this->jsonSerializer->serialize($this->getSafeData($event))
-                . ')' . PHP_EOL;
-        }
-
-        $dataScript .= '</script>' . PHP_EOL;
-        $this->clearQueuedEvents();
-
-        return $dataScript;
     }
 
     /**

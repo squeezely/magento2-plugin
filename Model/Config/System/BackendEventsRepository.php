@@ -7,34 +7,50 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Model\Config\System;
 
+use Squeezely\Plugin\Api\Config\RepositoryInterface;
 use Squeezely\Plugin\Api\Config\System\BackendEventsInterface;
-use Squeezely\Plugin\Model\Config\Repository as ConfigRepository;
 
 /**
  * Backend Events provider class
  */
-class BackendEventsRepository extends ConfigRepository implements BackendEventsInterface
+class BackendEventsRepository extends AdvancedOptionsRepository implements BackendEventsInterface
 {
+
     /**
      * @inheritDoc
      */
-    public function isEnabled(int $storeId = null): bool
+    public function isBackendEventEnabled(string $eventName): bool
     {
-        if (!parent::isEnabled($storeId)) {
-            return false;
-        }
-
-        return $this->getFlag(self::XML_PATH_BACKENDEVENTS_ENABLED, $storeId);
+        return $this->isBackendEventsEnabled() && in_array($eventName, $this->getEnabledBackendEvents());
     }
 
     /**
      * @inheritDoc
      */
-    public function getEnabledEvents(int $storeId = null): array
+    public function isBackendEventsEnabled(int $storeId = null): bool
+    {
+        return $this->getFlag(RepositoryInterface::XML_PATH_ENABLED, $storeId)
+            && $this->getFlag(self::XML_PATH_BACKEND_EVENTS_ENABLED, $storeId);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getEnabledBackendEvents(int $storeId = null): array
     {
         return explode(
             ',',
-            $this->getStoreValue(self::XML_PATH_BACKENDEVENTS_EVENTS, $storeId)
+            $this->getStoreValue(self::XML_PATH_BACKEND_EVENTS_EVENTS, $storeId)
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getPoolSize(): int
+    {
+        return (int)$this->getStoreValue(
+            self::XML_PATH_BACKEND_EVENTS_POOL_SIZE
         );
     }
 }

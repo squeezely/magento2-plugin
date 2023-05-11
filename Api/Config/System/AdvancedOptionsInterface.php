@@ -7,12 +7,10 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Api\Config\System;
 
-use Squeezely\Plugin\Api\Config\RepositoryInterface;
-
 /**
  * Advanced options group interface
  */
-interface AdvancedOptionsInterface extends RepositoryInterface
+interface AdvancedOptionsInterface
 {
     /**
      * Config paths for 'advanced'-group
@@ -23,7 +21,7 @@ interface AdvancedOptionsInterface extends RepositoryInterface
     public const XML_PATH_API_REQUEST_URI = 'squeezely/advanced/api_request_uri';
 
     /**
-     * Is debug loggin enabled
+     * Is debug log enabled
      *
      * @return bool
      */

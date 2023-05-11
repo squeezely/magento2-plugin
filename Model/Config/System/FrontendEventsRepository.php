@@ -7,23 +7,40 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Model\Config\System;
 
+use Squeezely\Plugin\Api\Config\RepositoryInterface;
 use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface;
-use Squeezely\Plugin\Model\Config\Repository as ConfigRepository;
 
 /**
  * Frontend Events provider class
  */
-class FrontendEventsRepository extends ConfigRepository implements FrontendEventsInterface
+class FrontendEventsRepository extends BackendEventsRepository implements FrontendEventsInterface
 {
+
     /**
      * @inheritDoc
      */
-    public function isEnabled(int $storeId = null): bool
+    public function isFrontendEventEnabled(string $eventName): bool
     {
-        if (!parent::isEnabled($storeId)) {
-            return false;
-        }
+        return $this->isFrontendEventsEnabled() && in_array($eventName, $this->getEnabledFrontendEvents());
+    }
 
-        return $this->getFlag(self::XML_PATH_FRONTENDEVENTS_ENABLED, $storeId);
+    /**
+     * @inheritDoc
+     */
+    public function isFrontendEventsEnabled(int $storeId = null): bool
+    {
+        return $this->getFlag(RepositoryInterface::XML_PATH_ENABLED, $storeId)
+            && $this->getFlag(self::XML_PATH_FRONTEND_EVENTS_ENABLED, $storeId);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getEnabledFrontendEvents(int $storeId = null): array
+    {
+        return explode(
+            ',',
+            $this->getStoreValue(self::XML_PATH_FRONTEND_EVENTS_EVENTS, $storeId)
+        );
     }
 }

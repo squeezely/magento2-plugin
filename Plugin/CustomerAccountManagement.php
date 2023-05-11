@@ -10,13 +10,10 @@ namespace Squeezely\Plugin\Plugin;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\AccountManagement;
 use Magento\Framework\Locale\Resolver as LocaleResolver;
+use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Newsletter\Model\Subscriber;
-use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepository;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
-use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Squeezely\Plugin\Api\Request\RepositoryInterface;
-use Squeezely\Plugin\Api\Service\DataLayerInterface;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
+use Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface as ProcessingQueueRepository;
 
 /**
  * Class CustomerAccountManagement
@@ -30,64 +27,42 @@ class CustomerAccountManagement
      */
     private $subscriber;
     /**
-     * @var DataLayerInterface
+     * @var ConfigRepository
      */
-    private $dataLayer;
+    private $configRepository;
     /**
-     * @var RepositoryInterface
+     * @var ProcessingQueueRepository
      */
-    private $requestRepository;
-    /**
-     * @var BackendEventsRepository
-     */
-    private $backendEventsRepository;
-    /**
-     * @var FrontendEventsRepository
-     */
-    private $frontendEventsRepository;
-    /**
-     * @var LogRepository
-     */
-    private $logRepository;
-    /**
-     * @var JsonSerializer
-     */
-    private $jsonSerializer;
+    private $processingQueueRepository;
     /**
      * @var LocaleResolver
      */
     private $localeResolver;
+    /**
+     * @var CookieManagerInterface
+     */
+    private $cookieManager;
 
     /**
      * CustomerAccountManagement constructor.
-     *
      * @param Subscriber $subscriber
-     * @param DataLayerInterface $dataLayer
-     * @param RepositoryInterface $requestRepository
-     * @param BackendEventsRepository $backendEventsRepository
-     * @param FrontendEventsRepository $frontendEventsRepository
-     * @param LogRepository $logRepository
-     * @param JsonSerializer $jsonSerializer
+     * @param ConfigRepository $configRepository
+     * @param ProcessingQueueRepository $processingQueueRepository
      * @param LocaleResolver $localeResolver
+     * @param CookieManagerInterface $cookieManager
      */
     public function __construct(
         Subscriber $subscriber,
-        DataLayerInterface $dataLayer,
-        RepositoryInterface $requestRepository,
-        BackendEventsRepository $backendEventsRepository,
-        FrontendEventsRepository $frontendEventsRepository,
-        LogRepository $logRepository,
-        JsonSerializer $jsonSerializer,
-        LocaleResolver $localeResolver
+        ConfigRepository $configRepository,
+        ProcessingQueueRepository $processingQueueRepository,
+        LocaleResolver $localeResolver,
+        CookieManagerInterface $cookieManager
     ) {
         $this->subscriber = $subscriber;
-        $this->dataLayer = $dataLayer;
-        $this->requestRepository = $requestRepository;
-        $this->backendEventsRepository = $backendEventsRepository;
-        $this->frontendEventsRepository = $frontendEventsRepository;
-        $this->logRepository = $logRepository;
-        $this->jsonSerializer = $jsonSerializer;
+        $this->configRepository = $configRepository;
+        $this->processingQueueRepository = $processingQueueRepository;
         $this->localeResolver = $localeResolver;
+        $this->cookieManager = $cookieManager;
     }
 
     /**
@@ -100,47 +75,42 @@ class CustomerAccountManagement
     public function afterCreateAccountWithPasswordHash(
         AccountManagement $subject,
         CustomerInterface $result
-    ) {
-        $this->logRepository->addDebugLog('EmailOptInEvent', __('Start'));
+    ): CustomerInterface {
         $customer = $result;
-        if ($customer->getEmail()) {
-            // Frontend event, to connect email_hash with cookie
-            if ($this->frontendEventsRepository->isEnabled()) {
-                $data = [
-                    'email' => hash('sha256', $customer->getEmail()),
-                    'language' => $this->getLanguage()
-                ];
-                $this->dataLayer->addEventToQueue('CompleteRegistration', $data);
-            }
-
-            // Backend event, to add the raw email
-            if ($this->backendEventsRepository->isEnabled()
-                && in_array(
-                    RepositoryInterface::EMAIL_OPT_IN_EVENT_NAME,
-                    $this->backendEventsRepository->getEnabledEvents()
-                )
-            ) {
-                $data = [
-                    'event' => RepositoryInterface::EMAIL_OPT_IN_EVENT_NAME,
-                    'email' => $customer->getEmail()
-                ];
-                $subscription = $this->subscriber->loadByCustomerId($customer->getId());
-                if ((int)$subscription->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
-                    $data['newsletter'] = 'yes';
-                }
-                $this->logRepository->addDebugLog(
-                    'EmailOptInEvent',
-                    'Event data: ' . $this->jsonSerializer->serialize($data)
-                );
-                try {
-                    $this->requestRepository->sendCompleteRegistration($data);
-                } catch (\Exception $exception) {
-                    $this->logRepository->addErrorLog('CustomerAccountManagement', $exception->getMessage());
-                }
-            }
+        if (!$customer->getEmail()) {
+            return $customer;
         }
-        $this->logRepository->addDebugLog('EmailOptInEvent', __('Finish'));
+
+        // Backend event, to connect email_hash with cookie
+        if ($this->configRepository->isBackendEventEnabled(ConfigRepository::COMPLETE_REGISTRATION_EVENT)) {
+            $this->registrationEvent($customer);
+        }
+
+        // Backend event, to add the raw email
+        if ($this->configRepository->isBackendEventEnabled(ConfigRepository::EMAIL_OPT_IN_EVENT)) {
+            $this->optInEvent($customer);
+        }
+
         return $customer;
+    }
+
+    /**
+     * @param CustomerInterface $customer
+     * @return void
+     */
+    private function registrationEvent(CustomerInterface $customer)
+    {
+        $process = $this->processingQueueRepository->create();
+        $process->setType('complete_registration')
+            ->setProcessingData([
+                'event' => ConfigRepository::COMPLETE_REGISTRATION_EVENT,
+                'email' => hash('sha256', $customer->getEmail()),
+                'language' => $this->getLanguage(),
+                'sqzly_cookie' => $this->cookieManager->getCookie(
+                    ConfigRepository::SQUEEZELY_COOKIE_NAME
+                )
+            ]);
+        $this->processingQueueRepository->save($process);
     }
 
     /**
@@ -151,5 +121,22 @@ class CustomerAccountManagement
         $locale = $this->localeResolver->getLocale()
             ?: $this->localeResolver->getDefaultLocale();
         return str_replace('_', '-', $locale);
+    }
+
+    /**
+     * @param CustomerInterface $customer
+     * @return void
+     */
+    private function optInEvent(CustomerInterface $customer): void
+    {
+        $subscription = $this->subscriber->loadByCustomerId($customer->getId());
+        $process = $this->processingQueueRepository->create();
+        $process->setType('registration')
+            ->setProcessingData([
+                'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
+                'email' => $customer->getEmail(),
+                'newsletter' => (int)$subscription->getStatus() == Subscriber::STATUS_SUBSCRIBED ? 'yes' : 'no'
+            ]);
+        $this->processingQueueRepository->save($process);
     }
 }

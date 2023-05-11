@@ -33,4 +33,16 @@
             <column name="store_id"/>
         </index>
     </table>
+
+    <!-- Declaration Schema of Squeezely Processing Queue Table -->
+    <table name="squeezely_processing_queue" engine="innodb" resource="default" comment="Squeezely Processing Queue Table">
+        <column name="entity_id" xsi:type="int" padding="10" identity="true" nullable="false" unsigned="true" comment="Entity ID"/>
+        <column name="type" xsi:type="varchar" length="100" nullable="false" comment="Process Type"/>
+        <column name="processing_data" xsi:type="text" nullable="true" comment="Processing Data"/>
+        <column name="attempts" xsi:type="smallint" padding="2" nullable="false" unsigned="true" comment="Sync Attempts"/>
+        <column name="created_at" xsi:type="timestamp" on_update="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint referenceId="PRIMARY" xsi:type="primary">
+            <column name="entity_id"/>
+        </constraint>
+    </table>
 </schema>

@@ -8,12 +8,11 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Model\Config\System;
 
 use Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface;
-use Squeezely\Plugin\Model\Config\Repository as ConfigRepository;
 
 /**
- * Advanced options provider class
+ * Advanced option provider class
  */
-class AdvancedOptionsRepository extends ConfigRepository implements AdvancedOptionsInterface
+class AdvancedOptionsRepository extends BaseRepository implements AdvancedOptionsInterface
 {
 
     /**

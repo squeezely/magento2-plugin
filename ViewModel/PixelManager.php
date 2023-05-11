@@ -7,13 +7,11 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\ViewModel;
 
+use Magento\Customer\Model\Session;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface as AdvancedOptionsRepository;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
-use Squeezely\Plugin\Api\Service\DataLayerInterface;
-use Magento\Framework\UrlInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 
 /**
@@ -21,27 +19,11 @@ use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
  */
 class PixelManager implements ArgumentInterface
 {
-    /**
-     * Url path for ajax call
-     */
-    public const URL_PATH = 'sqzl/events/get';
 
     /**
-     * @var FrontendEventsRepository
+     * @var ConfigRepository
      */
     private $configRepository;
-    /**
-     * @var AdvancedOptionsRepository
-     */
-    private $advancedOptionsRepository;
-    /**
-     * @var DataLayerInterface
-     */
-    private $dataLayer;
-    /**
-     * @var UrlInterface
-     */
-    private $urlBuilder;
     /**
      * @var StoreManagerInterface
      */
@@ -51,6 +33,10 @@ class PixelManager implements ArgumentInterface
      */
     private $logRepository;
     /**
+     * @var Session
+     */
+    private $session;
+    /**
      * @var int
      */
     private $storeId = 0;
@@ -58,26 +44,21 @@ class PixelManager implements ArgumentInterface
     /**
      * PixelManager constructor.
      *
-     * @param FrontendEventsRepository $configRepository
-     * @param AdvancedOptionsRepository $advancedOptionsRepository
-     * @param DataLayerInterface $dataLayer
-     * @param UrlInterface $urlBuilder
+     * @param ConfigRepository $configRepository
+     * @param StoreManagerInterface $storeManager
      * @param LogRepository $logRepository
+     * @param Session $session
      */
     public function __construct(
-        FrontendEventsRepository $configRepository,
-        AdvancedOptionsRepository $advancedOptionsRepository,
-        DataLayerInterface $dataLayer,
-        UrlInterface $urlBuilder,
+        ConfigRepository $configRepository,
         StoreManagerInterface $storeManager,
-        LogRepository $logRepository
+        LogRepository $logRepository,
+        Session $session
     ) {
         $this->configRepository = $configRepository;
-        $this->advancedOptionsRepository = $advancedOptionsRepository;
-        $this->dataLayer = $dataLayer;
-        $this->urlBuilder = $urlBuilder;
         $this->storeManager = $storeManager;
         $this->logRepository = $logRepository;
+        $this->session = $session;
     }
 
     /**
@@ -85,48 +66,21 @@ class PixelManager implements ArgumentInterface
      *
      * @return boolean 0 or 1
      */
-    public function isEnabled()
+    public function isEnabled(): bool
     {
-        return $this->configRepository->isEnabled($this->getStoreId());
+        return $this->configRepository->isFrontendEventsEnabled($this->getStoreId());
     }
 
     /**
-     * @return string
+     * Check if the frontend add to cart should be tracked
+     *
+     * @return bool
      */
-    public function getJsLink()
+    public function trackAddToCart(): bool
     {
-        return sprintf(
-            $this->advancedOptionsRepository->getEndpointTrackerUrl(),
-            $this->getAccountId()
+        return $this->configRepository->isFrontendEventEnabled(
+            ConfigRepository::ADD_TO_CART_EVENT
         );
-    }
-
-    /**
-     * Get container id
-     *
-     * @return string
-     */
-    private function getAccountId()
-    {
-        return $this->configRepository->getAccountId($this->getStoreId());
-    }
-
-    /**
-     * @return mixed
-     */
-    public function fireQueuedEvents()
-    {
-        return $this->dataLayer->fireQueuedEvents();
-    }
-
-    /**
-     * Get url for queued events ajax call
-     *
-     * @return string
-     */
-    public function getAjaxUrl()
-    {
-        return $this->urlBuilder->getUrl(self::URL_PATH);
     }
 
     /**
@@ -134,7 +88,7 @@ class PixelManager implements ArgumentInterface
      *
      * @return int
      */
-    private function getStoreId()
+    private function getStoreId(): int
     {
         if (!$this->storeId) {
             try {
@@ -144,5 +98,39 @@ class PixelManager implements ArgumentInterface
             }
         }
         return $this->storeId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getJsLink(): string
+    {
+        return sprintf(
+            $this->configRepository->getEndpointTrackerUrl(),
+            $this->getAccountId()
+        );
+    }
+
+    /**
+     * Get container id
+     *
+     * @return string
+     */
+    private function getAccountId(): string
+    {
+        return $this->configRepository->getAccountId($this->getStoreId());
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNewSession(): bool
+    {
+        if (!$this->session->getSessionInitilized()) {
+            $this->session->setSessionInitilized(true);
+            return true;
+        }
+
+        return false;
     }
 }

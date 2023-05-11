@@ -8,77 +8,51 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Plugin;
 
 use Magento\Framework\App\State;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Newsletter\Model\Subscriber as Subject;
-use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepository;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepository;
-use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Squeezely\Plugin\Api\Request\RepositoryInterface;
-use Squeezely\Plugin\Api\Service\DataLayerInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
+use Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface as ProcessingQueueRepository;
 
 /**
  * After save subscriber plugin
  */
 class Subscriber
 {
-    public const EVENT_NAME = 'EmailOptIn';
 
     /**
-     * @var DataLayerInterface
+     * @var ConfigRepository
      */
-    private $dataLayer;
-    /**
-     * @var FrontendEventsRepository
-     */
-    private $frontendEventsRepository;
-    /**
-     * @var BackendEventsRepository
-     */
-    private $backendEventsRepository;
-    /**
-     * @var LogRepository
-     */
-    private $logRepository;
-    /**
-     * @var JsonSerializer
-     */
-    private $jsonSerializer;
+    private $configRepository;
     /**
      * @var State
      */
     private $state;
     /**
-     * @var RepositoryInterface
+     * @var ProcessingQueueRepository
      */
-    private $requestRepository;
+    private $processingQueueRepository;
+    /**
+     * @var CookieManagerInterface
+     */
+    private $cookieManager;
 
     /**
      * Subscriber constructor.
-     *
-     * @param DataLayerInterface $dataLayer
-     * @param FrontendEventsRepository $frontendEventsRepository
-     * @param BackendEventsRepository $backendEventsRepository
-     * @param LogRepository $logRepository
-     * @param JsonSerializer $jsonSerializer
-     * @param RepositoryInterface $requestRepository
+     * @param ConfigRepository $configRepository
+     * @param ProcessingQueueRepository $processingQueueRepository
      * @param State $state
+     * @param CookieManagerInterface $cookieManager
      */
     public function __construct(
-        DataLayerInterface $dataLayer,
-        FrontendEventsRepository $frontendEventsRepository,
-        BackendEventsRepository $backendEventsRepository,
-        LogRepository $logRepository,
-        JsonSerializer $jsonSerializer,
-        RepositoryInterface $requestRepository,
-        State $state
+        ConfigRepository $configRepository,
+        ProcessingQueueRepository $processingQueueRepository,
+        State $state,
+        CookieManagerInterface $cookieManager
     ) {
-        $this->dataLayer = $dataLayer;
-        $this->frontendEventsRepository = $frontendEventsRepository;
-        $this->backendEventsRepository = $backendEventsRepository;
-        $this->logRepository = $logRepository;
-        $this->jsonSerializer = $jsonSerializer;
-        $this->requestRepository = $requestRepository;
+        $this->configRepository = $configRepository;
+        $this->processingQueueRepository = $processingQueueRepository;
         $this->state = $state;
+        $this->cookieManager = $cookieManager;
     }
 
     /**
@@ -101,75 +75,18 @@ class Subscriber
      */
     private function executeBackendEvent(Subject $subscriber)
     {
-        if ($this->backendEventsRepository->isEnabled()
-            && in_array(
-                RepositoryInterface::EMAIL_OPT_IN_EVENT_NAME,
-                $this->backendEventsRepository->getEnabledEvents()
-            )
-        ) {
-            $email = $subscriber->getEmail();
-            $data = [
-                'event' => RepositoryInterface::EMAIL_OPT_IN_EVENT_NAME,
-                'email' => $email
-            ];
-            if ((int)$subscriber->getStatus() == Subject::STATUS_SUBSCRIBED) {
-                $data['newsletter'] = 'yes';
-            } else {
-                $data['newsletter'] = 'no';
-            }
-            $this->logRepository->addDebugLog(
-                'EmailOptInEvent',
-                'Event data: ' . $this->jsonSerializer->serialize($data)
-            );
-            try {
-                $this->requestRepository->sendCompleteRegistration($data);
-            } catch (\Exception $exception) {
-                $this->logRepository->addErrorLog('CustomerAccountManagement', $exception->getMessage());
-            }
+        if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::EMAIL_OPT_IN_EVENT)) {
+            return;
         }
-    }
 
-    /**
-     * Execute frontend event
-     *
-     * @param Subject $subscriber
-     */
-    private function executeFrontendEvent(Subject $subscriber)
-    {
-        if ($this->frontendEventsRepository->isEnabled()) {
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Start'));
-            $email = $subscriber->getEmail();
-            if ($email) {
-                $this->addEvent($email, $subscriber);
-            }
-            $this->logRepository->addDebugLog(self::EVENT_NAME, __('Finish'));
-        }
-    }
-
-    /**
-     * Add event to data layer
-     *
-     * @param string $email
-     * @param Subject $subscriber
-     */
-    private function addEvent(string $email, Subject $subscriber)
-    {
-        if ($email && $subscriber->isStatusChanged()) {
-            $eventData = ['email' => hash('sha256', $email)];
-            switch ($subscriber->getStatus()) {
-                case Subject::STATUS_SUBSCRIBED:
-                    $eventData['newsletter'] = 'yes';
-                    break;
-                case Subject::STATUS_UNSUBSCRIBED:
-                    $eventData['newsletter'] = 'no';
-                    break;
-            }
-            $this->dataLayer->addEventToQueue(self::EVENT_NAME, $eventData);
-            $this->logRepository->addDebugLog(
-                self::EVENT_NAME,
-                'Event data: ' . $this->jsonSerializer->serialize($eventData)
-            );
-        }
+        $process = $this->processingQueueRepository->create();
+        $process->setType('registration')
+            ->setProcessingData([
+                'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
+                'email' => $subscriber->getEmail(),
+                'newsletter' => (int)$subscriber->getStatus() == Subject::STATUS_SUBSCRIBED ? 'yes' : 'no'
+            ]);
+        $this->processingQueueRepository->save($process);
     }
 
     /**
@@ -183,6 +100,51 @@ class Subscriber
             return $this->state->getAreaCode();
         } catch (\Exception $exception) {
             return null;
+        }
+    }
+
+    /**
+     * Execute frontend event
+     *
+     * @param Subject $subscriber
+     */
+    private function executeFrontendEvent(Subject $subscriber)
+    {
+        if ($this->configRepository->isBackendEventEnabled(ConfigRepository::EMAIL_OPT_IN_EVENT)) {
+            if ($email = $subscriber->getEmail()) {
+                $this->addEvent($email, $subscriber);
+            }
+        }
+    }
+
+    /**
+     * Add event to data layer
+     *
+     * @param string $email
+     * @param Subject $subscriber
+     */
+    private function addEvent(string $email, Subject $subscriber)
+    {
+        if ($email && $subscriber->isStatusChanged()) {
+            $eventData = [
+                'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
+                'email' => hash('sha256', $email),
+                'sqzly_cookie' => $this->cookieManager->getCookie(
+                    ConfigRepository::SQUEEZELY_COOKIE_NAME
+                )
+            ];
+            switch ($subscriber->getStatus()) {
+                case Subject::STATUS_SUBSCRIBED:
+                    $eventData['newsletter'] = 'yes';
+                    break;
+                case Subject::STATUS_UNSUBSCRIBED:
+                    $eventData['newsletter'] = 'no';
+                    break;
+            }
+            $process = $this->processingQueueRepository->create();
+            $process->setType('email_optin')
+                ->setProcessingData($eventData);
+            $this->processingQueueRepository->save($process);
         }
     }
 }

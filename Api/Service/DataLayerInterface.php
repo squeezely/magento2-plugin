@@ -14,22 +14,6 @@ use stdClass;
  */
 interface DataLayerInterface
 {
-    /**
-     * Add event to checkout session queue
-     *
-     * @param string $eventName
-     * @param array $data
-     *
-     * @return mixed
-     */
-    public function addEventToQueue(string $eventName, array $data);
-
-    /**
-     * Fire all queued events and reset the queue
-     *
-     * @return mixed
-     */
-    public function fireQueuedEvents();
 
     /**
      * Prepare script for frontend
@@ -39,13 +23,4 @@ interface DataLayerInterface
      * @return string
      */
     public function generateDataScript(stdClass $object);
-
-    /**
-     * Clear queuedevents by type
-     *
-     * @param string $type
-     *
-     * @return bool
-     */
-    public function clearQueuedEvents(string $type = 'all'): bool;
 }

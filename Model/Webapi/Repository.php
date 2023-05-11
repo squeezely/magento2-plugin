@@ -292,7 +292,7 @@ class Repository implements ManagementInterface
             'backend_events' =>
                 [
                     'enabled' => (string)$this->backendRepository->isEnabled($storeId),
-                    'events' => $this->backendRepository->getEnabledEvents($storeId)
+                    'events' => $this->backendRepository->getEnabledBackendEvents($storeId)
                 ],
             'advanced_options' =>
                 [

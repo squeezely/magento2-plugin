@@ -77,8 +77,13 @@ class Request implements ServiceInterface
     /**
      * @inheritDoc
      */
-    public function execute(array $fields, string $endpoint, $storeId = null, $method = 'POST')
-    {
+    public function execute(
+        array $fields,
+        string $endpoint,
+        $storeId = null,
+        string $method = 'POST',
+        bool $allowSoftFail = true
+    ) {
         $storeId = $storeId ?: $this->storeManager->getStore()->getId();
         $accountId = $this->configRepository->getAccountId((int)$storeId);
         $apiKey = $this->configRepository->getApiKey((int)$storeId);
@@ -116,8 +121,8 @@ class Request implements ServiceInterface
         $response = $this->jsonSerializer->unserialize($this->curl->getBody());
         $httpStatus = $this->curl->getStatus();
 
-        // We should also treat $httpStatus = 400 as success on products push.
-        if ($endpoint == 'v1/products' && $httpStatus = 400) {
+        // We should also treat $httpStatus = 400 as success on set of softFail flag
+        if ($allowSoftFail && $httpStatus = 400) {
             $httpStatus = 200;
         }
 
@@ -126,7 +131,7 @@ class Request implements ServiceInterface
             throw new AuthenticationException(__($error));
         }
 
-        if ($httpStatus !== 200) {
+        if ($httpStatus !== 200 && $httpStatus !== 201) {
             $error = $this->checkForErrorMessage($response) ?: 'Unknown response from API';
             throw new LocalizedException(__($error));
         }

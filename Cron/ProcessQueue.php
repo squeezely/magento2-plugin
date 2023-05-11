@@ -8,45 +8,46 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Cron;
 
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
-use Squeezely\Plugin\Service\ItemUpdate\SyncAll;
+use Squeezely\Plugin\Service\ProcessingQueue\Process;
 
 /**
- * Cron class to sync products
+ * Cron class to process queue
  */
-class SyncInvalidated
+class ProcessQueue
 {
     /**
-     * @var SyncAll
+     * @var Process
      */
-    private $syncAll;
+    private $process;
     /**
      * @var LogRepository
      */
     private $logRepository;
 
     /**
-     * @param SyncAll $syncAll
+     * @param Process $process
      * @param LogRepository $logRepository
      */
     public function __construct(
-        SyncAll $syncAll,
+        Process $process,
         LogRepository $logRepository
     ) {
-        $this->syncAll = $syncAll;
+        $this->process = $process;
         $this->logRepository = $logRepository;
     }
 
     /**
-     * Send Invalidated products to API
+     * Process backend events queue to API
      *
      * @return void
      */
     public function execute()
     {
         try {
-            $this->syncAll->execute();
+            $this->process->cleanupQueue();
+            $this->process->execute();
         } catch (\Exception $exception) {
-            $this->logRepository->addErrorLog('SyncInvalidated Cron', $exception->getMessage());
+            $this->logRepository->addErrorLog('ProcessQueue Cron', $exception->getMessage());
         }
     }
 }

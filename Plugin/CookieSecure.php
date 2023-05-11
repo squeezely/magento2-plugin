@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Plugin;
 
 use Magento\Framework\Session\Config;
-use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepositoryInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 
 /**
  * Plugin for Squeezely cookie
@@ -23,7 +23,7 @@ class CookieSecure
      */
     public function afterSetCookieSecure(Config $config): Config
     {
-        if ($config->getName() == ConfigRepositoryInterface::SQUEEZELY_COOKIE_NAME) {
+        if ($config->getName() == ConfigRepository::SQUEEZELY_COOKIE_NAME) {
             $config->setOption('session.cookie_secure', true);
         }
         return $config;

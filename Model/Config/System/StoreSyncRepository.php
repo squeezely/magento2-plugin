@@ -8,12 +8,11 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\Model\Config\System;
 
 use Squeezely\Plugin\Api\Config\System\StoreSyncInterface;
-use Squeezely\Plugin\Model\Config\Repository as ConfigRepository;
 
 /**
  * Store Sync provider class
  */
-class StoreSyncRepository extends ConfigRepository implements StoreSyncInterface
+class StoreSyncRepository extends FrontendEventsRepository implements StoreSyncInterface
 {
 
     /**
@@ -36,10 +35,6 @@ class StoreSyncRepository extends ConfigRepository implements StoreSyncInterface
      */
     public function isEnabled(int $storeId = null): bool
     {
-        if (!parent::isEnabled($storeId)) {
-            return false;
-        }
-
         return $this->getFlag(self::XML_PATH_STORESYNC_ENABLED, $storeId);
     }
 
