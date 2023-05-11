@@ -26,7 +26,13 @@
                 <endpoint_tracker_url>https://squeezely.tech/tracker/%s/sqzl.js</endpoint_tracker_url>
                 <api_request_uri>https://api.squeezely.tech/</api_request_uri>
             </advanced>
+            <frontend_events>
+                <enabled>1</enabled>
+                <events>ViewContent,ViewCategory,Search,AddToCart,RemoveFromCart,InitiateCheckout,Purchase</events>
+            </frontend_events>
             <backend_events>
+                <enabled>1</enabled>
+                <events>EmailOptIn,Purchase,CRMUpdate,AddToCart,RemoveFromCart,CompleteRegistration</events>
                 <pool_size>50</pool_size>
             </backend_events>
         </squeezely>
