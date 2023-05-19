@@ -17,7 +17,7 @@ use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 
 /**
  * Class LayoutLoadBefore
- * Obserser to set public Cookie
+ * Observer to set public Cookie
  */
 class LayoutLoadBefore implements ObserverInterface
 {

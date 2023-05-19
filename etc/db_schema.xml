@@ -39,6 +39,7 @@
         <column name="entity_id" xsi:type="int" padding="10" identity="true" nullable="false" unsigned="true" comment="Entity ID"/>
         <column name="type" xsi:type="varchar" length="100" nullable="false" comment="Process Type"/>
         <column name="processing_data" xsi:type="text" nullable="true" comment="Processing Data"/>
+        <column name="store_id" xsi:type="smallint" padding="5" nullable="false" unsigned="true" comment="Store ID"/>
         <column name="attempts" xsi:type="smallint" padding="2" nullable="false" unsigned="true" comment="Sync Attempts"/>
         <column name="created_at" xsi:type="timestamp" on_update="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
         <constraint referenceId="PRIMARY" xsi:type="primary">

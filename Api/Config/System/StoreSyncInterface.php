@@ -33,14 +33,14 @@ interface StoreSyncInterface extends FrontendEventsInterface
      *
      * @return bool
      */
-    public function isEnabled(int $storeId = null): bool;
+    public function isStoreSyncEnabled(int $storeId = null): bool;
 
     /**
-     * Return all enabled storeIds
+     * Return all enabled storeIds for product sync
      *
      * @return array
      */
-    public function getAllEnabledStoreIds(): array;
+    public function getAllEnabledStoreSyncStoreIds(): array;
 
     /**
      * Get Attribute Name

@@ -43,7 +43,7 @@ class Repository implements RequestRepository
     /**
      * @inheritDoc
      */
-    public function sendProducts(array $products): array
+    public function sendProducts(array $products, int $storeId): array
     {
         if (empty($products['products'])) {
             $this->logRepository->addDebugLog('Request', __('Skipped empty products'));
@@ -54,23 +54,28 @@ class Repository implements RequestRepository
                 'updated' => 0
             ];
         }
-        return $this->requestService->execute($products, self::PRODUCT_END_POINT);
+        return $this->requestService->execute($products, self::PRODUCT_END_POINT, $storeId);
     }
 
     /**
      * @inheritDoc
      */
-    public function sendDeleteProducts(array $products): array
+    public function sendDeleteProducts(array $products, int $storeId): array
     {
-        return $this->requestService->execute($products, self::PRODUCT_DELETE_ENDPOINT, null, 'DELETE');
+        return $this->requestService->execute(
+            $products,
+            self::PRODUCT_DELETE_ENDPOINT,
+            $storeId,
+            'DELETE'
+        );
     }
 
     /**
      * @inheritDoc
      */
-    public function sendToPlatform(array $eventData): array
+    public function sendToPlatform(array $eventData, int $storeId): array
     {
-        return $this->requestService->execute($eventData, self::TRACKER_END_POINT);
+        return $this->requestService->execute($eventData, self::TRACKER_END_POINT, $storeId);
     }
 
     /**

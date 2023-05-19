@@ -18,11 +18,11 @@ class StoreSyncRepository extends FrontendEventsRepository implements StoreSyncI
     /**
      * @inheritDoc
      */
-    public function getAllEnabledStoreIds(): array
+    public function getAllEnabledStoreSyncStoreIds(): array
     {
         $storeIds = [];
         foreach ($this->storeManager->getStores() as $store) {
-            if ($this->isEnabled((int)$store->getId()) && $store->getIsActive()) {
+            if ($this->isStoreSyncEnabled((int)$store->getId()) && $store->getIsActive()) {
                 $storeIds[] = (int)$store->getId();
             }
         }
@@ -33,7 +33,7 @@ class StoreSyncRepository extends FrontendEventsRepository implements StoreSyncI
     /**
      * @inheritDoc
      */
-    public function isEnabled(int $storeId = null): bool
+    public function isStoreSyncEnabled(int $storeId = null): bool
     {
         return $this->getFlag(self::XML_PATH_STORESYNC_ENABLED, $storeId);
     }

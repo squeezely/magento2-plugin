@@ -25,7 +25,8 @@ class BackendEvents implements OptionSourceInterface
         ConfigRepository::CRM_UPDATE_EVENT,
         ConfigRepository::ADD_TO_CART_EVENT,
         ConfigRepository::REMOVE_FROM_CART_EVENT,
-        ConfigRepository::COMPLETE_REGISTRATION_EVENT
+        ConfigRepository::COMPLETE_REGISTRATION_EVENT,
+        ConfigRepository::PRODUCT_DELETE
     ];
 
     /**

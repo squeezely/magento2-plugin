@@ -54,4 +54,12 @@ class Repository extends System\StoreSyncRepository implements ConfigRepositoryI
     {
         return $this->getStoreValue(self::XML_PATH_EXTENSION_VERSION);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEnabled(int $storeId = null): bool
+    {
+        return $this->getFlag(self::XML_PATH_ENABLED, $storeId);
+    }
 }

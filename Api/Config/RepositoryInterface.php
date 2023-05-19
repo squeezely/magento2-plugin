@@ -41,6 +41,7 @@ interface RepositoryInterface extends System\StoreSyncInterface
     public const PRE_PURCHASE_EVENT = 'PrePurchase';
     public const CRM_UPDATE_EVENT = 'CRMUpdate';
     public const COMPLETE_REGISTRATION_EVENT = 'CompleteRegistration';
+    public const PRODUCT_DELETE = 'ProductDelete';
 
     /**
      * Generic extension is not enables message

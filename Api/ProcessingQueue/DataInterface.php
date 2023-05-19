@@ -22,6 +22,7 @@ interface DataInterface extends ExtensibleDataInterface
     public const ENTITY_ID = 'entity_id';
     public const TYPE = 'type';
     public const PROCESSING_DATA = 'processing_data';
+    public const STORE_ID = 'store_id';
     public const ATTEMPTS = 'attempts';
     public const CREATED_AT = 'created_at';
 
@@ -57,6 +58,17 @@ interface DataInterface extends ExtensibleDataInterface
      * @return $this
      */
     public function setProcessingData(array $processingData): self;
+
+    /**
+     * @return int
+     */
+    public function getStoreId(): int;
+
+    /**
+     * @param $storeId
+     * @return $this
+     */
+    public function setStoreId($storeId): self;
 
     /**
      * @param int $attempts

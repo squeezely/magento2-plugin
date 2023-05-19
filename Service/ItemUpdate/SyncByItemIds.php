@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\Service\ItemUpdate;
 
-use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as ConfigRepository;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\ItemsQueue\RepositoryInterface as ItemsQueueRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
@@ -79,7 +79,7 @@ class SyncByItemIds
     public function execute($itemId): array
     {
         if (!$this->configRepository->isEnabled()) {
-            return ['success' => false, 'message' => 'Items sync is not enabled'];
+            return ['success' => false, 'message' => 'Module is not enabled'];
         }
 
         try {
@@ -95,7 +95,8 @@ class SyncByItemIds
 
         try {
             $response = $this->requestRepository->sendProducts(
-                ['products' => $productData]
+                ['products' => $productData],
+                $item->getStoreId()
             );
 
             $message = __(

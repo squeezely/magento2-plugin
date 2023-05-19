@@ -45,7 +45,7 @@ class InvalidateAll
      */
     public function execute(): array
     {
-        if (!$this->configRepository->isEnabled()) {
+        if (!$this->configRepository->isStoreSyncEnabled()) {
             return [
                 [
                     'success' => false,
@@ -54,7 +54,7 @@ class InvalidateAll
             ];
         }
         $result = [];
-        $storeIds = $this->configRepository->getAllEnabledStoreIds();
+        $storeIds = $this->configRepository->getAllEnabledStoreSyncStoreIds();
         foreach ($storeIds as $storeId) {
             $result[] = $this->invalidateByStore->execute((int)$storeId);
         }

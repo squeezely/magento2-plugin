@@ -135,6 +135,7 @@ class CustomerCreate
     {
         $process = $this->processingQueueRepository->create();
         $process->setType('complete_registration')
+            ->setStoreId($customer->getStoreId())
             ->setProcessingData([
                 'event' => ConfigRepository::COMPLETE_REGISTRATION_EVENT,
                 'email' => hash('sha256', $customer->getEmail()),
@@ -165,6 +166,7 @@ class CustomerCreate
         $subscription = $this->subscriber->loadByCustomerId($customer->getId());
         $process = $this->processingQueueRepository->create();
         $process->setType('registration')
+            ->setStoreId($customer->getStoreId())
             ->setProcessingData([
                 'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
                 'email' => $customer->getEmail(),

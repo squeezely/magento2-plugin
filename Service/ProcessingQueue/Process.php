@@ -12,10 +12,8 @@ use Magento\Framework\Exception\LocalizedException;
 use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\ProcessingQueue\RepositoryInterface as ProcessingQueueRepository;
 use Squeezely\Plugin\Model\ProcessingQueue\Collection as ProcessingQueueCollection;
+use Squeezely\Plugin\Model\ProcessingQueue\CollectionFactory as ProcessingQueueCollectionFactory;
 use Squeezely\Plugin\Model\ProcessingQueue\Data;
-use Squeezely\Plugin\Service\ProcessingQueue\Processors\DefaultProcessor;
-use Squeezely\Plugin\Service\ProcessingQueue\Processors\Order;
-use Squeezely\Plugin\Service\ProcessingQueue\Processors\Product;
 use Squeezely\Plugin\Model\ProcessingQueue\ResourceModel;
 
 /**
@@ -25,15 +23,15 @@ class Process
 {
 
     /**
-     * @var ProcessingQueueCollection
+     * @var ProcessingQueueCollectionFactory
      */
     private $processingQueueCollection;
     /**
-     * @var Order
+     * @var Processors\Order
      */
     private $order;
     /**
-     * @var Product
+     * @var Processors\Product
      */
     private $product;
     /**
@@ -45,7 +43,7 @@ class Process
      */
     private $configRepository;
     /**
-     * @var DefaultProcessor
+     * @var Processors\DefaultProcessor
      */
     private $defaultProcessor;
     /**
@@ -54,24 +52,22 @@ class Process
     private $resourceConnection;
 
     /**
-     * Process constructor.
-     *
-     * @param ProcessingQueueCollection $processingQueueCollection
-     * @param Order $order
-     * @param Product $product
+     * @param ProcessingQueueCollectionFactory $processingQueueCollection
      * @param ProcessingQueueRepository $processingQueueRepository
      * @param ConfigRepository $configRepository
-     * @param DefaultProcessor $defaultProcessor
      * @param ResourceConnection $resourceConnection
+     * @param Processors\Order $order
+     * @param Processors\Product $product
+     * @param Processors\DefaultProcessor $defaultProcessor
      */
     public function __construct(
-        ProcessingQueueCollection $processingQueueCollection,
-        Order $order,
-        Product $product,
+        ProcessingQueueCollectionFactory $processingQueueCollection,
         ProcessingQueueRepository $processingQueueRepository,
         ConfigRepository $configRepository,
-        DefaultProcessor $defaultProcessor,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        Processors\Order $order,
+        Processors\Product $product,
+        Processors\DefaultProcessor $defaultProcessor
     ) {
         $this->processingQueueCollection = $processingQueueCollection;
         $this->order = $order;
@@ -88,32 +84,44 @@ class Process
      */
     public function execute(): void
     {
-        $this->processingQueueCollection->setPageSize(
-            $this->configRepository->getPoolSize()
-        )->setCurPage(1);
+        $storeIds = $this->configRepository->getAllEnabledBackendSyncStoreIds();
+        foreach ($storeIds as $storeId) {
+            $events = $this->getQueuedEvents($storeId);
+            /* @var Data $process */
+            foreach ($events as $process) {
+                $data = $process->getProcessingData();
+                switch ($process->getType()) {
+                    case 'order':
+                        $result = $this->order->execute((int)$data['order_id']);
+                        break;
+                    case 'product':
+                        $result = $this->product->execute((int)$data['product_id'], $storeId);
+                        break;
+                    default:
+                        $result = $this->defaultProcessor->execute($data, $storeId);
+                        break;
+                }
 
-        /* @var Data $process */
-        foreach ($this->processingQueueCollection as $process) {
-            $data = $process->getProcessingData();
-            switch ($process->getType()) {
-                case 'order':
-                    $result = $this->order->execute((int)$data['order_id']);
-                    break;
-                case 'product':
-                    $result = $this->product->execute((int)$data['product_id']);
-                    break;
-                default:
-                    $result = $this->defaultProcessor->execute($data);
-                    break;
-            }
-
-            if ($result) {
-                $this->processingQueueRepository->delete($process);
-            } else {
-                $process->addAttempt();
-                $this->processingQueueRepository->save($process);
+                if ($result) {
+                    $this->processingQueueRepository->delete($process);
+                } else {
+                    $process->addAttempt();
+                    $this->processingQueueRepository->save($process);
+                }
             }
         }
+    }
+
+    /**
+     * @param int $storeId
+     * @return ProcessingQueueCollection
+     */
+    private function getQueuedEvents(int $storeId): ProcessingQueueCollection
+    {
+        return $this->processingQueueCollection->create()
+            ->addFieldToFilter('store_id', $storeId)
+            ->setPageSize($this->configRepository->getPoolSize())
+            ->setCurPage(1);
     }
 
     /**
@@ -125,6 +133,10 @@ class Process
         $connection->delete(
             $connection->getTableName(ResourceModel::ENTITY_TABLE),
             ['attempts > 3']
+        );
+        $connection->delete(
+            $connection->getTableName(ResourceModel::ENTITY_TABLE),
+            ['store_id = 0']
         );
     }
 }

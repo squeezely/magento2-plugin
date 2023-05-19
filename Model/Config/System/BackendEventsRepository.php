@@ -19,9 +19,25 @@ class BackendEventsRepository extends AdvancedOptionsRepository implements Backe
     /**
      * @inheritDoc
      */
-    public function isBackendEventEnabled(string $eventName): bool
+    public function isBackendEventEnabled(string $eventName, $storeId = null): bool
     {
-        return $this->isBackendEventsEnabled() && in_array($eventName, $this->getEnabledBackendEvents());
+        return $this->isBackendEventsEnabled($storeId)
+            && in_array($eventName, $this->getEnabledBackendEvents());
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAllEnabledBackendSyncStoreIds(): array
+    {
+        $storeIds = [];
+        foreach ($this->storeManager->getStores() as $store) {
+            if ($this->isBackendEventsEnabled((int)$store->getId()) && $store->getIsActive()) {
+                $storeIds[] = (int)$store->getId();
+            }
+        }
+
+        return $storeIds;
     }
 
     /**

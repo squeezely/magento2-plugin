@@ -94,7 +94,7 @@ class Data extends AbstractModel implements ExtensibleDataInterface, ProcessingQ
     public function getProcessingData(): array
     {
         $data = $this->getData(self::PROCESSING_DATA);
-        if (is_string($data)) {
+        while (is_string($data)) {
             $data = $this->serializer->unserialize($data);
         }
 
@@ -106,7 +106,24 @@ class Data extends AbstractModel implements ExtensibleDataInterface, ProcessingQ
      */
     public function setProcessingData(array $processingData): ProcessingQueueData
     {
-        return $this->setData(self::PROCESSING_DATA, $processingData);
+
+        return $this->setData(self::PROCESSING_DATA, $this->serializer->serialize($processingData));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getStoreId(): int
+    {
+        return (int)$this->getData(self::STORE_ID);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setStoreId($storeId): ProcessingQueueData
+    {
+        return $this->setData(self::STORE_ID, (int)$storeId);
     }
 
     /**

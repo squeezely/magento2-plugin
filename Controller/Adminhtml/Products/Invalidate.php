@@ -78,7 +78,7 @@ class Invalidate extends Action
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 
         $storeId = (int)$this->getRequest()->getParam('store_id');
-        if (!$this->storeSyncConfigRepository->isEnabled($storeId)) {
+        if (!$this->storeSyncConfigRepository->isStoreSyncEnabled($storeId)) {
             $msg = self::ERROR_MSG_ENABLED;
             $this->messageManager->addErrorMessage(__($msg));
             return $resultRedirect->setPath(

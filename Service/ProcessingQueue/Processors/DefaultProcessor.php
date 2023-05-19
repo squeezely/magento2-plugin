@@ -38,12 +38,13 @@ class DefaultProcessor
 
     /**
      * @param array $data
+     * @param int $storeId
      * @return bool
      */
-    public function execute(array $data): bool
+    public function execute(array $data, int $storeId): bool
     {
         try {
-            $this->requestRepository->sendToPlatform($data);
+            $this->requestRepository->sendToPlatform($data, $storeId);
             return true;
         } catch (\Exception $exception) {
             $this->logRepository->addErrorLog($data['event'], $exception->getMessage());
