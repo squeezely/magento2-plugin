@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Squeezely\Plugin\ViewModel;
 
-use Magento\Customer\Model\Session;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -33,10 +32,6 @@ class PixelManager implements ArgumentInterface
      */
     private $logRepository;
     /**
-     * @var Session
-     */
-    private $session;
-    /**
      * @var int
      */
     private $storeId = 0;
@@ -47,18 +42,15 @@ class PixelManager implements ArgumentInterface
      * @param ConfigRepository $configRepository
      * @param StoreManagerInterface $storeManager
      * @param LogRepository $logRepository
-     * @param Session $session
      */
     public function __construct(
         ConfigRepository $configRepository,
         StoreManagerInterface $storeManager,
-        LogRepository $logRepository,
-        Session $session
+        LogRepository $logRepository
     ) {
         $this->configRepository = $configRepository;
         $this->storeManager = $storeManager;
         $this->logRepository = $logRepository;
-        $this->session = $session;
     }
 
     /**
@@ -69,18 +61,6 @@ class PixelManager implements ArgumentInterface
     public function isEnabled(): bool
     {
         return $this->configRepository->isFrontendEventsEnabled($this->getStoreId());
-    }
-
-    /**
-     * Check if the frontend add to cart should be tracked
-     *
-     * @return bool
-     */
-    public function trackAddToCart(): bool
-    {
-        return $this->configRepository->isFrontendEventEnabled(
-            ConfigRepository::ADD_TO_CART_EVENT
-        );
     }
 
     /**
@@ -98,6 +78,18 @@ class PixelManager implements ArgumentInterface
             }
         }
         return $this->storeId;
+    }
+
+    /**
+     * Check if the frontend add to cart should be tracked
+     *
+     * @return bool
+     */
+    public function trackAddToCart(): bool
+    {
+        return $this->configRepository->isFrontendEventEnabled(
+            ConfigRepository::ADD_TO_CART_EVENT
+        );
     }
 
     /**
@@ -119,18 +111,5 @@ class PixelManager implements ArgumentInterface
     private function getAccountId(): string
     {
         return $this->configRepository->getAccountId($this->getStoreId());
-    }
-
-    /**
-     * @return bool
-     */
-    public function isNewSession(): bool
-    {
-        if (!$this->session->getSessionInitilized()) {
-            $this->session->setSessionInitilized(true);
-            return true;
-        }
-
-        return false;
     }
 }
