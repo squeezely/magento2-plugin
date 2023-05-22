@@ -12,13 +12,16 @@ $viewModel = $block->getViewModel();
         (window,document, '<?= /* @noEscape */ $viewModel->getJsLink();?>');
         window._sqzl = _sqzl || [];
         window._sqzl.push({"event": "PageView"});
-        <?php if ($viewModel->isNewSession()): ?>
-        window._sqzl.push({
-            "event": "UpdateCart",
-            "set_cart": true,
-            "products": []
-        });
-        <?php endif ?>
+
+        if (!sessionStorage.getItem("new-session")) {
+            window._sqzl.push({
+                "event": "UpdateCart",
+                "set_cart": true,
+                "products": []
+            });
+
+            sessionStorage.setItem("new-session", "true");
+        }
     </script>
 
     <script type="text/x-magento-init">

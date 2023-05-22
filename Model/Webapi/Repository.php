@@ -12,13 +12,8 @@ use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductColl
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
-use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepositoryInterface;
-use Squeezely\Plugin\Api\Config\System\AdvancedOptionsInterface as AdvancedOptionsRepositoryInterface;
-use Squeezely\Plugin\Api\Config\System\BackendEventsInterface as BackendEventsRepositoryInterface;
-use Squeezely\Plugin\Api\Config\System\FrontendEventsInterface as FrontendEventsRepositoryInterface;
-use Squeezely\Plugin\Api\Config\System\StoreSyncInterface as StoreSyncRepositoryInterface;
 use Squeezely\Plugin\Api\Webapi\ManagementInterface;
 use Squeezely\Plugin\Model\ItemsQueue\ResourceModel as ItemsQueueResource;
 use Squeezely\Plugin\Service\Invalidate\ByProductId as InvalidateByProductId;
@@ -62,26 +57,6 @@ class Repository implements ManagementInterface
      */
     private $configRepository;
     /**
-     * @var StoreSyncRepositoryInterface
-     */
-    private $storeSyncRepository;
-    /**
-     * @var FrontendEventsRepositoryInterface
-     */
-    private $frontendRepository;
-    /**
-     * @var BackendEventsRepositoryInterface
-     */
-    private $backendRepository;
-    /**
-     * @var AdvancedOptionsRepositoryInterface
-     */
-    private $advancedOptionsRepository;
-    /**
-     * @var StoreRepositoryInterface
-     */
-    private $storeRepository;
-    /**
      * @var ProductCollection
      */
     private $productCollection;
@@ -103,17 +78,12 @@ class Repository implements ManagementInterface
     private $invalidateByStore;
 
     /**
-     * Repository constructor.
-     *
      * @param Configurable $catalogProductTypeConfigurable
      * @param JsonSerializer $jsonSerializer
+     * @param InvalidateByStore $invalidateByStore
+     * @param InvalidateByProductId $invalidateByProductId
      * @param ProductDataService $productDataService
      * @param ConfigRepositoryInterface $configRepository
-     * @param StoreSyncRepositoryInterface $storeSyncRepository
-     * @param FrontendEventsRepositoryInterface $frontendRepository
-     * @param BackendEventsRepositoryInterface $backendRepository
-     * @param AdvancedOptionsRepositoryInterface $advancedOptionsRepository
-     * @param StoreRepositoryInterface $storeRepository
      * @param ProductCollection $productCollection
      * @param ItemsQueueResource $itemsQueueResource
      * @param StoreManagerInterface $storeManager
@@ -125,11 +95,6 @@ class Repository implements ManagementInterface
         InvalidateByProductId $invalidateByProductId,
         ProductDataService $productDataService,
         ConfigRepositoryInterface $configRepository,
-        StoreSyncRepositoryInterface $storeSyncRepository,
-        FrontendEventsRepositoryInterface $frontendRepository,
-        BackendEventsRepositoryInterface $backendRepository,
-        AdvancedOptionsRepositoryInterface $advancedOptionsRepository,
-        StoreRepositoryInterface $storeRepository,
         ProductCollection $productCollection,
         ItemsQueueResource $itemsQueueResource,
         StoreManagerInterface $storeManager
@@ -140,11 +105,6 @@ class Repository implements ManagementInterface
         $this->invalidateByProductId = $invalidateByProductId;
         $this->productDataService = $productDataService;
         $this->configRepository = $configRepository;
-        $this->storeSyncRepository = $storeSyncRepository;
-        $this->frontendRepository = $frontendRepository;
-        $this->backendRepository = $backendRepository;
-        $this->advancedOptionsRepository = $advancedOptionsRepository;
-        $this->storeRepository = $storeRepository;
         $this->productCollection = $productCollection;
         $this->itemsQueueResource = $itemsQueueResource;
         $this->storeManager = $storeManager;
@@ -219,7 +179,7 @@ class Repository implements ManagementInterface
                     'total' => $size,
                     'page' => $currentPage,
                     'output' => count($products),
-                    'totalPages' => ceil($size/$pageSize),
+                    'totalPages' => ceil($size / $pageSize),
                     'processingTime' => number_format((microtime(true) - $timeStart), 2)
                 ],
                 'items' => $products
@@ -274,32 +234,32 @@ class Repository implements ManagementInterface
                 ],
             'store_sync' =>
                 [
-                    'enabled' => (string)$this->storeSyncRepository->isEnabled($storeId),
-                    'name' => $this->storeSyncRepository->getAttributeName($storeId),
-                    'description' => $this->storeSyncRepository->getAttributeDescription($storeId),
-                    'brand' => $this->storeSyncRepository->getAttributeBrand($storeId),
-                    'size' => $this->storeSyncRepository->getAttributeSize($storeId),
-                    'color' => $this->storeSyncRepository->getAttributeColor($storeId),
-                    'condition' => $this->storeSyncRepository->getAttributeCondition($storeId),
-                    'use_parent_image_for_simples' => $this->storeSyncRepository->getUseParentImage($storeId),
+                    'enabled' => (string)$this->configRepository->isStoreSyncEnabled($storeId),
+                    'name' => $this->configRepository->getAttributeName($storeId),
+                    'description' => $this->configRepository->getAttributeDescription($storeId),
+                    'brand' => $this->configRepository->getAttributeBrand($storeId),
+                    'size' => $this->configRepository->getAttributeSize($storeId),
+                    'color' => $this->configRepository->getAttributeColor($storeId),
+                    'condition' => $this->configRepository->getAttributeCondition($storeId),
+                    'use_parent_image_for_simples' => $this->configRepository->getUseParentImage($storeId),
                     'extra_fields' => $this->getExtraFields($storeId),
                     'product_updates' => $this->getProductUpdates($storeId)
                 ],
             'frontend_events' =>
                 [
-                    'enabled' => (string)$this->frontendRepository->isEnabled($storeId)
+                    'enabled' => (string)$this->configRepository->isFrontendEventsEnabled($storeId)
                 ],
             'backend_events' =>
                 [
-                    'enabled' => (string)$this->backendRepository->isEnabled($storeId),
-                    'events' => $this->backendRepository->getEnabledBackendEvents($storeId)
+                    'enabled' => (string)$this->configRepository->isBackendEventsEnabled($storeId),
+                    'events' => $this->configRepository->getEnabledBackendEvents($storeId)
                 ],
             'advanced_options' =>
                 [
-                    'debug_enabled' => (string)$this->advancedOptionsRepository->isDebugEnabled(),
-                    'endpoint_data_url' => $this->advancedOptionsRepository->getEndpointDataUrl(),
-                    'endpoint_tracker_url' => $this->advancedOptionsRepository->getEndpointTrackerUrl(),
-                    'api_request_uri' => $this->advancedOptionsRepository->getApiRequestUri()
+                    'debug_enabled' => (string)$this->configRepository->isDebugEnabled(),
+                    'endpoint_data_url' => $this->configRepository->getEndpointDataUrl(),
+                    'endpoint_tracker_url' => $this->configRepository->getEndpointTrackerUrl(),
+                    'api_request_uri' => $this->configRepository->getApiRequestUri()
                 ]
         ];
     }
@@ -314,7 +274,7 @@ class Repository implements ManagementInterface
     private function getExtraFields(int $storeId = null): array
     {
         $value = [];
-        $extraFields = $this->jsonSerializer->unserialize($this->storeSyncRepository->getExtraFields($storeId));
+        $extraFields = $this->jsonSerializer->unserialize($this->configRepository->getExtraFields($storeId));
         if (is_array($extraFields)) {
             foreach ($extraFields as $extraField) {
                 $value[$extraField['name']] = $extraField['attribute'];

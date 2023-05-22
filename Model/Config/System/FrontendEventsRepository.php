@@ -21,7 +21,8 @@ class FrontendEventsRepository extends BackendEventsRepository implements Fronte
      */
     public function isFrontendEventEnabled(string $eventName): bool
     {
-        return $this->isFrontendEventsEnabled() && in_array($eventName, $this->getEnabledFrontendEvents());
+        return $this->isFrontendEventsEnabled()
+            && in_array($eventName, $this->getEnabledFrontendEvents());
     }
 
     /**

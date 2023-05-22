@@ -29,6 +29,13 @@ interface BackendEventsInterface extends AdvancedOptionsInterface
     public function isBackendEventsEnabled(int $storeId = null): bool;
 
     /**
+     * Return all enabled storeIds for backend events sync
+     *
+     * @return array
+     */
+    public function getAllEnabledBackendSyncStoreIds(): array;
+
+    /**
      * Get Array of Enabled Backend Events
      *
      * @param int|null $storeId

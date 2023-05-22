@@ -75,6 +75,7 @@ class Quote
         if ($item = $subject->getItemById($itemId)) {
             $process = $this->processingQueueRepository->create();
             $process->setType('remove_from_cart')
+                ->setStoreId($item->getStoreId())
                 ->setProcessingData([
                     'event' => ConfigRepository::REMOVE_FROM_CART_EVENT,
                     'products' => ['id' => $item->getSku()],
@@ -109,6 +110,7 @@ class Quote
 
         $process = $this->processingQueueRepository->create();
         $process->setType('add_to_cart')
+            ->setStoreId($product->getStoreId())
             ->setProcessingData([
                 'event' => ConfigRepository::ADD_TO_CART_EVENT,
                 'products' => [

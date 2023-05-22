@@ -44,29 +44,32 @@ interface RepositoryInterface
      * Send product data to API
      *
      * @param array $products
+     * @param int $storeId
      * @return array
      * @throws AuthenticationException
      * @throws LocalizedException
      */
-    public function sendProducts(array $products): array;
+    public function sendProducts(array $products, int $storeId): array;
 
     /**
      * @param array $products
+     * @param int $storeId
      * @return array
      * @throws AuthenticationException
      * @throws LocalizedException
      */
-    public function sendDeleteProducts(array $products): array;
+    public function sendDeleteProducts(array $products, int $storeId): array;
 
     /**
      * Send event data to API
      *
      * @param array $eventData
+     * @param int $storeId
      * @return array
      * @throws AuthenticationException
      * @throws LocalizedException
      */
-    public function sendToPlatform(array $eventData): array;
+    public function sendToPlatform(array $eventData, int $storeId): array;
 
     /**
      * Send request for credentials validation

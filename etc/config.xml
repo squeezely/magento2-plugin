@@ -10,7 +10,7 @@
         <squeezely>
             <general>
                 <enabled>1</enabled>
-                <version>v2.9.0</version>
+                <version>v2.9.1</version>
             </general>
             <store_sync>
                 <attribute_name>name</attribute_name>
@@ -32,7 +32,7 @@
             </frontend_events>
             <backend_events>
                 <enabled>1</enabled>
-                <events>EmailOptIn,Purchase,CRMUpdate,AddToCart,RemoveFromCart,CompleteRegistration</events>
+                <events>EmailOptIn,Purchase,CRMUpdate,AddToCart,RemoveFromCart,CompleteRegistration,ProductDelete</events>
                 <pool_size>50</pool_size>
             </backend_events>
         </squeezely>

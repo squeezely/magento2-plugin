@@ -54,14 +54,17 @@ class Invoice
         InvoiceModel $subject,
         InvoiceModel $result
     ) {
-        if ($this->configRepository->isBackendEventEnabled(ConfigRepository::PURCHASE_EVENT)) {
+
+        $order = $subject->getOrder();
+        $storeId = $order->getStoreId();
+        if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::PURCHASE_EVENT, $storeId)) {
             return $result;
         }
 
-        $order = $subject->getOrder();
         if ($subject->getState() === Order\Invoice::STATE_PAID) {
             $process = $this->processingQueueRepository->create();
             $process->setType('order')
+                ->setStoreId($order->getStoreId())
                 ->setProcessingData([
                     'order_id' => $order->getId()
                 ]);

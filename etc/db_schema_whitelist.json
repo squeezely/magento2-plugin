@@ -18,5 +18,18 @@
             "SQUEEZELY_ITEMS_QUEUE_STORE_ID_STORE_STORE_ID": true,
             "SQUEEZELY_ITEMS_QUEUE_PRD_ID_CAT_PRD_ENTT_ENTT_ID": true
         }
+    },
+    "squeezely_processing_queue": {
+        "column": {
+            "entity_id": true,
+            "type": true,
+            "processing_data": true,
+            "store_id": true,
+            "attempts": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
     }
 }

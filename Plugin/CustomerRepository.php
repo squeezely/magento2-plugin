@@ -131,6 +131,7 @@ class CustomerRepository
         ) {
             $process = $this->processingQueueRepository->create();
             $process->setType('crm_update')
+                ->setStoreId($newCustomerData->getStoreId())
                 ->setProcessingData([
                     "event" => "CRMUpdate",
                     "userid" => $newCustomerData->getId(),
@@ -176,6 +177,7 @@ class CustomerRepository
 
         $process = $this->processingQueueRepository->create();
         $process->setType('registration')
+            ->setStoreId($newCustomerData->getStoreId())
             ->setProcessingData([
                 'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
                 'userid' => $newCustomerData->getId(),
@@ -207,6 +209,7 @@ class CustomerRepository
     {
         $process = $this->processingQueueRepository->create();
         $process->setType('email_optin')
+            ->setStoreId($savedCustomer->getStoreId())
             ->setProcessingData([
                 'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
                 'email' => hash('sha256', $email),

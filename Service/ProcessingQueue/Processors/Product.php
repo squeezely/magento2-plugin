@@ -65,9 +65,10 @@ class Product
 
     /**
      * @param int $productId
+     * @param int $storeId
      * @return bool
      */
-    public function execute(int $productId): bool
+    public function execute(int $productId, int $storeId): bool
     {
         try {
             $product = $this->productRepository->getById($productId);
@@ -85,7 +86,7 @@ class Product
         $productData = ['products' => $products];
 
         try {
-            $this->requestRepository->sendDeleteProducts($productData);
+            $this->requestRepository->sendDeleteProducts($productData, $storeId);
             return true;
         } catch (\Exception $e) {
             $this->logRepository->addErrorLog('Delete product', $e->getMessage());

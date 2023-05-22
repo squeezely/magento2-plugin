@@ -26,15 +26,6 @@ class ResourceModel extends AbstractDb
     public const PRIMARY = 'entity_id';
 
     /**
-     * Serializable field: processing_data
-     *
-     * @var array
-     */
-    protected $_serializableFields = [
-        'processing_data' => [[], []],
-    ];
-
-    /**
      * @inheritDoc
      */
     public function _construct()
@@ -48,7 +39,7 @@ class ResourceModel extends AbstractDb
      * @param  int $entityId
      * @return bool
      */
-    public function isExists($entityId)
+    public function isExists($entityId): bool
     {
         $connection = $this->getConnection();
         $select = $connection->select()

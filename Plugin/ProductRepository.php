@@ -41,12 +41,15 @@ class ProductRepository
     public function afterDelete(Subject $subject, $result, ProductInterface $product)
     {
         if ($result === true) {
-            $process = $this->processingQueueRepository->create();
-            $process->setType('product')
-                ->setProcessingData([
-                    'product_id' => $product->getId()
-                ]);
-            $this->processingQueueRepository->save($process);
+            foreach ($product->getStoreIds() as $storeId) {
+                $process = $this->processingQueueRepository->create();
+                $process->setType('product')
+                    ->setStoreId($storeId)
+                    ->setProcessingData([
+                        'product_id' => $product->getId()
+                    ]);
+                $this->processingQueueRepository->save($process);
+            }
         }
         return $result;
     }

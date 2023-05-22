@@ -75,12 +75,14 @@ class Subscriber
      */
     private function executeBackendEvent(Subject $subscriber)
     {
-        if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::EMAIL_OPT_IN_EVENT)) {
+        $storeId = $subscriber->getStoreId();
+        if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::EMAIL_OPT_IN_EVENT, $storeId)) {
             return;
         }
 
         $process = $this->processingQueueRepository->create();
         $process->setType('registration')
+            ->setStoreId($subscriber->getStoreId())
             ->setProcessingData([
                 'event' => ConfigRepository::EMAIL_OPT_IN_EVENT,
                 'email' => $subscriber->getEmail(),
@@ -143,6 +145,7 @@ class Subscriber
             }
             $process = $this->processingQueueRepository->create();
             $process->setType('email_optin')
+                ->setStoreId($subscriber->getStoreId())
                 ->setProcessingData($eventData);
             $this->processingQueueRepository->save($process);
         }
