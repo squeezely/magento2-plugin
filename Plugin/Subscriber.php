@@ -75,7 +75,7 @@ class Subscriber
      */
     private function executeBackendEvent(Subject $subscriber)
     {
-        $storeId = $subscriber->getStoreId();
+        $storeId = (int) $subscriber->getStoreId();
         if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::EMAIL_OPT_IN_EVENT, $storeId)) {
             return;
         }

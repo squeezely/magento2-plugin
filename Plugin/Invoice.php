@@ -56,7 +56,7 @@ class Invoice
     ) {
 
         $order = $subject->getOrder();
-        $storeId = $order->getStoreId();
+        $storeId = (int) $order->getStoreId();
         if (!$this->configRepository->isBackendEventEnabled(ConfigRepository::PURCHASE_EVENT, $storeId)) {
             return $result;
         }
