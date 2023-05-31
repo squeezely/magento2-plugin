@@ -78,7 +78,7 @@ class Order
             );
             $this->requestRepository->sendToPlatform(
                 $this->transformOrderData($order),
-                $order->getStoreId()
+                (int) $order->getStoreId()
             );
         } catch (\Exception $exception) {
             $this->logRepository->addErrorLog('Purchase event', $exception->getMessage());
