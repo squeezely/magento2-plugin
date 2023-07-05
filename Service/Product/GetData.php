@@ -306,15 +306,9 @@ class GetData
                     $this->getAttributeValue($customField['attribute'], $product, $parentId, $storeId);
             }
 
-            $inventory = $salesChannel && isset($stock[$product->getId()]['msi'][$salesChannel])
-                ? $stock[$product->getId()]['msi'][$salesChannel]
-                : $stock[$product->getId()];
-
-            $oneProduct['inventory'] = $inventory['qty'];
-            $oneProduct['availability'] = $inventory['availability'] == 1 ? ('in stock') : ('out of stock');
-
-            $productData[] = $oneProduct;
+            $productData[] = $oneProduct + $this->getInventory($salesChannel, $stock, (int)$product->getId());
         }
+
         $this->logRepository->addDebugLog(
             'GetProductData',
             'Response: ' . $this->jsonSerializer->serialize($productData)
@@ -367,7 +361,6 @@ class GetData
      */
     private function getProducts(array $skus = [], int $storeId = 0): Collection
     {
-        /** @var Collection $collection */
         $collection = $this->productCollectionFactory->create();
         $collection->addStoreFilter($storeId)
             ->addAttributeToSelect(array_values($this->attributes))
@@ -696,5 +689,30 @@ class GetData
         }
 
         return $this->images[$product->getId()] ?? [];
+    }
+
+    /**
+     * @param string|null $salesChannel
+     * @param array $stock
+     * @param int $productId
+     * @return array
+     */
+    private function getInventory(?string $salesChannel, array $stock, int $productId): array
+    {
+        if ($salesChannel && isset($stock[$productId]['msi'][$salesChannel])) {
+            $inventory = $stock[$productId]['msi'][$salesChannel];
+        } elseif (isset($stock[$productId])) {
+            $inventory = $stock[$productId];
+        } else {
+            return [
+                'qty' => 0,
+                'availability' => 'in stock'
+            ];
+        }
+
+        return [
+            'inventory' => $inventory['qty'],
+            'availability' => $inventory['availability'] == 1 ? ('in stock') : ('out of stock')
+        ];
     }
 }
