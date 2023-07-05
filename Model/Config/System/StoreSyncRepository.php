@@ -118,6 +118,30 @@ class StoreSyncRepository extends FrontendEventsRepository implements StoreSyncI
     /**
      * @inheritDoc
      */
+    public function getLanguage(int $storeId = null): string
+    {
+        if ($this->getLanguageOption($storeId) !== 'custom') {
+            return $this->getStoreValue('general/locale/code', $storeId);
+        }
+
+        $customLanguage = $this->getStoreValue(self::XML_PATH_STORESYNC_LANGUAGE_CUSTOM, $storeId);
+        return !empty($customLanguage)
+            ? $customLanguage
+            : $this->getStoreValue('general/locale/code', $storeId);
+    }
+
+    /**
+     * @param int|null $storeId
+     * @return string
+     */
+    private function getLanguageOption(int $storeId = null): string
+    {
+        return $this->getStoreValue(self::XML_PATH_STORESYNC_LANGUAGE, $storeId);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getExtraFields(int $storeId = null): string
     {
         $extraFields = $this->getStoreValue(

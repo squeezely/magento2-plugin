@@ -492,7 +492,7 @@ class GetData
                 return $this->getPriceInclTax($product, $product->getFinalPrice(), $storeId) ?? 0;
             // no break
             case 'language':
-                return $this->getLanguage();
+                return $this->getLanguage($storeId);
             case 'currency':
                 return $this->getCurrency();
             case 'image_link':
@@ -598,16 +598,13 @@ class GetData
     }
 
     /**
+     * @param int $storeId
      * @return string
      */
-    private function getLanguage(): string
+    private function getLanguage(int $storeId): string
     {
         if (!$this->language) {
-            $this->language = (string)$this->scopeConfig->getValue(
-                'general/locale/code',
-                ScopeInterface::SCOPE_STORE,
-                $this->store->getId()
-            );
+            $this->language = $this->configRepository->getLanguage($storeId);
         }
         return $this->language;
     }

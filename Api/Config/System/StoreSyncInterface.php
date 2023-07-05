@@ -23,6 +23,8 @@ interface StoreSyncInterface extends FrontendEventsInterface
     public const XML_PATH_STORESYNC_ATTRIBUTE_COLOR = 'squeezely/store_sync/attribute_color';
     public const XML_PATH_STORESYNC_ATTRIBUTE_CONDITION = 'squeezely/store_sync/attribute_condition';
     public const XML_PATH_STORESYNC_USE_PARENT_IMAGE = 'squeezely/store_sync/use_parent_image';
+    public const XML_PATH_STORESYNC_LANGUAGE = 'squeezely/store_sync/language';
+    public const XML_PATH_STORESYNC_LANGUAGE_CUSTOM = 'squeezely/store_sync/language_custom';
     public const XML_PATH_STORESYNC_EXTRA_FIELDS = 'squeezely/store_sync/extra_fields';
     public const XML_PATH_SYNC_CRON = 'squeezely/store_sync/cron';
 
@@ -104,6 +106,15 @@ interface StoreSyncInterface extends FrontendEventsInterface
      * @return string
      */
     public function getUseParentImage(int $storeId = null): string;
+
+    /**
+     * Get Language
+     *
+     * @param int|null $storeId
+     *
+     * @return string
+     */
+    public function getLanguage(int $storeId = null): string;
 
     /**
      * Get Extra fields
