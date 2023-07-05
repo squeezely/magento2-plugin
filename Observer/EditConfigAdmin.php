@@ -11,6 +11,7 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\AuthenticationException;
 use Magento\Framework\Message\ManagerInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Service\Integration\Service as IntegrationService;
 
@@ -19,11 +20,6 @@ use Squeezely\Plugin\Service\Integration\Service as IntegrationService;
  */
 class EditConfigAdmin implements ObserverInterface
 {
-
-    /**
-     * Integation name constant
-     */
-    public const INTEGRATION_NAME = 'Squeezely Integration';
 
     /**
      * Message on successfully integration
@@ -45,7 +41,7 @@ class EditConfigAdmin implements ObserverInterface
     /**
      * Message on exception in integration call
      */
-    public const EXCEPTION_CREDENTIALS_MSG = 'Credentials are incorect, please try again!';
+    public const EXCEPTION_CREDENTIALS_MSG = 'Credentials are incorrect, please try again!';
 
     /**
      * @var LogRepository
@@ -59,6 +55,10 @@ class EditConfigAdmin implements ObserverInterface
      * @var IntegrationService
      */
     private $integrationService;
+    /**
+     * @var ConfigRepository
+     */
+    private $configRepository;
 
     /**
      * EditConfigAdmin constructor.
@@ -66,15 +66,18 @@ class EditConfigAdmin implements ObserverInterface
      * @param LogRepository $logRepository
      * @param ManagerInterface $messageManager
      * @param IntegrationService $integrationService
+     * @param ConfigRepository $configRepository
      */
     public function __construct(
         LogRepository $logRepository,
         ManagerInterface $messageManager,
-        IntegrationService $integrationService
+        IntegrationService $integrationService,
+        ConfigRepository $configRepository
     ) {
         $this->logRepository = $logRepository;
         $this->messageManager = $messageManager;
         $this->integrationService = $integrationService;
+        $this->configRepository = $configRepository;
     }
 
     /**
@@ -84,11 +87,13 @@ class EditConfigAdmin implements ObserverInterface
      */
     public function execute(EventObserver $observer)
     {
-        $storeId = $observer->getData('store');
-        try {
-            $isVerified = $this->integrationService->verifyAuth((int)$storeId);
+        $storeId = (int)$observer->getData('store');
+        if (!$this->configRepository->isEnabled($storeId)) {
+            return;
+        }
 
-            if ($isVerified) {
+        try {
+            if ($this->integrationService->verifyAuth((int)$storeId)) {
                 $msg = (string)self::SUCCESS_MSG;
                 $this->messageManager->addSuccessMessage(__($msg));
             } else {
