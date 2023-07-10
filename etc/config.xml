@@ -10,7 +10,7 @@
         <squeezely>
             <general>
                 <enabled>1</enabled>
-                <version>v2.9.2</version>
+                <version>v2.10.0</version>
             </general>
             <store_sync>
                 <attribute_name>name</attribute_name>
@@ -19,6 +19,7 @@
                 <attribute_size>size</attribute_size>
                 <attribute_color>color</attribute_color>
                 <attribute_condition>condition</attribute_condition>
+                <language>store</language>
             </store_sync>
             <advanced>
                 <debug>0</debug>

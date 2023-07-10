@@ -235,6 +235,7 @@ class Repository implements ManagementInterface
             'store_sync' =>
                 [
                     'enabled' => (string)$this->configRepository->isStoreSyncEnabled($storeId),
+                    'language' => $this->configRepository->getLanguage($storeId),
                     'name' => $this->configRepository->getAttributeName($storeId),
                     'description' => $this->configRepository->getAttributeDescription($storeId),
                     'brand' => $this->configRepository->getAttributeBrand($storeId),
