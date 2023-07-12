@@ -19,7 +19,7 @@ define([
 
                 CART.items.forEach((obj) => {
                     this.preventListOfProducts.push({
-                        "id": obj.product_id,
+                        "id": obj.product_sku,
                         "name": obj.product_name,
                         "price": obj.product_price_value,
                         "quantity": obj.qty
@@ -41,7 +41,7 @@ define([
 
             cartData.items.forEach((obj) => {
                 buffer.push({
-                    "id": obj.product_id,
+                    "id": obj.product_sku,
                     "name": obj.product_name,
                     "price": obj.product_price_value,
                     "quantity": obj.qty
@@ -72,7 +72,7 @@ define([
 
             cartData.items.forEach((obj) => {
                 buffer.push({
-                    "id": obj.product_id,
+                    "id": obj.product_sku,
                     "name": obj.product_name,
                     "price": obj.product_price_value,
                     "quantity": obj.qty
@@ -85,13 +85,13 @@ define([
             }
             this.preventListOfProducts = buffer;
         },
-        sqzlRemoveFromCartObject: function (productId) {
+        sqzlRemoveFromCartObject: function (productSKU) {
             window._sqzl.push({
                 "event": "RemoveFromCart",
-                "products": [{ "id":  productId }],
+                "products": [{ "id":  productSKU }],
             });
         },
-        sqzlAddToCartObject: function(products, set_cart) {
+        sqzlAddToCartObject: function(products) {
             let pushData = {
                 "event": "AddToCart",
                 "products": products,
