@@ -10,6 +10,7 @@ namespace Squeezely\Plugin\Model\Webapi;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollection;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable;
+use Magento\Cron\Model\Schedule;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Store\Model\StoreManagerInterface;
@@ -76,6 +77,10 @@ class Repository implements ManagementInterface
      * @var InvalidateByStore
      */
     private $invalidateByStore;
+    /**
+     * @var Schedule
+     */
+    private $schedule;
 
     /**
      * @param Configurable $catalogProductTypeConfigurable
@@ -97,7 +102,8 @@ class Repository implements ManagementInterface
         ConfigRepositoryInterface $configRepository,
         ProductCollection $productCollection,
         ItemsQueueResource $itemsQueueResource,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        Schedule $schedule
     ) {
         $this->catalogProductTypeConfigurable = $catalogProductTypeConfigurable;
         $this->jsonSerializer = $jsonSerializer;
@@ -108,6 +114,7 @@ class Repository implements ManagementInterface
         $this->productCollection = $productCollection;
         $this->itemsQueueResource = $itemsQueueResource;
         $this->storeManager = $storeManager;
+        $this->schedule = $schedule;
     }
 
     /**
@@ -262,8 +269,29 @@ class Repository implements ManagementInterface
                     'endpoint_data_url' => $this->configRepository->getEndpointDataUrl(),
                     'endpoint_tracker_url' => $this->configRepository->getEndpointTrackerUrl(),
                     'api_request_uri' => $this->configRepository->getApiRequestUri()
-                ]
+                ],
+            'last_cron_run' => $this->getLastCronRun()
         ];
+    }
+
+    /**
+     * @return string|null
+     */
+    private function getLastCronRun(): ?string
+    {
+        $scheduleCollection = $this->schedule->getCollection()
+            ->addFieldToSelect('scheduled_at')
+            ->addFieldToFilter('status', 'success');
+
+        $scheduleCollection->getSelect()
+            ->limit(1)
+            ->order('scheduled_at DESC');
+
+        if ($scheduleCollection->getSize() == 0) {
+            return null;
+        } else {
+            return (string)$scheduleCollection->getFirstItem()->getScheduledAt();
+        }
     }
 
     /**
