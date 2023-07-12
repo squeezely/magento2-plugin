@@ -248,7 +248,8 @@ class Repository implements ManagementInterface
                 ],
             'frontend_events' =>
                 [
-                    'enabled' => (string)$this->configRepository->isFrontendEventsEnabled($storeId)
+                    'enabled' => (string)$this->configRepository->isFrontendEventsEnabled($storeId),
+                    'events' => $this->configRepository->getEnabledFrontendEvents($storeId)
                 ],
             'backend_events' =>
                 [
