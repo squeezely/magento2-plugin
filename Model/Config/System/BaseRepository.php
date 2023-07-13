@@ -64,7 +64,7 @@ class BaseRepository
         int $storeId = null,
         string $scope = null
     ): bool {
-        if (!$storeId) {
+        if ($storeId === null) {
             $storeId = (int)$this->getStore()->getId();
         }
         $scope = $scope ?? ScopeInterface::SCOPE_STORE;
@@ -102,7 +102,7 @@ class BaseRepository
         int $storeId = null,
         string $scope = null
     ): string {
-        if (!$storeId) {
+        if ($storeId === null) {
             $storeId = (int)$this->getStore()->getId();
         }
         $scope = $scope ?? ScopeInterface::SCOPE_STORE;
