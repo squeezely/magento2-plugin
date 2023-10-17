@@ -1,0 +1,34 @@
+<?php
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ *
+ * @var Squeezely\Plugin\Block\Adminhtml\System\Config\Form\Table\Backend $block
+ */
+
+$element = $block->getElement();
+?>
+<tr id="row_<?= /* @noEscape */
+$element->getHtmlId() ?>">
+    <td class="value">
+        <table class="mm-block-squeezely-table">
+            <thead>
+            <tr>
+                <th><?= $block->escapeHtml(__('Summary')); ?></th>
+                <th><?= $block->escapeHtml(__('Action')); ?></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    -- todo --
+                </td>
+                <td>
+                    <a class="run" href="<?= $block->escapeUrl($block->getProcessQueueUrl()) ?>">Run now</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </td>
+    <td></td>
+</tr>
