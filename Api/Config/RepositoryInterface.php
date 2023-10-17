@@ -49,6 +49,14 @@ interface RepositoryInterface extends System\StoreSyncInterface
     public const EXTENSION_DISABLED_ERROR = 'Extension is not enabled';
 
     /**
+     * Header links
+     */
+    public const MODULE_DOCUMENTATION_LINK = 'https://squeezely.atlassian.net/wiki/spaces/SG/pages/1399652355/Magento+2+Plugin'; // phpcs:ignore
+    public const MODULE_SUPPORT_LINK = 'https://squeezely.atlassian.net/servicedesk/customer/portals';
+    public const MODULE_API_LINK = 'https://squeezely.tech/company/settings';
+    public const MODULE_MAGMODULES_LINK = 'https://www.magmodules.eu/';
+
+    /**
      * Check if module is enabled
      *
      * @param int|null $storeId
@@ -97,4 +105,32 @@ interface RepositoryInterface extends System\StoreSyncInterface
      * @return string
      */
     public function getMagentoVersion(): string;
+
+    /**
+     * Get Documentation Link
+     *
+     * @return string
+     */
+    public function getDocumentationLink(): string;
+
+    /**
+     * Get Support Link
+     *
+     * @return string
+     */
+    public function getSupportLink(): string;
+
+    /**
+     * Get Api Link
+     *
+     * @return string
+     */
+    public function getApiLink(): string;
+
+    /**
+     * Get Magmodules Link
+     *
+     * @return string
+     */
+    public function getMagmodulesLink(): string;
 }

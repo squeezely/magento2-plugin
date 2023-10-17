@@ -46,7 +46,7 @@ class ErrorLogger extends Logger
      * @param mixed $data
      *
      */
-    public function addLog($type, $data)
+    public function addLog(string $type, $data): void
     {
         if (is_array($data) || is_object($data)) {
             $this->addRecord(static::ERROR, $type . ': ' . $this->json->serialize($data));

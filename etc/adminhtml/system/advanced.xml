@@ -9,12 +9,6 @@
     <group id="advanced" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
         <label>Advanced Options</label>
         <comment>Do not change these settings unless instructed to do so by the Squeezely Team.</comment>
-        <field id="debug" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
-            <label>Enable Debug Logging</label>
-            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-            <comment>Write all calls to var/squeezely/debug.log. Not recommend in live stores.</comment>
-            <config_path>squeezely/advanced/debug</config_path>
-        </field>
         <field id="endpoint_data_url" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
             <label>Endpoint Data URL</label>
             <comment>Don't change unless instructed by the Squeezely team</comment>

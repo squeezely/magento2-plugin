@@ -1,0 +1,20 @@
+<?php
+/**
+ * Copyright © Squeezely B.V. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+use Squeezely\Plugin\Block\Adminhtml\System\Config\Button\Selftest;
+
+/**
+ * @see \Squeezely\Plugin\Block\Adminhtml\System\Config\Button\Selftest
+ * @var Selftest $block
+ */
+?>
+
+<div id="mm-ui-result_test-modal" 
+     data-mm-ui-endpoind-url="<?= $block->escapeUrl($block->getSelftestUrl()) ?>">
+    <div id="mm-ui-result_test">
+        <ul class="result"></ul>
+    </div>
+</div>

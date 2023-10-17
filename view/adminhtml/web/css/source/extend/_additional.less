@@ -1,0 +1,39 @@
+//
+//  Tables
+//  ---------------------------------------------
+
+form[action*="squeezely"] {
+    .magmodules-squeezely-variables();
+
+    .mm-ui-table {
+        border-color: fade(@mm-ui-color3, 50%);
+
+        th, td {
+            padding: 8px 12px !important;
+        }
+
+        th {
+            background-color: @mm-ui-color8;
+            border-color: @mm-ui-color1;
+            color: @mm-ui-color1;
+        }
+
+        a {
+            color: @mm-ui-magmodules-color2;
+            transition: .3s;
+            text-decoration: inherit;
+
+            &:before {
+                content: "›";
+                display: block;
+                text-decoration: inherit;
+                float: left;
+                margin-right: 5px;
+            }
+
+            &:hover {
+                color: darken(@mm-ui-color8, 10%);
+            }
+        }
+    }
+}

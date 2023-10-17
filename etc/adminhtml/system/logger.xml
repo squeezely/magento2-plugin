@@ -5,15 +5,26 @@
  * See COPYING.txt for license details.
  */
 -->
-<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
-    <group id="logger" translate="label comment" type="text" sortOrder="100" showInDefault="1" showInWebsite="1"
-           showInStore="1">
-        <label>Logger</label>
-        <field id="download" translate="label" type="select" sortOrder="1" showInDefault="1"
-               showInWebsite="1" showInStore="1">
-            <label>Log Files</label>
-            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Config\Form\Table\Logger</frontend_model>
+<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
+    <group id="logger" translate="label comment" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+        <label>Debug &amp; Logging</label>
+        <field id="logging_heading" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Logging</label>
+            <comment><![CDATA[Enable this function to write debug records and log events, API calls, and other debugging-related information into a debug.log file.<br>Errors are always logged and written into the error.log file.]]></comment>
+            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Design\Heading</frontend_model>
+        </field>
+        <field id="debug" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Debug Mode</label>
+            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+            <config_path>squeezely/advanced/debug</config_path>
+        </field>
+        <field id="check_button_wrapper" translate="label" type="button" sortOrder="12" showInDefault="1" showInWebsite="0" showInStore="0">
+            <label/>
+            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Config\Button\Log</frontend_model>
+        </field>
+        <field id="selftest_button" translate="label" type="button" sortOrder="21" showInDefault="1" showInWebsite="0" showInStore="0">
+            <label/>
+            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Config\Button\Selftest</frontend_model>
         </field>
     </group>
 </include>

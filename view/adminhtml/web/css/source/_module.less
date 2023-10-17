@@ -1,0 +1,27 @@
+//
+//  Imports
+//  ---------------------------------------------
+
+@import './variables/_colors.less';
+@import './module/ui/_button.less';
+@import './module/ui/_modal.less';
+
+@import './module/_header.less';
+@import './module/_version.less';
+@import './module/_debug.less';
+
+@import './extend/_additional.less';
+
+
+//
+//  Common styles
+//  ---------------------------------------------
+
+.admin__page-nav._collapsed.squeezely-extensions .title,
+.admin__page-nav._collapsed._show.squeezely-extensions .title  {
+    background-image: url('@{baseDir}Squeezely_Plugin/images/short_logo.png');
+    background-position: 18px center;
+    background-repeat: no-repeat;
+    text-indent: 50px;
+    background-size: auto 45%;
+}

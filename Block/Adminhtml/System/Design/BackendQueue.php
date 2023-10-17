@@ -4,19 +4,18 @@
  * See COPYING.txt for license details.
  */
 
-namespace Squeezely\Plugin\Block\Adminhtml\System\Config\Form\Table;
+namespace Squeezely\Plugin\Block\Adminhtml\System\Design;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\Data\Form\Element\Renderer\RendererInterface;
-use Magento\Framework\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Io\File;
 use Magento\Framework\View\Element\Template;
+use Squeezely\Plugin\Model\ProcessingQueue\CollectionFactory as ProcessingQueueCollectionFactory;
 
 /**
  * Logs Render Block
  */
-class Backend extends Template implements RendererInterface
+class BackendQueue extends Template implements RendererInterface
 {
 
     /**
@@ -27,29 +26,21 @@ class Backend extends Template implements RendererInterface
     protected $_template = 'Squeezely_Plugin::system/config/fieldset/backend.phtml';
 
     /**
-     * @var File
+     * @var ProcessingQueueCollectionFactory
      */
-    private $ioFilesystem;
-
-    /**
-     * @var DirectoryList
-     */
-    private $directoryList;
+    private $processesQueueCollectionFactory;
 
     /**
      * Feeds constructor.
      *
      * @param Context $context
-     * @param File $ioFilesystem
-     * @param DirectoryList $directoryList
+     * @param ProcessingQueueCollectionFactory $processesQueueCollectionFactory
      */
     public function __construct(
         Context $context,
-        File $ioFilesystem,
-        DirectoryList $directoryList
+        ProcessingQueueCollectionFactory $processesQueueCollectionFactory
     ) {
-        $this->ioFilesystem = $ioFilesystem;
-        $this->directoryList = $directoryList;
+        $this->processesQueueCollectionFactory = $processesQueueCollectionFactory;
         parent::__construct($context);
     }
 
@@ -68,6 +59,14 @@ class Backend extends Template implements RendererInterface
     public function getProcessQueueUrl(): string
     {
         return $this->getUrl('sqzl/ProcessingQueue/process');
+    }
+
+    /**
+     * @return int
+     */
+    public function getNumberOfRecords(): int
+    {
+        return $this->processesQueueCollectionFactory->create()->getSize();
     }
 
     /**

@@ -3,32 +3,36 @@
  * Copyright © Squeezely B.V. All rights reserved.
  * See COPYING.txt for license details.
  *
- * @var Squeezely\Plugin\Block\Adminhtml\System\Config\Form\Table\Backend $block
+ * @var Squeezely\Plugin\Block\Adminhtml\System\Design\BackendQueue $block
  */
-
 $element = $block->getElement();
 ?>
-<tr id="row_<?= /* @noEscape */
-$element->getHtmlId() ?>">
+<tr id="row_<?= /* @noEscape */ $element->getHtmlId() ?>">
+    <td class="label"><?= /* @noEscape */ $element->getLabel() ?></td>
     <td class="value">
-        <table class="mm-block-squeezely-table">
+        <table class="mm-ui-table" border="1">
             <thead>
             <tr>
-                <th><?= $block->escapeHtml(__('Summary')); ?></th>
-                <th><?= $block->escapeHtml(__('Action')); ?></th>
+                <th><?= $block->escapeHtml(__('Totals')); ?></th>
+                <th><?= $block->escapeHtml(__('Actions')); ?></th>
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>
-                    -- todo --
-                </td>
-                <td>
-                    <a class="run" href="<?= $block->escapeUrl($block->getProcessQueueUrl()) ?>">Run now</a>
-                </td>
-            </tr>
+                <tr>
+                    <td>
+                        <p><?= $block->escapeHtml($block->getNumberOfRecords()); ?></p>
+                    </td>
+                    <td>
+                        <p>
+                            <a href="<?= $block->escapeUrl($block->getProcessQueueUrl()) ?>">
+                                <?= $block->escapeHtml(__('Run Now')); ?>
+                            </a>
+                        </p>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </td>
     <td></td>
 </tr>
+

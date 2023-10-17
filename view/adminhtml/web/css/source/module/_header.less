@@ -1,0 +1,54 @@
+//
+//  Header
+//  ---------------------------------------------
+
+form[action*="squeezely"] {
+    .magmodules-squeezely-variables();
+
+    .mm-ui-header {
+        position: relative;
+        margin-bottom: 24px;
+        padding: 28px;
+    
+        border-radius: 8px;
+        background-color: @mm-ui-color8;
+    
+        color: @mm-ui-color1;
+        font: 1.5rem/2.4rem @font-family__base;
+        text-align: center;
+    }
+
+    .mm-ui-header-text {
+        display: grid;
+        grid-gap: 12px;
+        max-width: 930px;
+        margin: 20px auto 0;
+    }
+
+    .mm-ui-created-by {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 1.4rem;
+
+        a {
+            color: @mm-ui-magmodules-color1;
+            font-weight: 600;
+            transition: .3s;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+
+            &:hover {
+                color: darken(@mm-ui-magmodules-color1, 20%);
+            }
+        }
+    }
+
+    .mm-ui-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 40px;
+        gap: 20px;
+    }
+}

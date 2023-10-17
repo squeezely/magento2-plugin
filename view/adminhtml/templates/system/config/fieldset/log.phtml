@@ -10,35 +10,34 @@ $error = $block->getErrorLink();
 $debug = $block->getDebugLink();
 $element = $block->getElement();
 ?>
-<tr id="row_<?= /* @noEscape */
-$element->getHtmlId() ?>">
-    <td class="label"><?= /* @noEscape */
-        $element->getLabel() ?></td>
+
+<tr id="row_<?= /* @noEscape */ $element->getHtmlId() ?>">
+    <td class="label"><?= /* @noEscape */ $element->getLabel() ?></td>
     <td class="value">
-        <table class="mm-block-squeezely-table">
+        <table class="mm-ui-table" border="1">
             <thead>
-            <tr>
-                <th><?= $block->escapeHtml(__('Debug')); ?></th>
-                <th><?= $block->escapeHtml(__('Error')); ?></th>
-            </tr>
+                <tr>
+                    <th><?= $block->escapeHtml(__('Debug')); ?></th>
+                    <th><?= $block->escapeHtml(__('Error')); ?></th>
+                </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>
-                    <?php if ($debug): ?>
-                        <a class="debug_log" target="_blank" href="<?= $block->escapeUrl($debug) ?>">Download</a>
-                    <?php else: ?>
-                        <i><?= $block->escapeHtml(__('Empty')); ?></i>
-                    <?php endif ?>
-                </td>
-                <td>
-                    <?php if ($error): ?>
-                        <a class="error_log" target="_blank" href="<?= $block->escapeUrl($error) ?>">Download</a>
-                    <?php else: ?>
-                        <i><?= $block->escapeHtml(__('Empty')); ?></i>
-                    <?php endif ?>
-                </td>
-            </tr>
+                <tr>
+                    <td>
+                        <?php if ($debug): ?>
+                            <a class="debug_log" target="_blank" href="<?= $block->escapeUrl($debug) ?>">Download</a>
+                        <?php else: ?>
+                            <i><?= $block->escapeHtml(__('Empty')); ?></i>
+                        <?php endif ?>
+                    </td>
+                    <td>
+                        <?php if ($error): ?>
+                            <a class="error_log" target="_blank" href="<?= $block->escapeUrl($error) ?>">Download</a>
+                        <?php else: ?>
+                            <i><?= $block->escapeHtml(__('Empty')); ?></i>
+                        <?php endif ?>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </td>

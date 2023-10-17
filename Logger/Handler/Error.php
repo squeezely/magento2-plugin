@@ -24,5 +24,5 @@ class Error extends Base
     /**
      * @var string
      */
-    protected $fileName = '/var/log/squeezely/error.log';
+    protected $fileName = '/var/log/squeezely-error.log';
 }

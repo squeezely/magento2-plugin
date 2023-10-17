@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Squeezely\Plugin\Block\Adminhtml\System\Squeezely;
+namespace Squeezely\Plugin\Block\Adminhtml\System\Design;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollection;
