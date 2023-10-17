@@ -9,49 +9,49 @@
     <route method="GET" url="/V1/productParent">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getParentIdOfProduct"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
     <route method="POST" url="/V1/productInfo">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getProductsInfo"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
     <route method="GET" url="/V1/squeezely/products">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getProducts"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
     <route method="GET" url="/V1/squeezely/moduleInfo">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getModuleInfo"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
     <route method="GET" url="/V1/squeezely/invalidateAllProducts/:store_id">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="invalidateAll"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
     <route method="GET" url="/V1/squeezely/invalidateProducts/:store_id/:product_ids">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="invalidate"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
     <route method="GET" url="/V1/squeezely/moduleSettings">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getModuleSettings"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
     <route method="GET" url="/V1/squeezely/moduleSettings/:storeId">
         <service class="Squeezely\Plugin\Api\Webapi\ManagementInterface" method="getModuleSettingsByStore"/>
         <resources>
-            <resource ref="Magento_Backend::admin"/>
+            <resource ref="Squeezely_Plugin::webapi"/>
         </resources>
     </route>
 </routes>
