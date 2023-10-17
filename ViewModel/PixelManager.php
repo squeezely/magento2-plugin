@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Squeezely\Plugin\ViewModel;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Locale\Resolver as LocaleResolver;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
@@ -28,6 +29,10 @@ class PixelManager implements ArgumentInterface
      */
     private $storeManager;
     /**
+     * @var LocaleResolver
+     */
+    private $localeResolver;
+    /**
      * @var LogRepository
      */
     private $logRepository;
@@ -41,15 +46,18 @@ class PixelManager implements ArgumentInterface
      *
      * @param ConfigRepository $configRepository
      * @param StoreManagerInterface $storeManager
+     * @param LocaleResolver $localeResolver
      * @param LogRepository $logRepository
      */
     public function __construct(
         ConfigRepository $configRepository,
         StoreManagerInterface $storeManager,
+        LocaleResolver $localeResolver,
         LogRepository $logRepository
     ) {
         $this->configRepository = $configRepository;
         $this->storeManager = $storeManager;
+        $this->localeResolver = $localeResolver;
         $this->logRepository = $logRepository;
     }
 
@@ -111,5 +119,15 @@ class PixelManager implements ArgumentInterface
     private function getAccountId(): string
     {
         return $this->configRepository->getAccountId($this->getStoreId());
+    }
+
+    /**
+     * @return string
+     */
+    public function getStoreLocale(): string
+    {
+        $locale = $this->localeResolver->getLocale()
+            ?: $this->localeResolver->getDefaultLocale();
+        return str_replace('_', '-', $locale);
     }
 }

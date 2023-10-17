@@ -11,7 +11,10 @@ $viewModel = $block->getViewModel();
             l.defer=true;l.src=z;y.parentNode.insertBefore(l,y)})
         (window,document, '<?= /* @noEscape */ $viewModel->getJsLink();?>');
         window._sqzl = _sqzl || [];
-        window._sqzl.push({"event": "PageView"});
+        window._sqzl.push({
+            "event": "PageView",
+            "language": "<?= /* @noEscape */ $viewModel->getStoreLocale(); ?>"
+        });
 
         if (!sessionStorage.getItem("new-session")) {
             window._sqzl.push({
