@@ -10,6 +10,6 @@
     <group id="branding" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1"
            showInStore="1">
         <label>Branding</label>
-        <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Squeezely\Header</frontend_model>
+        <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Design\Header</frontend_model>
     </group>
 </include>

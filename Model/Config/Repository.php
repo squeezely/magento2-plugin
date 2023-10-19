@@ -62,4 +62,44 @@ class Repository extends System\StoreSyncRepository implements ConfigRepositoryI
     {
         return $this->getFlag(self::XML_PATH_ENABLED, $storeId);
     }
+
+    /**
+     * Documentation link for extension.
+     *
+     * @return string
+     */
+    public function getDocumentationLink(): string
+    {
+        return self::MODULE_DOCUMENTATION_LINK;
+    }
+
+    /**
+     * Support link for extension.
+     *
+     * @return string
+     */
+    public function getSupportLink(): string
+    {
+        return self::MODULE_SUPPORT_LINK;
+    }
+
+    /**
+     * Api link for extension.
+     *
+     * @return string
+     */
+    public function getApiLink(): string
+    {
+        return self::MODULE_API_LINK;
+    }
+
+    /**
+     * Magmodules link for extension.
+     *
+     * @return string
+     */
+    public function getMagmodulesLink(): string
+    {
+        return self::MODULE_MAGMODULES_LINK;
+    }
 }

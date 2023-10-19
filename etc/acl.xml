@@ -12,6 +12,7 @@
             <resource id="Magento_Backend::admin">
                 <resource id="Squeezely_Plugin::general" title="Squeezely" sortOrder="50">
                     <resource id="Squeezely_Plugin::general_item" title="Item Updates" sortOrder="10"/>
+                    <resource id="Squeezely_Plugin::webapi" title="WebApi" sortOrder="20"/>
                 </resource>
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">

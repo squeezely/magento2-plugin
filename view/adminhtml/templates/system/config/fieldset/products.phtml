@@ -3,20 +3,20 @@
  * Copyright © Squeezely B.V. All rights reserved.
  * See COPYING.txt for license details.
  *
- * @var Squeezely\Plugin\Block\Adminhtml\System\Squeezely\Products $block
+ * @var Squeezely\Plugin\Block\Adminhtml\System\Design\Products $block
  */
 $element = $block->getElement();
 ?>
 <tr id="row_<?= /* @noEscape */ $element->getHtmlId() ?>">
     <td class="label"><?= /* @noEscape */ $element->getLabel() ?></td>
     <td class="value">
-        <table class="mm-block-squeezely-table">
+        <table class="mm-ui-table" border="1">
             <thead>
-            <tr>
-                <th><?= $block->escapeHtml(__('Storeview')); ?></th>
-                <th><?= $block->escapeHtml(__('Totals')); ?></th>
-                <th><?= $block->escapeHtml(__('Actions')); ?></th>
-            </tr>
+                <tr>
+                    <th><?= $block->escapeHtml(__('Storeview')); ?></th>
+                    <th><?= $block->escapeHtml(__('Totals')); ?></th>
+                    <th><?= $block->escapeHtml(__('Actions')); ?></th>
+                </tr>
             </thead>
             <tbody>
             <?php foreach ($block->getContentStoreData() as $contentStore): ?>

@@ -105,7 +105,7 @@
         </field>
         <field id="products" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Product Updates</label>
-            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Squeezely\Products</frontend_model>
+            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Design\Products</frontend_model>
             <depends>
                 <field id="enabled">1</field>
             </depends>

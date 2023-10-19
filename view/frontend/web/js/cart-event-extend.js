@@ -21,7 +21,7 @@ define([
                     this.preventListOfProducts.push({
                         "id": obj.product_sku,
                         "name": obj.product_name,
-                        "price": obj.product_price_value,
+                        "price": obj.product_price_value.incl_tax ? +obj.product_price_value.incl_tax : obj.product_price_value,
                         "quantity": obj.qty
                     });
                 });
@@ -43,7 +43,7 @@ define([
                 buffer.push({
                     "id": obj.product_sku,
                     "name": obj.product_name,
-                    "price": obj.product_price_value,
+                    "price": obj.product_price_value.incl_tax ? +obj.product_price_value.incl_tax : obj.product_price_value,
                     "quantity": obj.qty
                 });
             });
@@ -58,7 +58,7 @@ define([
                         this.sqzlAddToCartObject({
                             "id": buffer[i]["id"],
                             "name": buffer[i]["name"],
-                            "price": buffer[i]["price"],
+                            "price": buffer[i]["price"].incl_tax ? +buffer[i]["price"].incl_tax : buffer[i]["price"],
                             "quantity": buffer[i]["quantity"] - this.preventListOfProducts[i]["quantity"]
                         });
                     }
@@ -74,7 +74,7 @@ define([
                 buffer.push({
                     "id": obj.product_sku,
                     "name": obj.product_name,
-                    "price": obj.product_price_value,
+                    "price": obj.product_price_value.incl_tax ? +obj.product_price_value.incl_tax : obj.product_price_value,
                     "quantity": obj.qty
                 });
             });

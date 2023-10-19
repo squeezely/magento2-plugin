@@ -116,7 +116,8 @@ class Service
         $integrationId = $integration->getId();
         $customerId = $integration->getConsumerId();
 
-        $this->authorizationService->grantAllPermissions($integrationId);
+        $this->authorizationService->grantPermissions($integrationId, ['Squeezely_Plugin::webapi']);
+
         $this->oauthService->createAccessToken($customerId, true);
         return $this->oauthService->getAccessToken($customerId);
     }

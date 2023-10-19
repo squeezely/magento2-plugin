@@ -32,5 +32,12 @@
                 <field id="enabled">1</field>
             </depends>
         </field>
+        <field id="table" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label/>
+            <frontend_model>Squeezely\Plugin\Block\Adminhtml\System\Design\BackendQueue</frontend_model>
+            <depends>
+                <field id="enabled">1</field>
+            </depends>
+        </field>
     </group>
 </include>

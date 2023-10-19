@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Squeezely\Plugin\Block\Adminhtml\System\Squeezely;
+namespace Squeezely\Plugin\Block\Adminhtml\System\Design;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Config\Block\System\Config\Form\Field;
@@ -51,17 +51,42 @@ class Header extends Field
     }
 
     /**
-     * Image with extension and magento version.
+     * Documentation link for extension.
      *
      * @return string
      */
-    public function getImage(): string
+    public function getDocumentationLink(): string
     {
-        return sprintf(
-            'https://www.magmodules.eu/logo/%s/%s/%s/logo.png',
-            ConfigRepository::SQUEEZELY_PLUGIN_NAME,
-            $this->configRepository->getExtensionVersion(),
-            $this->configRepository->getMagentoVersion()
-        );
+        return $this->configRepository->getDocumentationLink();
+    }
+
+    /**
+     * Support link for extension.
+     *
+     * @return string
+     */
+    public function getSupportLink(): string
+    {
+        return $this->configRepository->getSupportLink();
+    }
+
+    /**
+     * Api link for extension.
+     *
+     * @return string
+     */
+    public function getApiLink(): string
+    {
+        return $this->configRepository->getApiLink();
+    }
+
+    /**
+     * Magmodules link for extension.
+     *
+     * @return string
+     */
+    public function getMagmodulesLink(): string
+    {
+        return $this->configRepository->getMagmodulesLink();
     }
 }
