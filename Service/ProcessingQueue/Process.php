@@ -131,11 +131,11 @@ class Process
     {
         $connection = $this->resourceConnection->getConnection();
         $connection->delete(
-            $connection->getTableName(ResourceModel::ENTITY_TABLE),
+            $this->resourceConnection->getTableName(ResourceModel::ENTITY_TABLE),
             ['attempts > 3']
         );
         $connection->delete(
-            $connection->getTableName(ResourceModel::ENTITY_TABLE),
+            $this->resourceConnection->getTableName(ResourceModel::ENTITY_TABLE),
             ['store_id = 0']
         );
     }
