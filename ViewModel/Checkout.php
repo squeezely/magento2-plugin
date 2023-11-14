@@ -87,7 +87,8 @@ class Checkout implements ArgumentInterface
             $productItems[] = (object)[
                 'id' => $item->getSku(),
                 'name' => $item->getName(),
-                'price' => $item->getPrice(),
+                'price' => $this->configRepository->isPurchaseInclTax((int)$quote->getStoreId()) ?
+                    $item->getPriceInclTax() : $item->getPrice(),
                 'quantity' => (int)$item->getQty()
             ];
         }

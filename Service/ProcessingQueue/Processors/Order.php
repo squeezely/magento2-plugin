@@ -13,6 +13,7 @@ use Magento\Newsletter\Model\Subscriber;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order as MagentoOrder;
 use Magento\Store\Model\ScopeInterface;
+use Squeezely\Plugin\Api\Config\RepositoryInterface as ConfigRepository;
 use Squeezely\Plugin\Api\Log\RepositoryInterface as LogRepository;
 use Squeezely\Plugin\Api\Request\RepositoryInterface as RequestRepository;
 
@@ -42,6 +43,10 @@ class Order
      * @var LogRepository
      */
     private $logRepository;
+    /**
+     * @var ConfigRepository
+     */
+    private $configRepository;
 
     /**
      * @param Subscriber $subscriber
@@ -55,13 +60,15 @@ class Order
         RequestRepository $requestRepository,
         LogRepository $logRepository,
         OrderRepository $orderRepository,
-        TimezoneInterface $localeDate
+        TimezoneInterface $localeDate,
+        ConfigRepository $configRepository
     ) {
         $this->subscriber = $subscriber;
         $this->requestRepository = $requestRepository;
         $this->logRepository = $logRepository;
         $this->orderRepository = $orderRepository;
         $this->localeDate = $localeDate;
+        $this->configRepository = $configRepository;
     }
 
     /**
@@ -111,23 +118,23 @@ class Order
             'currency' => $order->getOrderCurrencyCode(),
             'service' => 'yes',
             'newsletter' => $this->getSubscriberStatus($order->getCustomerEmail()),
-            'products' => $this->retrieveProductsFromOrder($order->getAllVisibleItems())
+            'products' => $this->retrieveProductsFromOrder($order)
         ];
     }
 
     /**
-     * @param array $items
-     *
+     * @param MagentoOrder $order
      * @return array
      */
-    private function retrieveProductsFromOrder(array $items): array
+    private function retrieveProductsFromOrder(MagentoOrder $order): array
     {
         $productItems = [];
-        foreach ($items as $item) {
+        foreach ($order->getAllVisibleItems() as $item) {
             $productItems[] = [
                 'id' => $item->getSku(),
                 'name' => $item->getName(),
-                'price' => $item->getPrice(),
+                'price' => $this->configRepository->isPurchaseInclTax((int)$order->getStoreId()) ?
+                    $item->getPriceInclTax() : $item->getPrice(),
                 'quantity' => (int)$item->getQtyOrdered(),
             ];
         }

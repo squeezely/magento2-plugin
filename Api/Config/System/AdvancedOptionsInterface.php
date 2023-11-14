@@ -19,6 +19,7 @@ interface AdvancedOptionsInterface
     public const XML_PATH_ENDPOINT_DATA_URL = 'squeezely/advanced/endpoint_data_url';
     public const XML_PATH_ENDPOINT_TRACKER_URL = 'squeezely/advanced/endpoint_tracker_url';
     public const XML_PATH_API_REQUEST_URI = 'squeezely/advanced/api_request_uri';
+    public const XML_PATH_PURCHASE_INCL_TAX = 'squeezely/advanced/purchase_incl_tax';
 
     /**
      * Is debug log enabled
@@ -47,4 +48,13 @@ interface AdvancedOptionsInterface
      * @return string
      */
     public function getApiRequestUri(): string;
+
+    /**
+     * Check if use price incl tax in purchase event
+     *
+     * @param int|null $storeId
+     *
+     * @return bool
+     */
+    public function isPurchaseInclTax(int $storeId = null): bool;
 }

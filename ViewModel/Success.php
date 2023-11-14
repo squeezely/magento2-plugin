@@ -90,7 +90,8 @@ class Success implements ArgumentInterface
             $productItem['id'] = $item->getSku();
             $productItem['language'] = $this->getStoreLocale();
             $productItem['name'] = $item->getName();
-            $productItem['price'] = $item->getPrice();
+            $productItem['price'] = $this->configRepository->isPurchaseInclTax((int)$order->getStoreId()) ?
+                $item->getPriceInclTax() : $item->getPrice();
             $productItem['quantity'] = (int)$item->getQtyOrdered();
             $productItems[] = (object)$productItem;
         }

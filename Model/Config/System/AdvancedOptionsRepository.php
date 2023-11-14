@@ -46,4 +46,12 @@ class AdvancedOptionsRepository extends BaseRepository implements AdvancedOption
     {
         return (string)$this->getStoreValue(self::XML_PATH_API_REQUEST_URI);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isPurchaseInclTax(int $storeId = null): bool
+    {
+        return $this->getFlag(self::XML_PATH_PURCHASE_INCL_TAX, $storeId);
+    }
 }

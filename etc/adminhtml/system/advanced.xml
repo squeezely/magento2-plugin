@@ -9,17 +9,23 @@
     <group id="advanced" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
         <label>Advanced Options</label>
         <comment>Do not change these settings unless instructed to do so by the Squeezely Team.</comment>
-        <field id="endpoint_data_url" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+        <field id="purchase_incl_tax" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+            <label>Purchase event: Use price Including Tax</label>
+            <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+            <config_path>squeezely/advanced/purchase_incl_tax</config_path>
+            <comment>If set to No, price excluding tax will be sent</comment>
+        </field>
+        <field id="endpoint_data_url" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
             <label>Endpoint Data URL</label>
             <comment>Don't change unless instructed by the Squeezely team</comment>
             <config_path>squeezely/advanced/endpoint_data_url</config_path>
         </field>
-        <field id="endpoint_tracker_url" translate="label" type="text" sortOrder="11" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+        <field id="endpoint_tracker_url" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
             <label>Endpoint Tracker URL</label>
             <comment>Don't change unless instructed by the Squeezely team</comment>
             <config_path>squeezely/advanced/endpoint_tracker_url</config_path>
         </field>
-        <field id="api_request_uri" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
+        <field id="api_request_uri" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
             <label>API Request URI</label>
             <comment>Don't change unless instructed by the Squeezely team</comment>
             <config_path>squeezely/advanced/api_request_uri</config_path>
