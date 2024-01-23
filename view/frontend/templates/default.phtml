@@ -34,7 +34,8 @@ $viewModel = $block->getViewModel();
                     "components": {
                         "squeezely-cart": {
                             "component": "Squeezely_Plugin/js/cart-event-extend",
-                            "trackAddToCart": <?= /* @noEscape */ $viewModel->trackAddToCart() ?>
+                            "trackAddToCart": <?= /* @noEscape */ $viewModel->trackAddToCart() ?>,
+                            "locale": "<?= /* @noEscape */ $viewModel->getStoreLocale() ?>"
                         }
                     }
                 }
