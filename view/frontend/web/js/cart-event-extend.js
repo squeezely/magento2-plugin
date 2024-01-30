@@ -44,7 +44,8 @@ define([
                     "id": obj.product_sku,
                     "name": obj.product_name,
                     "price": obj.product_price_value.incl_tax ? +obj.product_price_value.incl_tax : obj.product_price_value,
-                    "quantity": obj.qty
+                    "quantity": obj.qty,
+                    "language": this.locale
                 });
             });
 
@@ -59,7 +60,8 @@ define([
                             "id": buffer[i]["id"],
                             "name": buffer[i]["name"],
                             "price": buffer[i]["price"].incl_tax ? +buffer[i]["price"].incl_tax : buffer[i]["price"],
-                            "quantity": buffer[i]["quantity"] - this.preventListOfProducts[i]["quantity"]
+                            "quantity": buffer[i]["quantity"] - this.preventListOfProducts[i]["quantity"],
+                            "language": this.locale
                         });
                     }
                 }
