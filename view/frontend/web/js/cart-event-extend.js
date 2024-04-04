@@ -8,6 +8,7 @@ define([
     return Component.extend({
         cartCount: null,
         preventListOfProducts: [],
+
         initialize() {
             this._super();
             const CART = customerData.get('cart')();
@@ -16,17 +17,14 @@ define([
             if (Object.keys(CART).length) {
                 // Get count of product when module initialize
                 this.cartCount = CART.summary_count;
-
-                CART.items.forEach((obj) => {
-                    this.preventListOfProducts.push({
-                        "id": obj.product_sku,
-                        "name": obj.product_name,
-                        "price": obj.product_price_value.incl_tax ? +obj.product_price_value.incl_tax : obj.product_price_value,
-                        "quantity": obj.qty
-                    });
-                });
+                this.saveCurrentProducts(CART.items);
+                this.saveSessionData();
+            } else {
+                this.setDataFromSessionStorage();
             }
+
             window._sqzl = _sqzl || [];
+
             // Track any changes to add or remove items.
             customerData.get('cart').subscribe((data) => {
                 // AddtoCart event
@@ -34,8 +32,12 @@ define([
                 // removeFromCart event
                 if (data.summary_count < this.cartCount) this.sqzlRemoveFromCart(data);
                 this.cartCount = data.summary_count;
+
+                this.saveCurrentProducts(data.items);
+                this.saveSessionData();
             });
         },
+
         sqzlAddToCart(cartData) {
             let buffer = [];
 
@@ -69,6 +71,7 @@ define([
 
             this.preventListOfProducts = buffer;
         },
+
         sqzlRemoveFromCart(cartData) {
             let buffer = [];
 
@@ -87,18 +90,46 @@ define([
             }
             this.preventListOfProducts = buffer;
         },
-        sqzlRemoveFromCartObject: function (productSKU) {
+
+        sqzlRemoveFromCartObject (productSKU) {
             window._sqzl.push({
                 "event": "RemoveFromCart",
                 "products": [{ "id":  productSKU }],
             });
         },
-        sqzlAddToCartObject: function(products) {
+
+        sqzlAddToCartObject(products) {
             let pushData = {
                 "event": "AddToCart",
                 "products": products,
             };
             window._sqzl.push(pushData);
+        },
+
+        // Fixes behavior when page reloads after adding or deleting product
+        saveSessionData() {
+            sessionStorage.setItem("sqzlProductCart", JSON.stringify(this.preventListOfProducts));
+            sessionStorage.setItem("sqzlSummaryCount", this.cartCount);
+        },
+
+        setDataFromSessionStorage() {
+            if (sessionStorage.getItem("sqzlProductCart")) {
+                this.preventListOfProducts = JSON.parse(sessionStorage.getItem("sqzlProductCart"));
+                this.cartCount = JSON.parse(sessionStorage.getItem("sqzlSummaryCount"));
+            }
+        },
+
+        saveCurrentProducts(items) {
+            this.preventListOfProducts = [];
+
+            items.forEach((obj) => {
+                this.preventListOfProducts.push({
+                    "id": obj.product_sku,
+                    "name": obj.product_name,
+                    "price": obj.product_price_value.incl_tax ? +obj.product_price_value.incl_tax : obj.product_price_value,
+                    "quantity": obj.qty
+                });
+            });
         }
     });
 });
