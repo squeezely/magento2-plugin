@@ -6,40 +6,36 @@ define([
     'use strict';
 
     return Component.extend({
-        cartCount: null,
         preventListOfProducts: [],
 
         initialize() {
             this._super();
-            const CART = customerData.get('cart')();
-
-            if (!this.trackAddToCart) return;
-            if (Object.keys(CART).length) {
-                // Get count of product when module initialize
-                this.cartCount = CART.summary_count;
-                this.saveCurrentProducts(CART.items);
-                this.saveSessionData();
-            } else {
-                this.setDataFromSessionStorage();
-            }
 
             window._sqzl = _sqzl || [];
 
+            if (!this.trackAddToCart) return;
+
             // Track any changes to add or remove items.
             customerData.get('cart').subscribe((data) => {
+                const previousCount = +sessionStorage.getItem("sqzlSummaryCount") || 0;
+                const currentCount = data.summary_count;
+
                 // AddtoCart event
-                if (data.summary_count > this.cartCount) this.sqzlAddToCart(data);
+                if (currentCount > previousCount) this.sqzlAddToCart(data);
                 // removeFromCart event
-                if (data.summary_count < this.cartCount) this.sqzlRemoveFromCart(data);
-                this.cartCount = data.summary_count;
+                if (currentCount < previousCount) this.sqzlRemoveFromCart(data);
 
                 this.saveCurrentProducts(data.items);
-                this.saveSessionData();
+                this.saveSessionData(currentCount);
             });
         },
 
         sqzlAddToCart(cartData) {
             let buffer = [];
+
+            if (this.preventListOfProducts.length === 0) {
+                this.preventListOfProducts = JSON.parse(sessionStorage.getItem("sqzlProductCart")) || [];
+            }
 
             cartData.items.forEach((obj) => {
                 buffer.push({
@@ -55,8 +51,8 @@ define([
             if (buffer.length !== this.preventListOfProducts.length) {
                 this.sqzlAddToCartObject(buffer[0]);
             } else {
-            // If product added but existing
-                for(let i = 0; i < buffer.length; i++) {
+                // If product added but existing
+                for (let i = 0; i < buffer.length; i++) {
                     if (buffer[i]["quantity"] !== this.preventListOfProducts[i]["quantity"]) {
                         this.sqzlAddToCartObject({
                             "id": buffer[i]["id"],
@@ -75,6 +71,10 @@ define([
         sqzlRemoveFromCart(cartData) {
             let buffer = [];
 
+            if (this.preventListOfProducts.length === 0) {
+                this.preventListOfProducts = JSON.parse(sessionStorage.getItem("sqzlProductCart"));
+            }
+
             cartData.items.forEach((obj) => {
                 buffer.push({
                     "id": obj.product_sku,
@@ -83,18 +83,41 @@ define([
                     "quantity": obj.qty
                 });
             });
+
+            // Option 1: when product fully removed
             if (buffer.length !== this.preventListOfProducts.length) {
                 this.preventListOfProducts.forEach((obj) => {
-                    if (buffer.findIndex((el) => el.id === obj.id) === -1) this.sqzlRemoveFromCartObject(obj.id);
+                    if (buffer.findIndex((el) => el.id === obj.id) === -1) {
+                        this.sqzlRemoveFromCartObject(obj.id);
+                    }
                 });
+            } else {
+                // Option 2: when product decreased qty
+                const productId = this.findRemovedProduct(buffer, this.preventListOfProducts)[0];
+                this.sqzlRemoveFromCartObject(productId);
             }
+
             this.preventListOfProducts = buffer;
         },
 
-        sqzlRemoveFromCartObject (productSKU) {
+        findRemovedProduct(cartData, previousData) {
+            const map = new Map(previousData.map(item => [item.id, item.quantity]));
+            const result = [];
+
+            cartData.forEach((item) => {
+                const qty = map.get(item.id);
+                if (qty !== undefined && item.quantity !== qty) {
+                    result.push(item.id);
+                }
+            });
+
+            return result;
+        },
+
+        sqzlRemoveFromCartObject(productSKU) {
             window._sqzl.push({
                 "event": "RemoveFromCart",
-                "products": [{ "id":  productSKU }],
+                "products": [{"id": productSKU}],
             });
         },
 
@@ -107,16 +130,9 @@ define([
         },
 
         // Fixes behavior when page reloads after adding or deleting product
-        saveSessionData() {
+        saveSessionData(count) {
             sessionStorage.setItem("sqzlProductCart", JSON.stringify(this.preventListOfProducts));
-            sessionStorage.setItem("sqzlSummaryCount", this.cartCount);
-        },
-
-        setDataFromSessionStorage() {
-            if (sessionStorage.getItem("sqzlProductCart")) {
-                this.preventListOfProducts = JSON.parse(sessionStorage.getItem("sqzlProductCart"));
-                this.cartCount = JSON.parse(sessionStorage.getItem("sqzlSummaryCount"));
-            }
+            sessionStorage.setItem("sqzlSummaryCount", count);
         },
 
         saveCurrentProducts(items) {
