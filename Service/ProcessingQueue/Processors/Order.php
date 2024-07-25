@@ -111,7 +111,7 @@ class Order
             'currency' => $order->getOrderCurrencyCode(),
             'service' => 'yes',
             'newsletter' => $this->getSubscriberStatus($order->getCustomerEmail()),
-            'products' => $this->retrieveProductsFromOrder($order->getAllVisibleItems())
+            'products' => $this->retrieveProductsFromOrder($order)
         ];
     }
 
@@ -120,15 +120,17 @@ class Order
      *
      * @return array
      */
-    private function retrieveProductsFromOrder(array $items): array
+    private function retrieveProductsFromOrder(MagentoOrder $order): array
     {
         $productItems = [];
-        foreach ($items as $item) {
+        $language = $order->getStore()->getConfig('general/locale/code');
+        foreach ($order->getAllVisibleItems() as $item) {
             $productItems[] = [
                 'id' => $item->getSku(),
                 'name' => $item->getName(),
                 'price' => $item->getPrice(),
                 'quantity' => (int)$item->getQtyOrdered(),
+                'language' => $language
             ];
         }
         return $productItems;
